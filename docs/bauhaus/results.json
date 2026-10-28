@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-28T15:49:49.592Z",
+  "host": "macOS Obsidian1.14.5 mobile emulation / Chromium",
+  "actualIos": false,
+  "actualAndroid": false,
+  "results": [
+    {
+      "name": "scene leads combined/DOF while flash leads exposure; contextual quick controls stay available",
+      "passed": true
+    },
+    {
+      "name": "360/390 portrait and landscape, both themes and large text have no overflow and >=44px controls",
+      "passed": true
+    },
+    {
+      "name": "GN40.5 decimal and mid-string edits preserve focus, cursor order and scroll",
+      "passed": true
+    },
+    {
+      "name": "long equipment names, error explanations and warning states wrap without clipping",
+      "passed": true
+    },
+    {
+      "name": "light/dark text and primary action token pairs retain at least 4.5:1 contrast",
+      "passed": true
+    },
+    {
+      "name": "no uncaught runtime exception in Bauhaus states",
+      "passed": true
+    }
+  ],
+  "exceptions": []
+}

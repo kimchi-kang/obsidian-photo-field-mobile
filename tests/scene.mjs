@@ -3,7 +3,7 @@ import {copyFile,mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 await mkdir('docs/visual-comparison',{recursive:true});
 for(const f of ['main.js','manifest.json','styles.css'])await copyFile(f,`/private/tmp/photo-field-qa-vault/.obsidian/plugins/photo-field-mobile/${f}`);
-const browser=await chromium.connectOverCDP('http://127.0.0.1:9338');const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('app://obsidian'));const cdp=await page.context().newCDPSession(page);const results=[];
+const browser=await chromium.connectOverCDP('http://127.0.0.1:9338');const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('app://obsidian.md/index.html'));const cdp=await page.context().newCDPSession(page);const results=[];
 const run=f=>page.evaluate(f);const value=key=>run(()=>app.plugins.plugins['photo-field-mobile'].state.inputs).then(i=>i[key]);
 const pass=name=>{results.push(name);console.log('PASS '+name);};
 try{
