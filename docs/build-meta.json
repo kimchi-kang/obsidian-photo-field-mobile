@@ -1,0 +1,229 @@
+{
+  "inputs": {
+    "src/model.ts": {
+      "bytes": 1548,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/units.ts": {
+      "bytes": 439,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/engine.ts": {
+      "bytes": 5323,
+      "imports": [
+        {
+          "path": "./model",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/presets.ts": {
+      "bytes": 955,
+      "imports": [
+        {
+          "path": "./model",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/storage.ts": {
+      "bytes": 1810,
+      "imports": [
+        {
+          "path": "src/model.ts",
+          "kind": "import-statement",
+          "original": "./model"
+        },
+        {
+          "path": "src/presets.ts",
+          "kind": "import-statement",
+          "original": "./presets"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/diagram.ts": {
+      "bytes": 4351,
+      "imports": [
+        {
+          "path": "./model",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/note.ts": {
+      "bytes": 5040,
+      "imports": [
+        {
+          "path": "./model",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/view.ts": {
+      "bytes": 20180,
+      "imports": [
+        {
+          "path": "obsidian",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/model.ts",
+          "kind": "import-statement",
+          "original": "./model"
+        },
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
+        },
+        {
+          "path": "src/diagram.ts",
+          "kind": "import-statement",
+          "original": "./diagram"
+        },
+        {
+          "path": "src/presets.ts",
+          "kind": "import-statement",
+          "original": "./presets"
+        },
+        {
+          "path": "src/note.ts",
+          "kind": "import-statement",
+          "original": "./note"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main.ts": {
+      "bytes": 3047,
+      "imports": [
+        {
+          "path": "obsidian",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "./model",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/storage.ts",
+          "kind": "import-statement",
+          "original": "./storage"
+        },
+        {
+          "path": "src/view.ts",
+          "kind": "import-statement",
+          "original": "./view"
+        },
+        {
+          "path": "src/note.ts",
+          "kind": "import-statement",
+          "original": "./note"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "main.js": {
+      "imports": [
+        {
+          "path": "obsidian",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "obsidian",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "src/main.ts",
+      "inputs": {
+        "src/main.ts": {
+          "bytesInOutput": 3270
+        },
+        "src/model.ts": {
+          "bytesInOutput": 846
+        },
+        "src/units.ts": {
+          "bytesInOutput": 374
+        },
+        "src/engine.ts": {
+          "bytesInOutput": 5591
+        },
+        "src/presets.ts": {
+          "bytesInOutput": 902
+        },
+        "src/storage.ts": {
+          "bytesInOutput": 1612
+        },
+        "src/view.ts": {
+          "bytesInOutput": 24890
+        },
+        "src/diagram.ts": {
+          "bytesInOutput": 5121
+        },
+        "src/note.ts": {
+          "bytesInOutput": 7181
+        }
+      },
+      "bytes": 51978
+    }
+  }
+}

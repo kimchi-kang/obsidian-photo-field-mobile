@@ -1,0 +1,32 @@
+import {chromium} from 'playwright';
+import {writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const browser=await chromium.connectOverCDP('http://127.0.0.1:9338');
+const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('app://obsidian'));
+const results=[];const run=f=>page.evaluate(f);
+const check=(name,value)=>{results.push({name,passed:!!value});console.log((value?'PASS ':'FAIL ')+name);};
+const input=k=>page.locator(`.pfm-root input[data-key="${k}"]`);
+const detail=text=>page.locator('.pfm-root details').filter({has:page.locator('summary',{hasText:text})}).first();
+const open=async(text)=>{const d=detail(text);if(!await d.evaluate(e=>e.open))await d.locator('summary').first().click();};
+const reload=()=>run(async()=>{await app.plugins.disablePlugin('photo-field-mobile');await app.plugins.enablePlugin('photo-field-mobile');await app.plugins.plugins['photo-field-mobile'].open();});
+try{
+ assert.equal(await run(()=>app.vault.adapter.basePath),'/private/tmp/photo-field-qa-vault');await reload();
+ await run(async()=>{const p=app.plugins.plugins['photo-field-mobile'];Object.assign(p.state.inputs,{aperture:4,denominator:4,zoom:50,gnZoom:50,mode:'manual',loss:0,linked:true,cameraDistance:5,flashDistance:5,tab:'combined'});p.state.equipment=[];await p.persist();app.workspace.getLeavesOfType('photo-field-mobile')[0].view.render();});
+ await open('필요 출력');await input('aperture').fill('8');check('opened results stay open during input',await detail('필요 출력').evaluate(e=>e.open));
+ await input('denominator').fill('3');check('custom 1/3 shown by output selector',await page.locator('select[data-key=denominator]').inputValue()==='3');
+ await reload();check('custom 1/3 selector restored on reentry',await page.locator('select[data-key=denominator]').inputValue()==='3');
+ await input('aperture').fill('');await open('내 장비 프리셋');
+ await page.getByLabel('새 장비 이름',{exact:true}).fill('Blank regression');await page.getByLabel('측정 조건 (ISO100·최대 출력·직접광 등)',{exact:true}).fill('ISO100 full direct');await page.getByLabel('출처 URL·설명서 페이지 또는 실측 방법',{exact:true}).fill('synthetic regression');await page.locator('.pfm-root textarea').fill('35,30');
+ await page.getByRole('button',{name:'새 장비 프리셋 저장',exact:true}).click();await run(()=>app.plugins.plugins['photo-field-mobile'].persist());
+ check('equipment save persists despite unrelated blank number',await run(async()=>{const d=await app.plugins.plugins['photo-field-mobile'].loadData();return d.equipment.length===1&&d.inputs.aperture===8;}));
+ check('equipment section stays open after save rerenders view',await page.getByLabel('저장된 장비',{exact:true}).isVisible());
+ await input('aperture').fill('4');await input('denominator').fill('4');
+ await run(()=>{const p=app.plugins.plugins['photo-field-mobile'];p.state.equipment=[{name:'missing zoom fixture',conditions:'ISO100 full',source:'synthetic',table:{'35':30},minDenominator:256,steps:p.state.inputs.steps}];app.workspace.getLeavesOfType('photo-field-mobile')[0].view.render();});
+ await open('내 장비 프리셋');await page.getByLabel('저장된 장비',{exact:true}).selectOption('0');await page.getByRole('button',{name:'선택 장비의 현재 줌 GN 적용',exact:true}).click();await run(()=>app.plugins.plugins['photo-field-mobile'].persist());await reload();
+ check('missing preset zoom stays unavailable after reload',await page.locator('.pfm-hero').innerText()==='—');
+ await run(()=>{const p=app.plugins.plugins['photo-field-mobile'];Object.assign(p.state.inputs,{gnZoom:50,tab:'dof'});app.workspace.getLeavesOfType('photo-field-mobile')[0].view.render();});
+ check('DOF tab hides flash-only details',!await detail('필요 출력').isVisible());
+ await open('플래시·GN');await input('loss').fill('-1');check('negative extra loss marked invalid',await input('loss').getAttribute('aria-invalid')==='true');
+ const phase=process.env.BASELINE==='1'?'before':'after';await writeFile(`docs/bugfix-1.0.1/${phase}.json`,JSON.stringify({date:new Date().toISOString(),results},null,2));
+ if(phase==='after')assert.ok(results.every(x=>x.passed),'Regression failure');
+}finally{await browser.close();}

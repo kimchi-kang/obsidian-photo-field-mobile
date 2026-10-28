@@ -1,0 +1,10 @@
+{
+  "id": "photo-field-mobile",
+  "name": "사진 촬영 도우미",
+  "version": "1.0.2",
+  "minAppVersion": "1.5.0",
+  "description": "모바일 오프라인 심도·화각과 수동 플래시 노출 거리 계산 및 Markdown 저장",
+  "author": "kimchi-kang",
+  "isDesktopOnly": false,
+  "authorUrl": "https://github.com/kimchi-kang"
+}

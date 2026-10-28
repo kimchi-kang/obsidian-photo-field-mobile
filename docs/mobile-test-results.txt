@@ -1,0 +1,21 @@
+
+> photo-field-mobile@1.0.2 qa
+> node tests/mobile.mjs
+
+PASS actual Obsidian ItemView and commands load, GN40 1/4 = 5m
+PASS 360px no overflow, hero/exposure/near-far first screen, controls >=44px
+PASS direct number entry updates flash and DOF together
+PASS linked distances and -2EV at double distance
+PASS off camera independent distance and no spatial overlap claim
+PASS focal change preserves fixed flash GN distance
+PASS blank input not converted to zero or stale computed distance
+PASS unknown zoom and HSS withhold calculated distances
+PASS GN unit change converts value without changing exposure
+PASS user zoom-GN equipment preset created
+PASS disable/enable restores inputs and zoom-GN preset through loadData/saveData
+PASS offline real Vault API saves two distinct plain Markdown notes without overwrite
+PASS offline view reentry and synthetic touch slider interaction
+PASS portrait/landscape, light/dark, reduced viewport keyboard surrogate, no overflow
+PASS numeric input focus survives rerender of results
+PASS view close/plugin disable abort handlers and detach leaves
+PASS no uncaught runtime exception during QA

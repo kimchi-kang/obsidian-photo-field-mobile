@@ -1,0 +1,8 @@
+node_modules/
+dist/
+# Local installation evidence and user-specific paths
+/docs/installation-verification.json
+/docs/qa-persisted-data.json
+/docs/example-note.md
+/docs/screenshots/
+/docs/bugfix-1.0.1/
