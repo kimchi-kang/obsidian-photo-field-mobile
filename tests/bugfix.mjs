@@ -11,7 +11,7 @@ const open=async(text)=>{const d=detail(text);if(!await d.evaluate(e=>e.open))aw
 const reload=()=>run(async()=>{await app.plugins.disablePlugin('photo-field-mobile');await app.plugins.enablePlugin('photo-field-mobile');await app.plugins.plugins['photo-field-mobile'].open();});
 try{
  assert.equal(await run(()=>app.vault.adapter.basePath),'/private/tmp/photo-field-qa-vault');await reload();
- await run(async()=>{const p=app.plugins.plugins['photo-field-mobile'];Object.assign(p.state.inputs,{aperture:4,denominator:4,zoom:50,gnZoom:50,mode:'manual',loss:0,linked:true,cameraDistance:5,flashDistance:5,tab:'combined'});p.state.equipment=[];await p.persist();app.workspace.getLeavesOfType('photo-field-mobile')[0].view.render();});
+ await run(async()=>{const p=app.plugins.plugins['photo-field-mobile'];Object.assign(p.state.inputs,{gnMode:'manual',equipmentId:'',aperture:4,denominator:4,zoom:50,gnZoom:50,mode:'manual',loss:0,linked:true,cameraDistance:5,flashDistance:5,tab:'combined'});p.state.equipment=[];await p.persist();app.workspace.getLeavesOfType('photo-field-mobile')[0].view.render();});
  await open('필요 출력');await input('aperture').fill('8');check('opened results stay open during input',await detail('필요 출력').evaluate(e=>e.open));
  await input('denominator').fill('3');check('custom 1/3 shown by output selector',await page.locator('select[data-key=denominator]').inputValue()==='3');
  await reload();check('custom 1/3 selector restored on reentry',await page.locator('select[data-key=denominator]').inputValue()==='3');
@@ -21,8 +21,8 @@ try{
  check('equipment save persists despite unrelated blank number',await run(async()=>{const d=await app.plugins.plugins['photo-field-mobile'].loadData();return d.equipment.length===1&&d.inputs.aperture===8;}));
  check('equipment section stays open after save rerenders view',await page.getByLabel('저장된 장비',{exact:true}).isVisible());
  await input('aperture').fill('4');await input('denominator').fill('4');
- await run(()=>{const p=app.plugins.plugins['photo-field-mobile'];p.state.equipment=[{name:'missing zoom fixture',conditions:'ISO100 full',source:'synthetic',table:{'35':30},minDenominator:256,steps:p.state.inputs.steps}];app.workspace.getLeavesOfType('photo-field-mobile')[0].view.render();});
- await open('내 장비 프리셋');await page.getByLabel('저장된 장비',{exact:true}).selectOption('0');await page.getByRole('button',{name:'선택 장비의 현재 줌 GN 적용',exact:true}).click();await run(()=>app.plugins.plugins['photo-field-mobile'].persist());await reload();
+ await run(()=>{const p=app.plugins.plugins['photo-field-mobile'];p.state.equipment=[{id:'missing-fixture',name:'missing zoom fixture',conditions:'ISO100 full',source:'synthetic',table:{'35':30},minDenominator:256,steps:p.state.inputs.steps}];app.workspace.getLeavesOfType('photo-field-mobile')[0].view.render();});
+ await open('내 장비 프리셋');await page.getByLabel('저장된 장비',{exact:true}).selectOption('missing-fixture');await page.getByRole('button',{name:'선택 장비의 현재 줌 GN 적용',exact:true}).click();await run(()=>app.plugins.plugins['photo-field-mobile'].persist());await reload();
  check('missing preset zoom stays unavailable after reload',await page.locator('.pfm-hero').innerText()==='—');
  await run(()=>{const p=app.plugins.plugins['photo-field-mobile'];Object.assign(p.state.inputs,{gnZoom:50,tab:'dof'});app.workspace.getLeavesOfType('photo-field-mobile')[0].view.render();});
  check('DOF tab hides flash-only details',!await detail('필요 출력').isVisible());

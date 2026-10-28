@@ -33,6 +33,6 @@
 
 ## 배포 의존성 감사
 
-빌드 메타데이터의 입력은 `src/*.ts` 9개뿐이며 외부 import는 호스트 `obsidian`뿐이다. React/Chakra/Emotion/Framer Motion/react-icons와 그 전이 의존성은 배포하지 않는다. 런타임 Node/Electron/fs/path, CDN, fetch, 원격 폰트, 분석 추적 없음. SVG의 `http://www.w3.org/2000/svg`는 네임스페이스이며 네트워크 요청이 아니다. README·정보 링크는 사용자가 누를 때만 외부 문서를 연다.
+빌드 메타데이터의 입력은 `src/*.ts` 10개뿐이며 외부 import는 호스트 `obsidian`뿐이다. React/Chakra/Emotion/Framer Motion/react-icons와 그 전이 의존성은 배포하지 않는다. 런타임 Node/Electron/fs/path, CDN, fetch, 원격 폰트, 분석 추적 없음. SVG의 `http://www.w3.org/2000/svg`는 네임스페이스이며 네트워크 요청이 아니다. README·정보 링크는 사용자가 누를 때만 외부 문서를 연다.
 
 원본 직접 의존성은 모두 MIT metadata를 갖고 있으며, 원본 개발/전이 도구에는 ISC, BSD, Apache-2.0, Python-2.0, CC-BY-4.0, 0BSD 및 이중 라이선스가 있다. 이를 일괄 MIT라고 취급하지 않았다. 이번에 그 코드를 배포하지 않으므로 해당 실행 코드의 고지가 추가로 필요한 형태로 재사용되지 않는다.

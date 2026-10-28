@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "host": "macOS Obsidian 1.14.5 mobile emulation",
+  "cssViewport": "360x800",
+  "rootAndRemFontPx": 20,
+  "checks": [
+    "no horizontal overflow",
+    "visible controls >=44px"
+  ],
+  "actualSystemAccessibilitySetting": false,
+  "actualIos": false,
+  "actualAndroid": false
+}

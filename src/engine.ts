@@ -46,7 +46,7 @@ export function flash(i:Inputs) {
   if(i.gnZoom!==i.zoom)throw Error(`선택 줌 ${i.zoom}mm의 GN 자료 없음. 해당 줌의 GN과 측정 줌을 직접 입력하세요.`);
   positive(i.gn,i.gnZoom,i.denominator,i.minDenominator,i.tolerance,i.linked?i.cameraDistance:i.flashDistance);
   if(!i.conditions.trim())throw Error('GN 측정 조건을 입력하세요.');
-  if(i.denominator<1||i.denominator>i.minDenominator)throw Error('선택 출력이 장비 지원 범위를 벗어납니다.');
+  if(i.denominator<1)throw Error('출력 분모는 1 이상이어야 합니다.');
   if(i.tolerance>5)throw Error('허용 범위는 0 초과 5EV 이하로 입력하세요.');
   const steps=powerSteps(i.steps,i.minDenominator);
   const g=i.gnUnit==='ft'?feetToMetres(i.gn):i.gn;
@@ -54,7 +54,7 @@ export function flash(i:Inputs) {
   const gn=effectiveGN(g,1/i.denominator,i.iso,i.loss),d=gn/i.aperture;
   positive(i.aperture,d); const needed=requiredPower(g,i.aperture,r,i.iso,i.loss);
   const nearest=steps.reduce((best,v)=>Math.abs(Math.log2((1/v)/needed))<Math.abs(Math.log2((1/best)/needed))?v:best,steps[0]);
-  return {gn,d,r,g,ev:exposureEV(d,r),needed,requiredAperture:gn/r,nearest,
+  return {gn,d,r,g,supported:steps.includes(i.denominator),powerLabel:steps.includes(i.denominator)?(i.gnMode==='equipment'?'장비 지원 출력':'수동 GN · 입력한 지원 단계'):'이론값·장비 미지원 출력',nearestDistance:flashDistance(g,1/nearest,i.iso,i.aperture,i.loss),ev:exposureEV(d,r),needed,requiredAperture:gn/r,nearest,
     residual:Math.log2((1/nearest)/needed),low:d/2**(i.tolerance/2),high:d*2**(i.tolerance/2),
     status:needed>1?'최대 출력으로도 부족':needed<1/i.minDenominator?'최소 출력보다 낮은 출력 필요':'장비 출력 범위 안',steps,
     distances:steps.map(n=>({n,d:flashDistance(g,1/n,i.iso,i.aperture,i.loss)}))};

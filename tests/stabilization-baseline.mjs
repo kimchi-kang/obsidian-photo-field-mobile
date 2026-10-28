@@ -1,0 +1,10 @@
+import {chromium} from 'playwright';import {writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
+const b=await chromium.connectOverCDP('http://127.0.0.1:9338');const page=b.contexts()[0].pages().find(p=>p.url().startsWith('app://obsidian'));
+try{assert.equal(await page.evaluate(()=>app.vault.adapter.basePath),'/private/tmp/photo-field-qa-vault');const r=await page.evaluate(async()=>{
+ await app.plugins.disablePlugin('photo-field-mobile');await app.plugins.enablePlugin('photo-field-mobile');const p=app.plugins.plugins['photo-field-mobile'];await p.open();if(typeof p.flush==='function')throw Error('Baseline requires the original 1.1.0 bundle.');const v=app.workspace.getLeavesOfType('photo-field-mobile')[0].view;
+ Object.assign(p.state.inputs,{gn:40,gnUnit:'m',zoom:50,gnZoom:50,denominator:3,minDenominator:16,steps:'1,2,4,8,16',conditions:'Synthetic test',tab:'combined',aperture:4,iso:100,loss:0});v.render();
+ const unsupported={hero:v.contentEl.querySelector('.pfm-hero').textContent,marked:/장비 미지원 출력/.test(v.contentEl.textContent)};
+ let paints=0,writes=0;const paint=v.paint.bind(v),save=p.saveData.bind(p);v.paint=(...a)=>{paints++;return paint(...a);};p.saveData=async d=>{writes++;await new Promise(r=>setTimeout(r,10));return save(d);};
+ const start=performance.now();const input=v.contentEl.querySelector('input[data-range=cameraDistance]');for(let n=0;n<120;n++){input.value=String(2+n*.1);input.dispatchEvent(new Event('input'));}await p.persist();const perf={events:120,paints,writes,elapsedMs:Math.round(performance.now()-start),injectedWriteLatencyMs:10};v.paint=paint;p.saveData=save;
+ const saves=await Promise.allSettled(Array.from({length:8},()=>p.saveNote()));return {unsupported,performance:perf,notes:{fulfilled:saves.filter(x=>x.status==='fulfilled').length,rejected:saves.filter(x=>x.status==='rejected').map(x=>String(x.reason))}};
+ });await writeFile('docs/stabilization/before.json',JSON.stringify({date:new Date().toISOString(),...r},null,2));console.log(JSON.stringify(r));}finally{await b.close();}
