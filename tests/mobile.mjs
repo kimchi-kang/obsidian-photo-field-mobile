@@ -5,7 +5,7 @@ const vault='/private/tmp/photo-field-qa-vault';
 await mkdir('docs/screenshots',{recursive:true});
 for(const f of ['main.js','styles.css','manifest.json'])await copyFile(f,`${vault}/.obsidian/plugins/photo-field-mobile/${f}`);
 const browser=await chromium.connectOverCDP('http://127.0.0.1:9338');
-const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('app://obsidian'));
+const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('app://obsidian.md/index.html'));
 const cdp=await page.context().newCDPSession(page);const results=[];const exceptions=[];
 page.on('pageerror',e=>exceptions.push(String(e)));
 const pass=name=>{results.push(name);console.log('PASS '+name);};
@@ -45,8 +45,8 @@ try {
  await cdp.send('Network.enable');await cdp.send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});
  // Offline, save twice using the real visible control and compare ordinary vault content.
  const beforeFiles=await run(()=>app.vault.getMarkdownFiles().filter(f=>f.path.startsWith('사진 촬영 계산/')).map(f=>f.path));
- await page.getByRole('button',{name:'현재 계산을 노트로 저장',exact:true}).click();await page.waitForFunction(n=>app.vault.getMarkdownFiles().filter(f=>f.path.startsWith('사진 촬영 계산/')).length>n,beforeFiles.length);
- await page.getByRole('button',{name:'현재 계산을 노트로 저장',exact:true}).click();await page.waitForFunction(n=>app.vault.getMarkdownFiles().filter(f=>f.path.startsWith('사진 촬영 계산/')).length>n,beforeFiles.length+1);
+ await page.getByRole('button',{name:'전체 계산을 노트로 저장',exact:true}).click();await page.waitForFunction(n=>app.vault.getMarkdownFiles().filter(f=>f.path.startsWith('사진 촬영 계산/')).length>n,beforeFiles.length);
+ await page.getByRole('button',{name:'전체 계산을 노트로 저장',exact:true}).click();await page.waitForFunction(n=>app.vault.getMarkdownFiles().filter(f=>f.path.startsWith('사진 촬영 계산/')).length>n,beforeFiles.length+1);
  const notes=await run(async()=>{const fs=app.vault.getMarkdownFiles().filter(f=>f.path.startsWith('사진 촬영 계산/'));return Promise.all(fs.slice(-2).map(async f=>({path:f.path,text:await app.vault.read(f)})));});
  assert.notEqual(notes[0].path,notes[1].path);for(const n of notes){assert.ok(n.text.includes('적정 노출 예상 거리: 5 m'));assert.ok(n.text.includes('Copyright (c) 2026 Jack Herrington'));assert.ok(!n.text.includes('```photo'));}await writeFile('docs/example-note.md',notes[0].text);pass('offline real Vault API saves two distinct plain Markdown notes without overwrite');
  // Reopen while offline, then use synthetic touch on a real range control.

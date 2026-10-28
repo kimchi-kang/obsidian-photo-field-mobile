@@ -60,7 +60,7 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   const legend=document.createElement('figcaption');legend.className='pfm-scene-legend';
   const items=[['pfm-key-camera','카메라 화각'],...(showDof?[['pfm-key-dof','심도']]:[]),...(showFlash&&i.linked?[['pfm-key-flash','플래시 조사각']]:[])];
   for(const [cls,text]of items){const label=document.createElement('span');label.className=cls;label.textContent=text;legend.append(label);}host.append(legend);
-  const hint=document.createElement('p');hint.className='pfm-scene-hint';hint.textContent='피사체를 좌우로 움직이거나 아래 거리 값을 바꾸세요.';host.append(hint);
-  if(showFlash){const p=document.createElement('p');p.className='pfm-scene-note';p.textContent=i.linked?'플래시 거리 띠: 점선=과다 · 빗금=허용 · 파선=부족. 실제 배광 지도는 아닙니다.':'오프카메라: 위치·방향 미입력. 플래시 거리와 카메라 장면은 독립 계산입니다.';host.append(p);}
+  const hint=document.createElement('p');hint.className='pfm-scene-hint';hint.textContent='피사체 드래그 · 거리 직접 입력';host.append(hint);
+  if(showFlash){const p=document.createElement('p');p.className='pfm-scene-note';p.textContent=i.linked?'플래시 띠: 점선=과다 · 빗금=허용 · 파선=부족 (배광 아님)':'오프카메라: 위치·방향 미입력. 플래시 거리와 카메라 장면은 독립 계산입니다.';host.append(p);}
   try{const o=optics(i);if(showDof&&(o.near>i.diagramMax||o.far>i.diagramMax)){const p=document.createElement('p');p.className='pfm-scene-note';p.textContent=`그림 밖 심도: ${out(o.near)} ~ ${out(o.far)}`;host.append(p);}}catch{/* Result details report the input error. */}
 }

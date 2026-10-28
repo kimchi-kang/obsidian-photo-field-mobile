@@ -4,7 +4,7 @@ import {restore,snapshot} from './storage';
 import {LatestWriter} from './writer';
 import {applyEquipment,selectedEquipment,setGnMode} from './presets';
 import {PhotoView,VIEW} from './view';
-import {note,validateNote} from './note';
+import {note,validateNote,NoteScope} from './note';
 export default class PhotoPlugin extends Plugin {
   state!:Saved;
   private writer!:LatestWriter<Saved>;
@@ -21,7 +21,8 @@ export default class PhotoPlugin extends Plugin {
     this.registerDomEvent(window,'pagehide',flush);
     this.registerView(VIEW,(leaf:WorkspaceLeaf)=>new PhotoView(leaf,this));
     this.addCommand({id:'open',name:'촬영 계산 열기',icon:'camera',callback:()=>{void this.open().catch(e=>this.report(e));}});
-    this.addCommand({id:'save-note',name:'현재 계산을 노트로 저장',callback:()=>{void this.saveNote().catch(e=>this.report(e));}});
+    this.addCommand({id:'save-note',name:'전체 계산을 노트로 저장',callback:()=>{void this.saveNote().catch(e=>this.report(e));}});
+    this.addCommand({id:'save-tab-note',name:'현재 탭 결과 저장',callback:()=>{void this.saveNote(this.state.inputs.tab).catch(e=>this.report(e));}});
     this.addRibbonIcon('camera','사진 촬영 도우미 열기',()=>{void this.open().catch(e=>this.report(e));});
   }
   report(e:unknown):void {console.error('Photo Field Mobile',e);new Notice(`사진 촬영 도우미: ${e instanceof Error?e.message:String(e)}`);}
@@ -43,9 +44,9 @@ export default class PhotoPlugin extends Plugin {
   async flush():Promise<void>{if(this.writer)await this.writer.flush();}
   reportSaveError(e:unknown):void {if(!this.saveError){this.saveError='설정 저장 실패 · 다시 저장하세요.';this.report(e);}for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.updateSaveStatus();}
   refresh(source:PhotoView):void {for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView&&leaf.view!==source)leaf.view.render();}
-  saveNote():Promise<string> {
+  saveNote(scope:NoteScope='all'):Promise<string> {
     const i={...this.state.inputs},equipment=selectedEquipment(this.state);
-    let content:string;try{validateNote(i);content=note(i,new Date(),{version:this.manifest.version,equipment});}catch(e){return Promise.reject(e);}
+    let content:string;try{validateNote(i,scope);content=note(i,new Date(),{version:this.manifest.version,equipment,scope});}catch(e){return Promise.reject(e);}
     const task=this.notes.catch(()=>undefined).then(async()=>{
       const folder=normalizePath('사진 촬영 계산');
       if(!this.app.vault.getAbstractFileByPath(folder))try{await this.app.vault.createFolder(folder);}catch(e){if(!(this.app.vault.getAbstractFileByPath(folder) instanceof TFolder))throw e;}

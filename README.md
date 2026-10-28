@@ -21,7 +21,7 @@ GitHub: https://github.com/kimchi-kang/obsidian-photo-field-mobile
 1. ZIP의 `photo-field-mobile` 폴더를 **사용할 보관함의 `.obsidian/plugins/`** 아래에 복사한다. `main.js`, `manifest.json`, `styles.css`가 바로 그 폴더 안에 있어야 한다. 라이선스·고지 파일과 vendor 폴더도 함께 보관한다.
 2. Obsidian 설정 → 커뮤니티 플러그인에서 **사진 촬영 도우미**를 활성화한다. 이미 앱이 열려 있었다면 다시 시작하거나 플러그인 목록을 새로 읽는다.
 3. 명령 팔레트 → **사진 촬영 도우미: 촬영 계산 열기**, 또는 카메라 리본 아이콘. 모바일에서는 도구막대에 이 명령을 추가해도 된다.
-4. **현재 계산을 노트로 저장** 버튼은 보관함 `사진 촬영 계산/`에 새 `.md`를 만든다. 기존 파일을 덮어쓰지 않는다. 명령 팔레트의 저장 명령도 제공한다.
+4. **전체 계산을 노트로 저장** 버튼은 보관함 `사진 촬영 계산/`에 새 `.md`를 만든다. 기존 파일을 덮어쓰지 않는다. **현재 탭 결과 저장**은 심도·화각 또는 플래시만 검증·기록한다. 통합 탭은 전체 계산을 저장한다. 각 저장 명령도 제공한다.
 
 iOS: Files에서 보관함을 찾고 Mac/PC로 `.obsidian/plugins/photo-field-mobile`을 복사한 후 보관함 전체를 동기화하는 방식이 편리하다. 숨김 폴더 접근이 어려우면 데스크톱에서 설치한 뒤 **설정/플러그인 폴더도 동기화하는 수단**을 사용한다. Obsidian Sync에서는 플러그인·설정 동기화 선택을 확인한다. Android: 보관함 폴더에 접근 가능한 파일 관리자 또는 USB로 복사한다. Android의 보관함 접근 권한과 저장 위치는 OS/앱 구성에 따라 다르다. 설치/동기화 이후 계산과 저장에는 인터넷이 필요 없다. Obsidian 자체의 동기화 동작은 플러그인과 별개다.
 
@@ -123,3 +123,7 @@ npm test
 - [Obsidian 모바일 개발 및 에뮬레이션](https://docs.obsidian.md/Plugins/Getting%20started/Mobile%20development), [Plugin API](https://github.com/obsidianmd/obsidian-api).
 
 배포는 MIT. 원본 MIT 전문은 `vendor/depth-of-field-LICENSE.txt`와 `THIRD_PARTY_NOTICES.md`에 포함. 재사용 내역과 변경점: [UPSTREAM_ANALYSIS.md](docs/UPSTREAM_ANALYSIS.md). 원본 PNG·SVG·서체·React 생태계 패키지는 배포에 포함하지 않았다.
+
+촬영 준비 흐름의 후속 수정은 [검증 보고서](docs/preparation/REPORT.md), [실기 8~10분 확인 절차](docs/preparation/DEVICE-CHECKLIST.md), [실제 장비 비교 기록](docs/preparation/EQUIPMENT-COMPARISON.md)을 참고한다. 이 작업의 빌드는1.2.0 로컬 후보이며 공개 안정판과 구분한다.
+
+현재 로컬 작업에는 [바우하우스 디자인 적용](docs/bauhaus/REPORT.md)이 포함된다. 공개 안정판과 구분되며, 설치 ZIP은 `dist/photo-field-mobile-1.2.0-bauhaus.zip`이다.

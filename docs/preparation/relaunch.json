@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-28T15:17:46.707Z",
+  "passed": true,
+  "host": "macOS Obsidian 1.14.5 mobile emulation",
+  "method": "CDP Browser.close on dedicated QA app; relaunch same QA profile; compare restored full Saved state",
+  "actualIos": false,
+  "actualAndroid": false
+}

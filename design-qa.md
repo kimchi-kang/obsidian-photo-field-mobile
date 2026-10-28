@@ -1,32 +1,53 @@
-# Design QA — 1.1.0 scene restoration
+# Design QA · Bauhaus · 2026-10-29
 
-Final result: **passed for the source scene and interaction adaptation**. This is not a pixel-identical clone. Actual iOS/Android device QA remains unperformed.
+final result: passed
 
-## Evidence and normalized comparison
+## Source and evidence
 
-Reference: https://jherr.github.io/depth-of-field/ and upstream commit `c75dd6d40e4a96e96fd38e57657fe4b9737bf776`. Captured the rendered original before implementation. Compared the actual plugin in a dedicated Obsidian vault using mobile emulation, rather than an HTML mockup.
+The user explicitly replaced the A/B/C selection step with a Bauhaus preference and asked for immediate application. `docs/bauhaus/target.png` is a generated style target, not a selected pixel-exact product specification. The preceding scene-restoration QA is preserved in `docs/bauhaus/previous-design-qa.md`.
 
-Both views: 390×844 CSS pixels, light theme, metric units, full frame 36×24mm, actual 50mm, f/1.8, subject 1.8288m and custom CoC0.029mm. Original screenshot390×844; plugin screenshot780×1688 at2× was normalized to390×844. Compared the top700px of content side by side, excluding Obsidian chrome. Result: near1.76m, far1.90m, total0.14m and hyperfocal47.94m match at display precision.
+Source pixels939×1683; implementation780×1688 for390×844 CSS viewport. `docs/bauhaus/compare.html` displays before/source/after at the same390px width with natural aspect ratio; no stretching/cropping. Source omits Obsidian host chrome and has a different artboard length; this is explicitly labeled rather than compared as identical density. Combined comparison captured and inspected in `docs/bauhaus/comparison.png` (1280×2023). The native app header/toolbar is host owned and intentionally retained.
 
-Local evidence (ignored to keep user vault/chrome imagery out of GitHub): `docs/visual-comparison/original-mobile.jpg`, `plugin-after-mobile.png`, `comparison.png`, `scene-preview.png`. A private before screenshot is also excluded and must not be published.
+Implementation evidence: `docs/bauhaus/screenshots/combined-light.png`, `390-light-심도·화각.png`, `390-light-플래시.png`, `390-dark-통합.png`; large text/long error: `long-save-error.png`; warning and long name: `long-name-theoretical.png`; GN missing: `missing-gn.png`. Same baseline GN40m/ISO100/f4/quarter power/on-camera5m. Actual state/viewport assertions in `tests/bauhaus.mjs`, output `docs/bauhaus/results.json`. Existing preparation before capture: `docs/design-exploration/screenshots/01-combined.png`.
 
-## Review and corrections
+Full-view comparison was performed in the same comparison image, then the lower readouts/controls and light/dark tabs were inspected together by scrolling the comparison page. Individual390px captures were inspected for readable Korean labels, numeric fields and failure states. No raster artwork was substituted for live UI or interactive geometry.
 
-- P1: the original single camera/subject/DOF scene had been replaced by small independent strips below controls. Restored scene-first layout, field-of-view cone, pink DOF region, focus marker and four numeric cards.
-- P1: the subject was not interactive. Added pointer/touch dragging with capture on the stable ItemView element, keyboard arrows, direct numeric entry and synchronized range inputs. Page scrolling remains available outside the subject handle; existing per-view sidebar swipe protection remains.
-- P2: a combined normalized screenshot revealed missing range tracks under host styles. Added explicit scoped tracks and value-progress styling, then recaptured and checked them.
-- Reviewed layout, type size, theme colors, assets and copy. Distance/focal/aperture controls follow the source sequence; all visible controls retain44px touch targets and360px avoids horizontal overflow. Korean labels and metric readouts remain readable. Light/dark theme behavior and wider/shorter viewports are covered by the mobile test suite.
+## Findings and iteration history
 
-## Intentional differences
+- [P2, fixed] First360px implementation placed the DOF far readout partially beneath the native lower toolbar (far bottom718.3px vs710px bound). Reduced context and section gaps, shortened repeated scene guidance, retained the exposure-pattern explanation. Final existing mobile check passes and the final source/implementation comparison confirms visible primary readouts.
+- [P2, fixed] First implementation grouped visually reordered controls without matching reading order. Quick-control fields now append in the same priority during initial render only; scene/flash DOM order follows the selected tab. No field rebuilding or sorting while typing. New DOM/context tests and focus/cursor/scroll tests pass.
+- Test setup issue, fixed: a second Obsidian starter window could be selected by the previous broad URL match. Relevant QA scripts now select `/index.html` and retain the strict dedicated-vault assertion. No production fallback was added.
+- Test calculation issue, fixed: short CSS hex `#fff` was initially not expanded by the new contrast assertion. Expanded to six digits in the test. Final light/dark foreground/background and primary-action pairs all pass4.5:1.
+- One preparation run recorded host `TypeError: e.isShown is not a function`. An isolated repeat with stack recording and the final Bauhaus run did not reproduce it. It was not silently filtered; the final run has no uncaught exception. This is a macOS host observation, not evidence of phone stability.
 
-The user requires Obsidian-native offline TypeScript, Korean UI, tabs and flash calculations. The combined tab therefore adds the flash hero, dashed coverage cone and patterned exposure strip. Off-camera geometry stays separate. Four metric cards are compact so Korean labels fit; native theme accent colors replace Chakra styling. Newly authored simple photographer/camera/subject SVG symbols replace original decorative figure paths whose independent asset provenance is unclear. No remote fonts, copied PNGs or original figure paths are included. The source authorship and MIT notice remain in README, plugin information and distribution.
+No actionable P0/P1/P2 visual issue remains within the tested scope.
 
-## Behavior verification
+## Required fidelity surfaces
 
-31 automated engine/data/scene/packaging tests passed.10 scene integration scenarios passed, including real CDP touch gestures, mouse drag, keyboard, numeric entry, aperture updating both flash and DOF, off-camera separation, blank input and finite offscreen distances.17 existing mobile integration scenarios passed, including offline Markdown saving, settings restoration, themes, lifecycle and touch targets.6 swipe and8 prior bug regression scenarios also passed with the new scene implementation. These checks use macOS Obsidian/Chromium mobile emulation; they do not establish real iOS/Android behavior.
+- Typography: existing local Obsidian/system Korean font, strong tab/result weights, tabular numbers and smaller unit span; rem-based body/label sizes. Long numeric/readout wrapping checked under20px root text. No external font or CDN.
+- Spacing/layout: square tab strip,2px corners, flat ruled sections, scene first in combined/DOF and exposure first in flash. Distance/aperture form a paired row. Every visible tested input/select/button/summary has at least44px height. No horizontal overflow at360/390 portrait or844×390 landscape, both themes, normal/20px root fonts.
+- Colors/tokens: warm ivory/ink/cobalt, red DOF and ochre dashed flash, dark palette with brighter semantic colors. Actual resolved ink/muted/primary/warning token pairs checked at≥4.5:1. States include text/forms/line styles, not color alone. No glass, decorative gradients or shadows.
+- Image/asset fidelity: original live photographer/subject/coverage/DOF SVG and pointer geometry retained. No new static bitmap in runtime, no fake shutter, no decorative shapes or new icon dependency. The generated target's illustrative geometry was not used for calculation or control positions. MIT notices retained.
+- Copy: existing Korean function/ARIA names preserved. Visible distance/aperture labels shortened without changing accessible names or units. On/offcamera and GN mode summarized. Theory warning is differentiated from blocking error. Both note scopes and settings retry remain distinct.
 
-No unresolved P0/P1/P2 issue in this scoped adaptation. Remaining device checks: native keyboard/IME, safe areas, physical touch and rotation in iOS WebKit and Android WebView, and BRAT update on each device.
+## Intentional native-product differences
 
-## 1.2.0 stabilization follow-up
+The host toolbar/header, correct live flash-tolerance strip, original hyperfocal action, full advanced settings and safety explanations remain. They consume more vertical space than the generated style image; normal scrolling is retained. There is no fixed footer. Camera/flash coverage uses the original engine and scene coordinates, not the raster target. Source layout proportions are art direction rather than a reason to remove controls or falsify numeric positions.
 
-Final result: passed for preserving the existing scene layout. `tests/compare-ui.mjs` captured actual 1.1.0 and 1.2.0 bundles with matched optics, light theme and 390px content width. Normalized local `docs/stabilization/screenshots/comparison.png` was inspected side by side: scene, four readings and distance/focal/aperture controls retain the same placement and values. No new decorative assets or fonts. Additional device/power/error controls remain in existing detail areas; unsupported power is explicitly marked. Device and save behavior is verified separately in `docs/stabilization/REPORT.md`. Actual mobile OS accessibility/keyboard checks remain incomplete.
+## Implementation checklist and verification
+
+- [x] CSS tokens and theme-scoped style
+- [x] Scene and direct numeric/range inputs retained
+- [x] GN40.5, mid-string editing, focus and scroll preservation
+- [x] Equipment drafts/selection and settings writer unchanged
+- [x] Tab/full note scope and I/O failure recovery retained
+- [x] Existing50 unit,17 mobile,14 stabilization,10 scene,6 swipe,8 bug regression and10 preparation scenarios passed
+- [x] New6 Bauhaus state/layout/contrast checks passed
+- [x] Current src checks with preserved official Obsidian1.7.2 types; min declaration1.7.4 unchanged
+- [x] Real vault files backed up; data.json identical during file replacement; original v1 data fully preserved in migrationBackup after normal v2 migration and subsequent runtime input saves; Mac native new UI load verified
+
+Phone keyboards, OS font settings/rotation/safe areas and Android back remain actual-device checks. 20px root size and resized Chromium viewport are substitutes only. No iOS/Android device pass and no1.7.4 runtime pass claimed. No forced app exit, OS lock or public release performed.
+
+## Follow-up polish
+
+P3: actual-phone OS keyboard/large-text review may call for small device-specific spacing adjustments. This is not treated as a verified phone result.

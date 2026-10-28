@@ -14,7 +14,7 @@ function node<K extends keyof HTMLElementTagNameMap>(parent:HTMLElement,tag:K,te
 export class PhotoView extends ItemView {
   private results!:HTMLElement;private picture!:HTMLElement;private resultDetails!:HTMLElement;private root!:HTMLElement;
   private readonly aborters:AbortController[]=[];
-  private gnDisplayUnit:'m'|'ft'='m';private power?:HTMLSelectElement;private saveStatus?:HTMLElement;
+  private gnDisplayUnit:'m'|'ft'='m';private power?:HTMLSelectElement;private saveStatus?:HTMLElement;private context!:HTMLElement;
   private detailState=new Map<string,boolean>();
   private numeric=new Map<NumericKey,{input:HTMLInputElement;range?:HTMLInputElement}>();
   constructor(leaf:WorkspaceLeaf,private plugin:PhotoPlugin){super(leaf);}
@@ -62,18 +62,19 @@ export class PhotoView extends ItemView {
     range.style.setProperty('--pfm-range-progress',`${percent}%`);
   }
   private number(parent:HTMLElement,label:string,key:NumericKey,options?:{min:number;max:number;step:number}):void {
-    const wrap=node(parent,'label',undefined,'pfm-field');node(wrap,'span',label);
+    const wrap=node(parent,'label',undefined,'pfm-field');wrap.dataset.field=key;const compact:Partial<Record<NumericKey,string>>={cameraDistance:'카메라 거리 (m)',aperture:'조리개 (f/)',focal:'초점거리 (mm)'};node(wrap,'span',compact[key]??label);
     const input=node(wrap,'input');input.type='number';input.inputMode='decimal';input.step='any';input.value=Number.isFinite(this.plugin.state.inputs[key])?String(this.plugin.state.inputs[key]):'';input.dataset.key=key;input.setAttribute('aria-label',label);
     let range:HTMLInputElement|undefined;
     if(options){wrap.classList.add('pfm-range-field');input.min=String(options.min);range=node(wrap,'input');range.type='range';range.min=String(options.min);range.max=String(options.max);range.step=String(options.step);range.value=input.value;this.rangeProgress(range);range.setAttribute('aria-label',`${label} 빠른 조절`);range.dataset.range=key;
       const r=range;this.listen(r,'input',()=>{input.value=r.value;this.rangeProgress(r);input.setAttribute('aria-invalid','false');this.plugin.update(key,Number(r.value));this.changed();});
     }
     if(key==='flashDistance')wrap.classList.add('pfm-flash-distance');
+    if(key==='denominator')wrap.classList.add('pfm-custom-power');
     this.numeric.set(key,{input,range});
     this.listen(input,'input',()=>{const v=parseNumber(input.value);this.plugin.update(key,v);if(key==='denominator')this.syncPower();if(range&&Number.isFinite(v)){range.value=String(v);this.rangeProgress(range);}input.setAttribute('aria-invalid',String(!Number.isFinite(v)||v<0||(v===0&&key!=='loss')));this.changed();});
   }
   private select<K extends keyof Inputs>(parent:HTMLElement,label:string,key:K,values:Record<string,string>,after?:()=>void):HTMLSelectElement {
-    const l=node(parent,'label',undefined,'pfm-field');node(l,'span',label);const s=node(l,'select');s.setAttribute('aria-label',label);s.dataset.key=key;
+    const l=node(parent,'label',undefined,'pfm-field');l.dataset.field=key;node(l,'span',label);const s=node(l,'select');s.setAttribute('aria-label',label);s.dataset.key=key;
     for(const [v,t] of Object.entries(values)){const o=node(s,'option',t);o.value=v;}s.value=String(this.plugin.state.inputs[key]);
     this.listen(s,'change',()=>{this.plugin.update(key,s.value as Inputs[K]);after?.();this.changed();});return s;
   }
@@ -108,11 +109,11 @@ export class PhotoView extends ItemView {
     const header=node(this.root,'header');node(header,'h1','사진 촬영 도우미');node(header,'p','조리개 하나로, 빛과 심도를 함께.');
     const tabs=node(this.root,'nav',undefined,'pfm-tabs');tabs.setAttribute('aria-label','계산 화면');
     for(const [v,t]of Object.entries({flash:'플래시',dof:'심도·화각',combined:'통합'})) {const b=this.button(tabs,t,()=>{this.plugin.update('tab',v as Inputs['tab']);this.changed();for(const btn of tabs.querySelectorAll('button'))btn.setAttribute('aria-pressed',String(btn===b));});b.setAttribute('aria-pressed',String(i.tab===v));}
+    this.context=node(this.root,'p',undefined,'pfm-context');
     this.results=node(this.root,'section',undefined,'pfm-results');this.results.setAttribute('aria-live','polite');
     this.picture=node(this.results,'figure',undefined,'pfm-diagram');this.sceneControls();this.flushOnEnd();
     const quick=node(this.root,'section',undefined,'pfm-quick');node(quick,'h2','빠른 조절');
     this.number(quick,'카메라 → 피사체 거리 (m)','cameraDistance',{min:0.1,max:30,step:0.1});
-    this.number(quick,'실제 초점거리 (mm)','focal',{min:8,max:200,step:1});
     this.number(quick,'조리개 f-number','aperture',{min:0.7,max:32,step:0.1});
     const power=this.select(quick,'출력 선택','denominator',{},()=>{this.plugin.update('denominator',Number(power.value));this.syncNumeric('denominator');});
     this.power=power;this.syncPower();
@@ -127,8 +128,11 @@ export class PhotoView extends ItemView {
     const camera=this.details('카메라·렌즈·CoC');
     this.select(quick,'센서 프리셋','sensor',{...Object.fromEntries(Object.entries(sensors).map(([k,v])=>[k,v.name])),custom:'사용자 지정'},()=>{const preset=sensors[this.plugin.state.inputs.sensor];if(preset){this.plugin.update('width',preset.width);this.plugin.update('height',preset.height);this.syncNumeric('width');this.syncNumeric('height');}});
     this.number(camera,'센서 가로 (mm)','width');this.number(camera,'센서 세로 (mm)','height');
-    for(const key of ['width','height'] as const)this.listen(this.numeric.get(key)!.input,'input',()=>{this.plugin.update('sensor','custom');const s=quick.querySelector<HTMLSelectElement>('select[data-key=sensor]');if(s)s.value='custom';void this.plugin.persist().catch(e=>this.plugin.reportSaveError(e));});
+    for(const key of ['width','height'] as const)this.listen(this.numeric.get(key)!.input,'input',()=>{this.plugin.update('sensor','custom');const s=this.root.querySelector<HTMLSelectElement>('select[data-key=sensor]');if(s)s.value='custom';void this.plugin.persist().catch(e=>this.plugin.reportSaveError(e));});
     this.number(quick,'ISO','iso');
+    this.number(quick,'실제 초점거리 (mm)','focal',{min:8,max:200,step:1});
+    // Match reading/focus order to the visible priority without rebuilding fields while typing.
+    for(const selector of ['[data-field=cameraDistance]','[data-field=aperture]','label[data-field=denominator]:not(.pfm-custom-power)','[data-field=iso]','[data-field=focal]','[data-field=sensor]','.pfm-check','.pfm-flash-distance','.pfm-custom-power']){const field=quick.querySelector(selector);if(field)quick.append(field);}
     this.select(camera,'CoC 방식','cocMode',{estimate:'센서 대각 ÷1500 추정',custom:'사용자 지정 mm'});this.number(camera,'사용자 CoC (mm)','coc');
     node(camera,'p','CoC는 감상 크기·시력·확대율에 따른 허용 착란원입니다. 대각/1500은 경험적 기본값이며 픽셀 단위 선명도를 보장하지 않습니다. APS-C 크기는 제조사마다 다릅니다.');
     const fl=this.details('플래시·GN 조건·조사각');
@@ -157,8 +161,10 @@ export class PhotoView extends ItemView {
     const about=this.details('플러그인 정보·원본 저작권');node(about,'p',`사진 촬영 도우미 ${this.plugin.manifest.version} · depth-of-field의 심도·화각 시각화를 모바일 Obsidian용으로 수정·재구현하고 수동 플래시 계산을 확장했습니다. 원작자의 공식 또는 후원 플러그인이 아닙니다.`);
     const a=node(about,'a','원본: Jack Herrington · depth-of-field');a.href='https://github.com/jherr/depth-of-field';
     node(about,'p','Copyright (c) 2026 Jack Herrington · MIT. 참고 SHA c75dd6d40e4a96e96fd38e57657fe4b9737bf776. MIT 전문: main.js 내 고지 및 배포 ZIP의 vendor/depth-of-field-LICENSE.txt. 재사용 내역: GitHub의 THIRD_PARTY_NOTICES.md.');
-    const footer=node(this.root,'footer');this.saveStatus=node(footer,'p',undefined,'pfm-error');this.saveStatus.setAttribute('role','status');this.updateSaveStatus();this.button(footer,'설정 다시 저장',()=>{void this.plugin.persist().then(()=>this.plugin.flush()).catch(e=>this.plugin.reportSaveError(e));});const save=this.button(footer,'현재 계산을 노트로 저장',()=>{save.disabled=true;void this.plugin.saveNote().catch(e=>this.plugin.report(e)).finally(()=>{save.disabled=false;});});save.className='mod-cta pfm-save';
-    node(footer,'p','일반 Markdown · 새 노트 생성 · 인터넷 연결 불필요');this.paint(false);
+    const footer=node(this.root,'footer');this.saveStatus=node(footer,'p',undefined,'pfm-error');this.saveStatus.setAttribute('role','status');this.updateSaveStatus();const retry=this.button(footer,'설정 다시 저장',()=>{void this.plugin.persist().then(()=>this.plugin.flush()).catch(e=>this.plugin.reportSaveError(e));});retry.className='pfm-retry';const tabSave=this.button(footer,'현재 탭 결과 저장',()=>{tabSave.disabled=true;void this.plugin.saveNote(this.plugin.state.inputs.tab).catch(e=>this.plugin.report(e)).finally(()=>{tabSave.disabled=false;});});
+    tabSave.className='mod-cta pfm-tab-save';
+    const save=this.button(footer,'전체 계산을 노트로 저장',()=>{save.disabled=true;void this.plugin.saveNote().catch(e=>this.plugin.report(e)).finally(()=>{save.disabled=false;});});save.className='pfm-save';
+    node(footer,'p','현재 탭: 심도·화각 또는 플래시 결과만 저장 · 통합/전체: 모든 계산 조건 필요 · 일반 Markdown · 새 노트 생성 · 오프라인');this.paint(false);
   }
   private equipmentPanel():void {
     const p=this.details('내 장비 프리셋 · 줌별 GN 표');
@@ -188,10 +194,10 @@ export class PhotoView extends ItemView {
   }
   private paint(remember=true):void {
     if(remember)this.rememberDetails();
-    const i=this.plugin.state.inputs;this.syncPower();for(const key of ['gn','gnZoom','minDenominator'] as const)this.syncNumeric(key);const mode=this.root.querySelector<HTMLSelectElement>('select[data-key=gnMode]');if(mode)mode.value=i.gnMode;this.gnDisplayUnit=i.gnUnit;const unit=this.root.querySelector<HTMLSelectElement>('select[data-key=gnUnit]');if(unit)unit.value=i.gnUnit;for(const key of ['conditions','steps']as const){const field=this.root.querySelector<HTMLInputElement>(`input[data-key=${key}]`);if(field&&document.activeElement!==field)field.value=i[key];}this.results.replaceChildren();this.resultDetails.replaceChildren();this.root.dataset.tab=i.tab;this.root.dataset.linked=String(i.linked);
+    const i=this.plugin.state.inputs;this.context.textContent=`${i.linked?'온카메라 · 거리 연동':'오프카메라 · 거리 분리'} / ${i.gnMode==='equipment'?'장비 GN':'수동 GN'} / ${i.mode==='manual'?'직접광 · 일반 동조':'GN 모델 미지원 조건'}`;this.syncPower();for(const key of ['gn','gnZoom','minDenominator'] as const)if(document.activeElement!==this.numeric.get(key)?.input)this.syncNumeric(key);const mode=this.root.querySelector<HTMLSelectElement>('select[data-key=gnMode]');if(mode)mode.value=i.gnMode;this.gnDisplayUnit=i.gnUnit;const unit=this.root.querySelector<HTMLSelectElement>('select[data-key=gnUnit]');if(unit)unit.value=i.gnUnit;for(const key of ['conditions','steps']as const){const field=this.root.querySelector<HTMLInputElement>(`input[data-key=${key}]`);if(field&&document.activeElement!==field)field.value=i[key];}this.results.replaceChildren();this.resultDetails.replaceChildren();this.root.dataset.tab=i.tab;this.root.dataset.linked=String(i.linked);
     const flashPanel=node(this.results,'div',undefined,'pfm-flash-results');const equipment=selectedEquipment(this.plugin.state);
     if(i.gnMode==='equipment')node(flashPanel,'small',equipment?`${equipment.name} · 사용 가능 줌 ${Object.keys(equipment.table).join(', ')}mm`:'선택 장비 없음 · 장비를 선택하거나 수동 GN으로 전환하세요.');
-    try {const f=flash(i);if(!f.supported)node(flashPanel,'p',f.powerLabel,'pfm-error');node(flashPanel,'p','적정 노출 예상 거리','pfm-eyebrow');node(flashPanel,'div',metres(f.d),'pfm-hero');
+    try {const f=flash(i);if(!f.supported)node(flashPanel,'p',f.powerLabel,'pfm-warning');node(flashPanel,'p','적정 노출 예상 거리','pfm-eyebrow');const hero=node(flashPanel,'div',undefined,'pfm-hero');node(hero,'span',fmt(f.d),'pfm-value');hero.append(document.createTextNode(' '));node(hero,'span','m','pfm-unit');
       node(flashPanel,'p',`1/${i.denominator} · f/${fmt(i.aperture)} · ISO ${fmt(i.iso,0)} · GN ${fmt(f.g)}m (${fmt(i.zoom)}mm·ISO100 최대)`);
       if(i.conditions.includes('연습용 가상 GN'))node(flashPanel,'small','연습용 GN · 실제 장비 사양 아님','pfm-model-note');
       const label=f.ev>i.tolerance?'예상 과다 노출':f.ev< -i.tolerance?'예상 부족 노출':'허용 범위 내';
@@ -202,7 +208,7 @@ export class PhotoView extends ItemView {
       this.table(d,['출력','예상 거리'],f.distances.map(x=>[`1/${x.n}`,metres(x.d)]));
       this.table(d,['플래시 거리','노출 차이'],[0.5,0.70710678,1,1.41421356,2].map(v=>[metres(f.d*v),`${fmt(exposureEV(f.d,f.d*v))} EV · ${v<1?'과다':v>1?'부족':'기준 적정'}`]));
     }catch(e){node(flashPanel,'p','적정 노출 예상 거리','pfm-eyebrow');node(flashPanel,'div','—','pfm-hero');node(flashPanel,'p',e instanceof Error?e.message:String(e),'pfm-error');}
-    this.results.append(this.picture);
+    if(i.tab==='flash')this.results.append(this.picture);else this.results.prepend(this.picture);
     const dof=node(this.results,'div',undefined,'pfm-dof-results');
     try {const o=optics(i);node(dof,'h2','심도·화각');
       const grid=node(dof,'div',undefined,'pfm-stat-grid');

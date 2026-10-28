@@ -1,0 +1,5 @@
+537b89c20e256dcf6e9883dc939dba205a6e3b3d7adde48eab57692075a7eeea  dist/photo-field-mobile-1.2.0-preparation-candidate.zip
+cebe448a61df58c174ffa64dfb739c9767ef75ec8f545fc81105ae993a7d649c  dist/photo-field-mobile-1.2.0-b26f4d8-rollback.zip
+d426b50fd7daf1e4316d8c138a1dcd1d04aea17a667d8bfc3aa3a91653f5aa71  main.js
+255a4e46df9c48559bdfe0b236612e0b57391a06ff12d1d2e35b7639d08c9d4c  manifest.json
+479ca92349ce0d95b0a0901a7984e08f803c6e9acc9df0ec7ebfdf3b1d46bc4e  styles.css

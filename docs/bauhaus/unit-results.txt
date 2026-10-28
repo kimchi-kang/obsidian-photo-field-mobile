@@ -1,0 +1,62 @@
+
+> photo-field-mobile@1.2.0 test
+> node --import tsx --test tests/*.test.ts
+
+✔ runtime imports only Obsidian host API, all bundled inputs are our TS (1.394375ms)
+✔ GN40 ISO100 f4 最大 output -> 10m (0.771916ms)
+✔ 1/4 -> 5m, not 2.5m (0.060375ms)
+✔ 1/16 -> 2.5m (0.050541ms)
+✔ ISO400 1/16 -> 5m (0.046667ms)
+✔ one stop loss reduces distance by sqrt2 (0.063875ms)
+✔ double distance -> -2EV (0.046042ms)
+✔ inverse power round trip across ISO, loss, apertures (0.12975ms)
+✔ 36x24 / 50mm angles (0.051917ms)
+✔ finite DOF beyond old 360in scene remains finite (0.145542ms)
+✔ hyperfocal boundary consistent with H=f²/Nc+f (0.116125ms)
+✔ unit conversion m-ft round trip including GN (0.2345ms)
+✔ reject zero, negative, NaN, empty and impossible focus distance (0.225583ms)
+✔ fixed flash unaffected by focal/sensor changes (0.085084ms)
+✔ missing zoom GN and unsupported modes do not compute (0.147833ms)
+✔ power limit, rounding residual and exposure tolerance (0.140333ms)
+✔ off camera distances independent; coverage warns on narrow flash (0.103416ms)
+✔ equipment table normalizes ft and refuses duplicate/blank values (0.152875ms)
+✔ restores only well formed data and presets (0.826833ms)
+✔ plain markdown includes inputs, results, source, date and limits (16.273375ms)
+✔ independent thin lens defocus circle equals CoC at both DOF bounds (0.102292ms)
+✔ rounding EV agrees with forward distance equation at selected output (0.066292ms)
+✔ huge values reject arithmetic overflow instead of displaying spurious infinity (0.074041ms)
+✔ valid optics can be exported with missing GN, unsupported mode and invalid coverage (16.3285ms)
+✔ optics-only export still rejects invalid optics rather than exporting unavailable results (0.245917ms)
+✔ flash export keeps theoretical classification and rejects unsupported flash model (1.38525ms)
+✔ all and combined exports retain full validation and result sections (1.584208ms)
+✔ blank input preserves its last finite value while equipment and tab changes persist (3.223625ms)
+✔ rapid valid then blank edits preserve latest finite snapshot (0.26975ms)
+✔ missing preset GN remains unavailable after persistence and restore (0.562333ms)
+✔ hyperfocal button distance reliably gives infinity across focal lengths and apertures (2.682375ms)
+✔ inactive offcamera field does not invalidate linked flash calculation (0.41225ms)
+✔ overflowing footprints and underflowing distances reject rather than claim infinity/zero (0.109458ms)
+✔ scene position maps to metric focus distance independent of view size (0.43225ms)
+✔ dragging cannot produce a nonphysical focus distance or exceed scene extent (0.06275ms)
+✔ unsupported power remains theoretical and recommendation has matching distance and EV (1.1075ms)
+✔ v1 migration preserves gear content and old inputs without inferring a selected device (1.431875ms)
+✔ duplicate or missing ids migrate once and remain stable (0.316042ms)
+✔ equipment restore applies exact zoom data and missing zoom blocks stale GN (0.644958ms)
+✔ manual mode restores independently of retained equipment id (0.179667ms)
+✔ future data versions refuse migration rather than overwriting (0.119334ms)
+✔ draft and deletion undo survive snapshots including blank numeric edits (0.58925ms)
+✔ latest writer coalesces a burst and flush saves final value (0.757291ms)
+✔ latest value arriving during a write is flushed without stale overwrite (3.421333ms)
+✔ failed save retains dirty data and explicit retry recovers (0.826625ms)
+✔ sustained edits are not postponed indefinitely (112.80475ms)
+✔ note includes version, device attribution and theoretical power classification (16.058084ms)
+✔ inactive blanks allow valid note while active invalid input and HSS do not (0.170959ms)
+✔ manual GN settings survive switching to equipment and back after restoration (0.322709ms)
+✔ blank manual value before choosing device restores last finite manual snapshot (0.198709ms)
+ℹ tests 50
+ℹ suites 0
+ℹ pass 50
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 292.074292

@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 import {writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const browser=await chromium.connectOverCDP('http://127.0.0.1:9338');
-const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('app://obsidian'));
+const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('app://obsidian.md/index.html'));
 const cdp=await page.context().newCDPSession(page);const results=[];
 const run=f=>page.evaluate(f);const pass=name=>{results.push(name);console.log('PASS '+name);};
 const closed=()=>run(()=>({left:app.workspace.leftSplit.collapsed,right:app.workspace.rightSplit.collapsed}));

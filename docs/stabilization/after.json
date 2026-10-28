@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-28T14:27:33.515Z",
+  "date": "2026-10-28T15:45:38.171Z",
   "results": [
     {
       "name": "v1 device migration preserves fields and assigns stable IDs",
@@ -62,8 +62,8 @@
     "events": 120,
     "paints": 121,
     "writes": 1,
-    "paintMs": 108,
-    "elapsedMs": 125,
+    "paintMs": 116,
+    "elapsedMs": 137,
     "injectedWriteLatencyMs": 10,
     "lastSaved": 13.9
   },
