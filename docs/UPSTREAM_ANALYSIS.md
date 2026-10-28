@@ -19,7 +19,7 @@
 | --- | --- | --- |
 | LICENSE.txt | vendor/depth-of-field-LICENSE.txt | **원문 그대로 복사**, SHA256은 감사 JSON에 기록 |
 | App.tsx | src/engine.ts | 광학 공식·CoC 경험칙의 의미를 참고한 새 구현. 원본 UI 코드 복사 없음. 일관된 박막렌즈 모델, 과초점 경계 및 유한값 보존으로 수정 |
-| PhotographyGraphic.tsx | src/diagram.ts | 화각·심도 시각화 발상 참고. React/SVG 경로 코드 복사 없음. 새 원뿔·독립 축·빗금·숫자 표시 |
+| PhotographyGraphic.tsx | src/diagram.ts | 화각·심도 시각화 발상 참고. React/SVG 경로 코드 복사 없음. 1.1.0에서 촬영자·피사체·원뿔·심도 장면과 드래그/네 카드/빠른 조절 순서를 복원. 새 단순 SVG 기호·독립 플래시 축·빗금·숫자 표시 |
 | utils/units.ts | src/units.ts | 신규 작성. m↔ft 및 숫자 파싱/표시, 광학 mm 분리 |
 | selectStyles.ts, CSS, main.tsx | src/view.ts, main.ts, styles.css | 신규 Obsidian ItemView·명령·한글 UI, 테마 변수, 모바일 CSS |
 | 해당 없음 | presets.ts, storage.ts, note.ts 및 engine.ts 플래시 부분 | 신규 GN 모델, 줌별 장비 표, loadData/saveData, Vault API Markdown 저장 |

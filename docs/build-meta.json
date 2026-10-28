@@ -64,7 +64,7 @@
       "format": "esm"
     },
     "src/diagram.ts": {
-      "bytes": 4351,
+      "bytes": 6922,
       "imports": [
         {
           "path": "./model",
@@ -106,7 +106,7 @@
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 20268,
+      "bytes": 24077,
       "imports": [
         {
           "path": "obsidian",
@@ -214,16 +214,16 @@
           "bytesInOutput": 1612
         },
         "src/view.ts": {
-          "bytesInOutput": 24990
+          "bytesInOutput": 29370
         },
         "src/diagram.ts": {
-          "bytesInOutput": 5121
+          "bytesInOutput": 7742
         },
         "src/note.ts": {
           "bytesInOutput": 7181
         }
       },
-      "bytes": 52078
+      "bytes": 59079
     }
   }
 }

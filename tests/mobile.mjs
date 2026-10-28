@@ -26,10 +26,10 @@ try {
  await noOverflow();
  // Both critical readouts are visible on a 360px first screen without opening settings.
  await run(()=>{document.body.classList.remove('theme-light');document.body.classList.add('theme-dark');});
- const far=await page.locator('.pfm-dof-results .pfm-ev').boundingBox();assert.ok(far&&far.y+far.height<=710,JSON.stringify(far));
+ const far=await page.locator('[data-stat=far]').boundingBox();assert.ok(far&&far.y+far.height<=710,JSON.stringify(far));
  await page.screenshot({path:'docs/screenshots/360-dark.png'});
  const targets=await page.locator('.pfm-root button:visible,.pfm-root select:visible,.pfm-root input:not([type=checkbox]):visible,.pfm-root summary:visible,.pfm-check').evaluateAll(es=>es.map(e=>({text:e.textContent?.slice(0,60)||e.getAttribute('aria-label'),h:e.getBoundingClientRect().height})).filter(e=>e.h<43.9));assert.deepEqual(targets,[]);pass('360px no overflow, hero/exposure/near-far first screen, controls >=44px');
- await set('aperture',8);assert.match(await page.locator('.pfm-hero').innerText(),/2.5 m/);const changed=await page.locator('.pfm-dof-results .pfm-ev').innerText();assert.ok(!changed.includes('4.07 m'));pass('direct number entry updates flash and DOF together');
+ await set('aperture',8);assert.match(await page.locator('.pfm-hero').innerText(),/2.5 m/);const changed=await page.locator('[data-stat=near] strong').innerText();assert.ok(!changed.includes('4.07 m'));pass('direct number entry updates flash and DOF together');
  await set('aperture',4);await set('cameraDistance',10);assert.match(await page.locator('.pfm-flash-results .pfm-ev').innerText(),/-2 EV/);assert.equal(await value('flashDistance'),10);pass('linked distances and -2EV at double distance');
  await page.locator('.pfm-check').click();await set('flashDistance',5);assert.match(await page.locator('.pfm-flash-results .pfm-ev').innerText(),/0 EV/);assert.match(await page.locator('.pfm-coverage-results').textContent(),/중첩/);pass('off camera independent distance and no spatial overlap claim');
  await open('카메라·렌즈');const before=await page.locator('.pfm-hero').innerText();await set('focal',100);assert.equal(await page.locator('.pfm-hero').innerText(),before);pass('focal change preserves fixed flash GN distance');

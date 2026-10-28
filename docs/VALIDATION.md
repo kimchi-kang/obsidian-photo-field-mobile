@@ -2,14 +2,20 @@
 
 ## 결과
 
-현재 빌드: **1.0.3**. 버그 재현·회귀 검증 **8/8 통과**, 이전 1.0.0에서 같은 8개 시나리오 실패를 기록했다. 자세한 비교: `bugfix-1.0.1/before.json`, `bugfix-1.0.1/after.json`.
+현재 빌드: **1.1.0**. 버그 재현·회귀 검증 **8/8 통과**, 이전 1.0.0에서 같은 8개 시나리오 실패를 기록했다. 자세한 비교: `bugfix-1.0.1/before.json`, `bugfix-1.0.1/after.json`.
 
 - TypeScript strict 타입 검사 + esbuild browser-target 빌드: **통과**.
-- 자동 수치·오류·배포 검사: **29/29 통과**, 실패 0. 원문 `unit-test-results.txt`.
+- 자동 수치·오류·배포 검사: **31/31 통과**, 실패 0. 원문 `unit-test-results.txt`.
 - 실제 macOS Obsidian의 모바일 에뮬레이션 + Chromium DevTools 자동 시나리오: **17/17 통과**, 미처리 런타임 예외 0. 원문 `mobile-test-results.txt`, 기계 판독 `mobile-results.json`.
 - 테스트 보관함: `/private/tmp/photo-field-qa-vault`. 사용자의 기존 노트에서 파괴적 검증을 하지 않았다.
 - 오프라인 모드에서 실제 ItemView 재진입, 수치 변경, Vault API로 새 노트 두 개 생성, 중복 경로 없음, 일반 Markdown 내용 읽기를 검증했다. `example-note.md`는 그 실제 저장물이다.
-- 계산 번들: 약 49KB (정확한 크기는 `build-meta.json`), 별도 CSS 약 4KB. 외부 import는 `obsidian`뿐. 번들에 Node/Electron/fs/path/네트워크 호출·원격 자산 없음. 개발용 패키지와 Obsidian 호스트 API는 런타임 번들에 들어 있지 않다.
+- 계산 번들 및 CSS 크기는 릴리스 파일과 `build-meta.json`에서 확인 가능. 외부 import는 `obsidian`뿐. 번들에 Node/Electron/fs/path/네트워크 호출·원격 자산 없음. 개발용 패키지와 Obsidian 호스트 API는 런타임 번들에 들어 있지 않다.
+
+## 1.1.0 원본 장면 복원 검사
+
+원본 공개 화면과 같은 390×844, 풀프레임·실제50mm·f/1.8·피사체1.8288m·사용자 CoC0.029mm·미터·라이트 조건으로 비교했다. 촬영 장면→심도 카드4개→거리/초점거리/조리개 순서를 복원했다. 새 단순 SVG 기호와 한국어·Obsidian 테마, 플래시 확장은 의도한 차이다. 픽셀 단위 복제는 아니다. 상세 디자인 비교는 `../design-qa.md` 참고.
+
+`tests/scene.mjs`에서 **10/10 통과** (`scene-results.json`): 360px/가로 화면 넘침, 피사체 마우스·CDP 터치 드래그, 화살표 키, 직접 거리 입력, 조리개의 심도/플래시 동시 갱신, 오프카메라 분리, 빈 입력의 NaN 도형 방지, 화면 밖 유한 심도 화살표. `tests/scene.test.ts`에서 좌표/거리와 물리적 거리 경계 자동 검사 추가. 이 결과는 macOS Obsidian 모바일 에뮬레이션이며 실제 iOS·Android 검증이 아니다.
 
 ## 수치 검사 범위
 

@@ -1,5 +1,5 @@
 
-> photo-field-mobile@1.0.2 qa
+> photo-field-mobile@1.0.3 qa
 > node tests/mobile.mjs
 
 PASS actual Obsidian ItemView and commands load, GN40 1/4 = 5m

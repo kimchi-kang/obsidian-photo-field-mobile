@@ -268,84 +268,119 @@ var import_obsidian = require("obsidian");
 
 // src/diagram.ts
 var ns = "http://www.w3.org/2000/svg";
+var SCENE = { width: 400, start: 54, end: 382 };
 var nextId = 0;
+function sceneDistance(x, max, focal) {
+  return Math.max(focal / 1e3 + 1e-3, Math.min(max, (x - SCENE.start) / (SCENE.end - SCENE.start) * max));
+}
 function diagram(host, i) {
   host.replaceChildren();
-  if (!Number.isFinite(i.diagramMax) || i.diagramMax <= 0) return;
+  if (!Number.isFinite(i.diagramMax) || i.diagramMax <= 0) {
+    const p = document.createElement("p");
+    p.textContent = "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC\uB97C \uC591\uC218\uB85C \uC785\uB825\uD558\uC138\uC694.";
+    host.append(p);
+    return;
+  }
+  const showDof = i.tab !== "flash", showFlash = i.tab !== "dof";
   const svg = document.createElementNS(ns, "svg");
-  svg.setAttribute("viewBox", "0 0 320 230");
-  svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "\uCE74\uBA54\uB77C \uC2EC\uB3C4\uC640 \uD50C\uB798\uC2DC \uB178\uCD9C \uAC70\uB9AC\uC758 \uB3C5\uB9BD \uCD95 \uB3C4\uC2DD. \uC2E4\uC81C \uBC30\uAD11 \uC9C0\uB3C4\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
+  svg.setAttribute("viewBox", `0 0 400 ${showFlash ? 260 : 212}`);
+  svg.setAttribute("role", "group");
+  svg.setAttribute("aria-label", "\uCE74\uBA54\uB77C\uC640 \uD53C\uC0AC\uCCB4, \uB80C\uC988 \uD654\uAC01\uACFC \uC2EC\uB3C4\uB97C \uD568\uAED8 \uBCF4\uB294 \uCD2C\uC601 \uC7A5\uBA74");
+  svg.dataset.scene = "true";
   host.append(svg);
   function el(tag, attrs, text, parent = svg) {
     const n = document.createElementNS(ns, tag);
     for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
-    if (text) n.textContent = text;
+    if (text !== void 0) n.textContent = text;
     parent.append(n);
     return n;
   }
-  const id = `pfm-hatch-${++nextId}`;
-  const defs = el("defs", {}), pat = el("pattern", { id, width: 6, height: 6, patternUnits: "userSpaceOnUse" }, void 0, defs);
-  el("path", { d: "M0 6 L6 0", stroke: "currentColor", "stroke-width": 1 }, void 0, pat);
-  const x = (d) => 20 + 280 * Math.max(0, Math.min(d / i.diagramMax, 1));
-  const marker = (d, y) => el("line", { x1: x(d), x2: x(d), y1: y - 15, y2: y + 15, stroke: "var(--text-accent)", "stroke-width": 2 });
-  el("text", { x: 20, y: 16 }, `\uB3C5\uB9BD \uAC70\uB9AC \uCD95 \xB7 0 \u2192 ${metres(i.diagramMax)}`);
+  const id = `pfm-scene-${++nextId}`, defs = el("defs", {}), clip = el("clipPath", { id: id + "-clip" }, void 0, defs);
+  el("rect", { x: SCENE.start, y: 24, width: SCENE.end - SCENE.start, height: 140 }, void 0, clip);
+  const pattern = el("pattern", { id: id + "-hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse" }, void 0, defs);
+  el("path", { d: "M0 7 L7 0", stroke: "var(--text-accent)", "stroke-width": 1.2 }, void 0, pattern);
+  const x = (d) => SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(d / i.diagramMax, 1));
+  const out = (d) => `${d > i.diagramMax && Number.isFinite(d) ? "\u2192 " : ""}${metres(d)}`;
+  const cone = (degrees, cl) => {
+    const half = (SCENE.end - SCENE.start) * Math.tan(degrees * Math.PI / 360);
+    el("path", { d: `M${SCENE.start} 92 L${SCENE.end} ${92 - half} L${SCENE.end} ${92 + half} Z`, class: cl, "clip-path": `url(#${id}-clip)` });
+  };
   try {
     const o = optics(i);
-    el("text", { x: 20, y: 38 }, "\uCE74\uBA54\uB77C: \uCD08\uC810\xB7\uC2EC\uB3C4");
-    el("line", { x1: 20, x2: 300, y1: 66, y2: 66, stroke: "currentColor" });
-    el("rect", { x: x(o.near), y: 51, width: Math.max(0, x(o.far) - x(o.near)), height: 30, fill: `url(#${id})` });
-    marker(i.cameraDistance, 66);
-    el("text", { x: 20, y: 99 }, `\uC2EC\uB3C4 ${o.near > i.diagramMax ? "\u2192 " : ""}${metres(o.near)} ~ ${o.far > i.diagramMax && o.far !== Infinity ? "\u2192 " : ""}${metres(o.far)}`);
-  } catch {
-    el("text", { x: 20, y: 66 }, "\uC2EC\uB3C4 \uC785\uB825\uC744 \uD655\uC778\uD558\uC138\uC694.");
-  }
-  try {
-    const f = flash(i);
-    el("text", { x: 20, y: 124 }, "\uD50C\uB798\uC2DC: \uACFC\uB2E4 / \uBE57\uAE08=\uD5C8\uC6A9 / \uBD80\uC871");
-    el("rect", { x: 20, y: 136, width: x(f.low) - 20, height: 28, fill: "var(--color-orange)", "fill-opacity": 0.25, stroke: "currentColor", "stroke-dasharray": "2 3" });
-    el("rect", { x: x(f.low), y: 136, width: x(f.high) - x(f.low), height: 28, fill: `url(#${id})` });
-    el("rect", { x: x(f.high), y: 136, width: 300 - x(f.high), height: 28, fill: "var(--color-blue)", "fill-opacity": 0.2, stroke: "currentColor", "stroke-dasharray": "6 3" });
-    marker(f.r, 150);
-    el("text", { x: 20, y: 186 }, `\uD5C8\uC6A9 ${f.low > i.diagramMax ? "\u2192 " : ""}${metres(f.low)} ~ ${f.high > i.diagramMax ? "\u2192 " : ""}${metres(f.high)}`);
-    el("text", { x: 20, y: 207 }, `\uC801\uC815 ${f.d > i.diagramMax ? "\u2192 " : ""}${metres(f.d)} \xB7 \uD53C\uC0AC\uCCB4 ${f.r > i.diagramMax ? "\u2192 " : ""}${metres(f.r)}`);
-  } catch {
-    el("text", { x: 20, y: 155 }, "\uD50C\uB798\uC2DC: \uACC4\uC0B0\uD560 \uC218 \uC5C6\uB294 \uC870\uAC74");
-  }
-  try {
-    const c = coverage(i);
-    const geometry = document.createElementNS(ns, "svg");
-    geometry.setAttribute("viewBox", "0 0 320 160");
-    geometry.setAttribute("role", "img");
-    geometry.setAttribute("aria-label", i.linked ? "\uAC19\uC740 \uC704\uCE58\uC640 \uBC29\uD5A5\uC5D0\uC11C \uC218\uD3C9 \uD654\uAC01 \uBC0F \uC870\uC0AC\uAC01 \uC6D0\uBFD4 \uBE44\uAD50" : "\uD654\uAC01\uACFC \uC870\uC0AC\uAC01\uC758 \uC815\uADDC\uD654\uB41C \uB3C5\uB9BD \uB3C4\uC2DD, \uC704\uCE58 \uC911\uCCA9 \uBE44\uAD50 \uC544\uB2D8");
-    host.append(geometry);
-    const cam = Math.tan(angleHalf(i.width, i.focal)), beam = Math.tan(c.h * Math.PI / 360), scale = 45 / Math.max(cam, beam);
-    const cone = (s, cl, origin) => {
-      const n = document.createElementNS(ns, "path");
-      n.setAttribute("d", `M20 ${origin} L300 ${origin - s * scale} L300 ${origin + s * scale} Z`);
-      n.setAttribute("class", cl);
-      geometry.append(n);
-    };
-    if (i.linked) {
-      cone(cam, "pfm-camera-cone", 75);
-      cone(beam, "pfm-flash-cone", 75);
-    } else {
-      cone(cam, "pfm-camera-cone", 45);
-      cone(beam, "pfm-flash-cone", 110);
+    cone(o.vertical, "pfm-camera-cone");
+    if (showDof) {
+      el("rect", { x: x(o.near), y: 24, width: Math.max(0, x(o.far) - x(o.near)), height: 140, class: "pfm-dof-zone" });
+      for (const d of [o.near, o.far]) el("line", { x1: x(d), x2: x(d), y1: 24, y2: 164, class: "pfm-dof-limit" });
     }
-    const label = document.createElementNS(ns, "text");
-    label.setAttribute("x", "20");
-    label.setAttribute("y", "155");
-    label.textContent = i.linked ? "\uC2E4\uC120=\uCE74\uBA54\uB77C \xB7 \uC810\uC120=\uD50C\uB798\uC2DC (\uADE0\uC77C \uAD11\uB7C9 \uC544\uB2D8)" : "\uB3C5\uB9BD \uC815\uADDC\uD654 \uC6D0\uBFD4 \xB7 \uC815\uD655\uD55C \uACF5\uAC04 \uC911\uCCA9 \uC544\uB2D8";
-    geometry.append(label);
-    const p = document.createElement("p");
-    p.textContent = `\uC218\uD3C9 \uC870\uC0AC\uAC01 ${fmt(c.h)}\xB0 \xB7 \uC218\uC9C1 ${fmt(c.v)}\xB0. ${i.coverage === "approx" ? "\uD480\uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815. \uC81C\uC870\uC0AC \uC790\uB8CC \uC544\uB2D8." : "\uC218\uB3D9 \uC870\uC0AC\uAC01."}`;
-    host.append(p);
+  } catch {
+    el("text", { x: 70, y: 65 }, "\uB80C\uC988\xB7\uCD08\uC810 \uC785\uB825\uC744 \uD655\uC778\uD558\uC138\uC694.");
+  }
+  if (showFlash && i.linked) try {
+    cone(coverage(i).v, "pfm-flash-cone");
   } catch {
   }
-}
-function angleHalf(size, f) {
-  return Math.atan(size / (2 * f));
+  el("line", { x1: 4, x2: 390, y1: 164, y2: 164, class: "pfm-ground" });
+  const photographer = el("g", { class: "pfm-person" });
+  el("circle", { cx: 24, cy: 75, r: 8 }, void 0, photographer);
+  el("path", { d: "M22 88 L15 116 L9 151 M15 116 L31 151 M22 91 L36 99 L42 87", fill: "none", stroke: "currentColor", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, void 0, photographer);
+  el("rect", { x: 35, y: 80, width: 17, height: 13, rx: 2 }, void 0, photographer);
+  el("rect", { x: 49, y: 83, width: 7, height: 7 }, void 0, photographer);
+  el("text", { x: 6, y: 16, class: "pfm-scene-lens" }, `${fmt(i.focal)} mm \xB7 f/${fmt(i.aperture)}`);
+  const subject = x(Number.isFinite(i.cameraDistance) && i.cameraDistance > 0 ? i.cameraDistance : 0);
+  el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-line" });
+  const person = el("g", { transform: `translate(${subject},0)`, class: "pfm-person pfm-subject", "data-pfm-subject": "true", tabindex: 0, role: "slider", "aria-label": "\uD53C\uC0AC\uCCB4 \uAC70\uB9AC \xB7 \uC88C\uC6B0 \uB4DC\uB798\uADF8 \uB610\uB294 \uD654\uC0B4\uD45C \uD0A4\uB85C \uC870\uC808", "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0, "aria-valuemin": Number.isFinite(i.focal) ? i.focal / 1e3 + 1e-3 : 1e-3, "aria-valuemax": Math.max(i.diagramMax, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0), "aria-valuetext": metres(i.cameraDistance) });
+  el("rect", { x: -26, y: 68, width: 52, height: 102, fill: "transparent" }, void 0, person);
+  el("circle", { cx: 0, cy: 82, r: 8 }, void 0, person);
+  el("path", { d: "M0 96 L0 129 M-13 113 L0 100 L13 113 M0 129 L-10 155 M0 129 L10 155", fill: "none", stroke: "currentColor", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, void 0, person);
+  el("circle", { cx: 0, cy: 177, r: 5, class: "pfm-focus-dot" }, void 0, person);
+  el("text", { x: Math.max(92, Math.min(subject, 340)), y: 38, "text-anchor": "middle", class: "pfm-subject-label" }, `\uD53C\uC0AC\uCCB4 ${out(i.cameraDistance)}`);
+  el("line", { x1: SCENE.start, x2: SCENE.end, y1: 192, y2: 192, class: "pfm-distance-axis" });
+  for (let n = 0; n <= 4; n++) {
+    const d = i.diagramMax * n / 4;
+    el("line", { x1: x(d), x2: x(d), y1: 189, y2: 195, class: "pfm-distance-axis" });
+    el("text", { x: x(d), y: 208, "text-anchor": n === 4 ? "end" : "middle", class: "pfm-axis-label" }, `${fmt(d, 1)}m`);
+  }
+  if (showFlash) try {
+    const f = flash(i);
+    const y = 228;
+    el("rect", { x: SCENE.start, y, width: x(f.low) - SCENE.start, height: 12, class: "pfm-over-zone" });
+    el("rect", { x: x(f.low), y, width: x(f.high) - x(f.low), height: 12, fill: `url(#${id}-hatch)` });
+    el("rect", { x: x(f.high), y, width: SCENE.end - x(f.high), height: 12, class: "pfm-under-zone" });
+    el("line", { x1: x(f.r), x2: x(f.r), y1: y - 5, y2: y + 17, class: "pfm-flash-marker" });
+    el("text", { x: SCENE.start, y: 257, class: "pfm-axis-label" }, `${i.linked ? "\uD50C\uB798\uC2DC" : "\uD50C\uB798\uC2DC \uB3C5\uB9BD \uAC70\uB9AC \uCD95"} \xB7 \uD5C8\uC6A9 ${out(f.low)} ~ ${out(f.high)}`);
+  } catch {
+    el("text", { x: SCENE.start, y: 243, class: "pfm-axis-label" }, "\uD50C\uB798\uC2DC \uAC70\uB9AC: \uD604\uC7AC \uC870\uAC74\uC5D0\uC11C \uACC4\uC0B0 \uBD88\uAC00");
+  }
+  const legend = document.createElement("figcaption");
+  legend.className = "pfm-scene-legend";
+  const items = [["pfm-key-camera", "\uCE74\uBA54\uB77C \uD654\uAC01"], ...showDof ? [["pfm-key-dof", "\uC2EC\uB3C4"]] : [], ...showFlash && i.linked ? [["pfm-key-flash", "\uD50C\uB798\uC2DC \uC870\uC0AC\uAC01"]] : []];
+  for (const [cls, text] of items) {
+    const label = document.createElement("span");
+    label.className = cls;
+    label.textContent = text;
+    legend.append(label);
+  }
+  host.append(legend);
+  const hint = document.createElement("p");
+  hint.className = "pfm-scene-hint";
+  hint.textContent = "\uD53C\uC0AC\uCCB4\uB97C \uC88C\uC6B0\uB85C \uC6C0\uC9C1\uC774\uAC70\uB098 \uC544\uB798 \uAC70\uB9AC \uAC12\uC744 \uBC14\uAFB8\uC138\uC694.";
+  host.append(hint);
+  if (showFlash) {
+    const p = document.createElement("p");
+    p.className = "pfm-scene-note";
+    p.textContent = i.linked ? "\uD50C\uB798\uC2DC \uAC70\uB9AC \uB760: \uC810\uC120=\uACFC\uB2E4 \xB7 \uBE57\uAE08=\uD5C8\uC6A9 \xB7 \uD30C\uC120=\uBD80\uC871. \uC2E4\uC81C \uBC30\uAD11 \uC9C0\uB3C4\uB294 \uC544\uB2D9\uB2C8\uB2E4." : "\uC624\uD504\uCE74\uBA54\uB77C: \uC704\uCE58\xB7\uBC29\uD5A5 \uBBF8\uC785\uB825. \uD50C\uB798\uC2DC \uAC70\uB9AC\uC640 \uCE74\uBA54\uB77C \uC7A5\uBA74\uC740 \uB3C5\uB9BD \uACC4\uC0B0\uC785\uB2C8\uB2E4.";
+    host.append(p);
+  }
+  try {
+    const o = optics(i);
+    if (showDof && (o.near > i.diagramMax || o.far > i.diagramMax)) {
+      const p = document.createElement("p");
+      p.className = "pfm-scene-note";
+      p.textContent = `\uADF8\uB9BC \uBC16 \uC2EC\uB3C4: ${out(o.near)} ~ ${out(o.far)}`;
+      host.append(p);
+    }
+  } catch {
+  }
 }
 
 // src/note.ts
@@ -438,6 +473,66 @@ var PhotoView = class extends import_obsidian.ItemView {
     el.addEventListener(event, fn, { signal: a.signal });
     this.aborters.push(a);
   }
+  focusHyperfocal() {
+    try {
+      this.plugin.update("cameraDistance", optics(this.plugin.state.inputs).hyperfocal);
+      this.syncNumeric("cameraDistance");
+      this.changed();
+    } catch (e) {
+      this.plugin.report(e);
+    }
+  }
+  sceneControls() {
+    let dragging = null, offset = 0;
+    const update = (x) => {
+      this.plugin.update("cameraDistance", sceneDistance(x, this.plugin.state.inputs.diagramMax, this.plugin.state.inputs.focal));
+      this.syncNumeric("cameraDistance");
+      this.changed();
+    };
+    const coordinate = (e) => {
+      const r = this.picture.querySelector("svg")?.getBoundingClientRect();
+      return r && r.width > 0 ? (e.clientX - r.left) / r.width * SCENE.width : null;
+    };
+    this.listen(this.contentEl, "pointerdown", (event) => {
+      if (!(event instanceof PointerEvent) || !(event.target instanceof Element) || !event.target.closest("[data-pfm-subject]")) return;
+      const x = coordinate(event);
+      if (x === null) return;
+      const i = this.plugin.state.inputs;
+      offset = x - (SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(1, (Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0) / i.diagramMax)));
+      dragging = event.pointerId;
+      this.contentEl.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+    this.listen(this.contentEl, "pointermove", (event) => {
+      if (!(event instanceof PointerEvent) || event.pointerId !== dragging) return;
+      const x = coordinate(event);
+      if (x !== null) {
+        event.preventDefault();
+        update(x - offset);
+      }
+    });
+    for (const kind of ["pointerup", "pointercancel"]) this.listen(this.contentEl, kind, (event) => {
+      if (!(event instanceof PointerEvent) || event.pointerId !== dragging) return;
+      dragging = null;
+      if (this.contentEl.hasPointerCapture(event.pointerId)) this.contentEl.releasePointerCapture(event.pointerId);
+    });
+    this.listen(this.contentEl, "click", (event) => {
+      if (event.target instanceof Element && event.target.closest("[data-pfm-hyperfocal]")) this.focusHyperfocal();
+    });
+    this.listen(this.contentEl, "keydown", (event) => {
+      if (!(event instanceof KeyboardEvent) || !(event.target instanceof Element) || !event.target.closest("[data-pfm-subject]")) return;
+      const i = this.plugin.state.inputs;
+      let distance;
+      if (event.key === "ArrowLeft") distance = i.cameraDistance - 0.1;
+      else if (event.key === "ArrowRight") distance = i.cameraDistance + 0.1;
+      else return;
+      event.preventDefault();
+      this.plugin.update("cameraDistance", Math.max(i.focal / 1e3 + 1e-3, distance));
+      this.syncNumeric("cameraDistance");
+      this.changed();
+      this.picture.querySelector("[data-pfm-subject]")?.focus();
+    });
+  }
   changed() {
     if (this.plugin.state.inputs.linked) {
       this.plugin.update("flashDistance", this.plugin.state.inputs.cameraDistance);
@@ -453,6 +548,10 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.listen(b, "click", fn);
     return b;
   }
+  rangeProgress(range) {
+    const percent = (Number(range.value) - Number(range.min)) / (Number(range.max) - Number(range.min)) * 100;
+    range.style.setProperty("--pfm-range-progress", `${percent}%`);
+  }
   number(parent, label, key, options) {
     const wrap = node(parent, "label", void 0, "pfm-field");
     node(wrap, "span", label);
@@ -465,6 +564,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     input.setAttribute("aria-label", label);
     let range;
     if (options) {
+      wrap.classList.add("pfm-range-field");
       input.min = String(options.min);
       range = node(wrap, "input");
       range.type = "range";
@@ -472,22 +572,28 @@ var PhotoView = class extends import_obsidian.ItemView {
       range.max = String(options.max);
       range.step = String(options.step);
       range.value = input.value;
+      this.rangeProgress(range);
       range.setAttribute("aria-label", `${label} \uBE60\uB978 \uC870\uC808`);
       range.dataset.range = key;
       const r = range;
       this.listen(r, "input", () => {
         input.value = r.value;
+        this.rangeProgress(r);
         input.setAttribute("aria-invalid", "false");
         this.plugin.update(key, Number(r.value));
         this.changed();
       });
     }
+    if (key === "flashDistance") wrap.classList.add("pfm-flash-distance");
     this.numeric.set(key, { input, range });
     this.listen(input, "input", () => {
       const v = parseNumber(input.value);
       this.plugin.update(key, v);
       if (key === "denominator") this.syncPower();
-      if (range && Number.isFinite(v)) range.value = String(v);
+      if (range && Number.isFinite(v)) {
+        range.value = String(v);
+        this.rangeProgress(range);
+      }
       input.setAttribute("aria-invalid", String(!Number.isFinite(v) || v < 0 || v === 0 && key !== "loss"));
       this.changed();
     });
@@ -552,7 +658,10 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (pair) {
       const value = this.plugin.state.inputs[key];
       pair.input.value = typeof value === "number" && !Number.isFinite(value) ? "" : String(value);
-      if (pair.range) pair.range.value = pair.input.value;
+      if (pair.range) {
+        pair.range.value = pair.input.value;
+        this.rangeProgress(pair.range);
+      }
     }
     if (key === "denominator") this.syncPower();
   }
@@ -564,7 +673,6 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.root = node(this.contentEl, "div", void 0, "pfm-root");
     const i = this.plugin.state.inputs;
     const header = node(this.root, "header");
-    node(header, "p", "PHOTO FIELD / OFFLINE", "pfm-eyebrow");
     node(header, "h1", "\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8");
     node(header, "p", "\uC870\uB9AC\uAC1C \uD558\uB098\uB85C, \uBE5B\uACFC \uC2EC\uB3C4\uB97C \uD568\uAED8.");
     const tabs = node(this.root, "nav", void 0, "pfm-tabs");
@@ -579,8 +687,12 @@ var PhotoView = class extends import_obsidian.ItemView {
     }
     this.results = node(this.root, "section", void 0, "pfm-results");
     this.results.setAttribute("aria-live", "polite");
+    this.picture = node(this.results, "figure", void 0, "pfm-diagram");
+    this.sceneControls();
     const quick = node(this.root, "section", void 0, "pfm-quick");
     node(quick, "h2", "\uBE60\uB978 \uC870\uC808");
+    this.number(quick, "\uCE74\uBA54\uB77C \u2192 \uD53C\uC0AC\uCCB4 \uAC70\uB9AC (m)", "cameraDistance", { min: 0.1, max: 30, step: 0.1 });
+    this.number(quick, "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC (mm)", "focal", { min: 8, max: 200, step: 1 });
     this.number(quick, "\uC870\uB9AC\uAC1C f-number", "aperture", { min: 0.7, max: 32, step: 0.1 });
     const power = this.select(quick, "\uCD9C\uB825 \uC120\uD0DD", "denominator", Object.fromEntries([1, 2, 4, 8, 16, 32, 64, 128, 256].map((n) => [n, `1/${n}`])), () => {
       this.plugin.update("denominator", Number(power.value));
@@ -589,7 +701,6 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.power = power;
     this.syncPower();
     this.number(quick, "\uC0AC\uC6A9\uC790 \uCD9C\uB825 1/n \xB7 n", "denominator");
-    this.number(quick, "\uCE74\uBA54\uB77C \u2192 \uD53C\uC0AC\uCCB4 \uAC70\uB9AC (m)", "cameraDistance", { min: 0.1, max: 30, step: 0.1 });
     const linked = node(quick, "label", void 0, "pfm-check");
     const check = node(linked, "input");
     check.type = "checkbox";
@@ -608,9 +719,9 @@ var PhotoView = class extends import_obsidian.ItemView {
       const r = this.numeric.get("flashDistance")?.range;
       if (r) r.disabled = check.checked;
     });
-    this.picture = node(this.root, "figure", void 0, "pfm-diagram");
+    this.resultDetails = node(this.root, "section", void 0, "pfm-result-details");
     const camera = this.details("\uCE74\uBA54\uB77C\xB7\uB80C\uC988\xB7CoC");
-    this.select(camera, "\uC13C\uC11C \uD504\uB9AC\uC14B", "sensor", { ...Object.fromEntries(Object.entries(sensors).map(([k, v]) => [k, v.name])), custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815" }, () => {
+    this.select(quick, "\uC13C\uC11C \uD504\uB9AC\uC14B", "sensor", { ...Object.fromEntries(Object.entries(sensors).map(([k, v]) => [k, v.name])), custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815" }, () => {
       const preset = sensors[this.plugin.state.inputs.sensor];
       if (preset) {
         this.plugin.update("width", preset.width);
@@ -623,12 +734,11 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.number(camera, "\uC13C\uC11C \uC138\uB85C (mm)", "height");
     for (const key of ["width", "height"]) this.listen(this.numeric.get(key).input, "input", () => {
       this.plugin.update("sensor", "custom");
-      const s = camera.querySelector("select[data-key=sensor]");
+      const s = quick.querySelector("select[data-key=sensor]");
       if (s) s.value = "custom";
       void this.plugin.persist().catch((e) => this.plugin.report(e));
     });
-    this.number(camera, "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC (mm)", "focal");
-    this.number(camera, "ISO", "iso");
+    this.number(quick, "ISO", "iso");
     this.select(camera, "CoC \uBC29\uC2DD", "cocMode", { estimate: "\uC13C\uC11C \uB300\uAC01 \xF71500 \uCD94\uC815", custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 mm" });
     this.number(camera, "\uC0AC\uC6A9\uC790 CoC (mm)", "coc");
     node(camera, "p", "CoC\uB294 \uAC10\uC0C1 \uD06C\uAE30\xB7\uC2DC\uB825\xB7\uD655\uB300\uC728\uC5D0 \uB530\uB978 \uD5C8\uC6A9 \uCC29\uB780\uC6D0\uC785\uB2C8\uB2E4. \uB300\uAC01/1500\uC740 \uACBD\uD5D8\uC801 \uAE30\uBCF8\uAC12\uC774\uBA70 \uD53D\uC140 \uB2E8\uC704 \uC120\uBA85\uB3C4\uB97C \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. APS-C \uD06C\uAE30\uB294 \uC81C\uC870\uC0AC\uB9C8\uB2E4 \uB2E4\uB985\uB2C8\uB2E4.");
@@ -668,15 +778,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     const advanced = this.details("\uD5C8\uC6A9 \uBC94\uC704\xB7\uADF8\uB9BC \uBC94\uC704\xB7\uACC4\uC0B0 \uADFC\uAC70");
     this.number(advanced, "\uC801\uC815 \uB178\uCD9C \uD5C8\uC6A9 \uBC94\uC704 \xB1EV", "tolerance");
     this.number(advanced, "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC (m)", "diagramMax");
-    const hyper = this.button(advanced, "\uACFC\uCD08\uC810\uAC70\uB9AC\uC5D0 \uCD08\uC810 \uB9DE\uCD94\uAE30", () => {
-      try {
-        this.plugin.update("cameraDistance", optics(this.plugin.state.inputs).hyperfocal);
-        this.syncNumeric("cameraDistance");
-        this.changed();
-      } catch (e) {
-        this.plugin.report(e);
-      }
-    });
+    const hyper = this.button(advanced, "\uACFC\uCD08\uC810\uAC70\uB9AC\uC5D0 \uCD08\uC810 \uB9DE\uCD94\uAE30", () => this.focusHyperfocal());
     hyper.className = "pfm-wide";
     node(advanced, "p", "\uC720\uD6A8 GN=G\u221Ap\u221A(ISO/100)\xD72^(\u2212L/2), \uC801\uC815 \uAC70\uB9AC=GN/f-number. \uD544\uC694 \uCD9C\uB825=(Nr/G)\xB2(100/ISO)2^L. \uB178\uCD9C \uCC28\uC774=2log\u2082(d/r). \uC591\uC218=\uC608\uC0C1 \uACFC\uB2E4, \uC74C\uC218=\uC608\uC0C1 \uBD80\uC871. \uBE5B\uC774 \uC774 \uAC70\uB9AC\uC5D0\uC11C \uB05D\uB098\uB294 \uAC83\uC740 \uC544\uB2D9\uB2C8\uB2E4.");
     node(advanced, "p", "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f. \uADFC\uAC70\uB9AC=hs/(h+s\u2212f), \uC6D0\uAC70\uB9AC=hs/(h\u2212s+f). s\u2265H\uC774\uBA74 \u221E. \uAD11\uD559\uC740 mm, \uCD9C\uB825\uC740 m. \uC9C1\uC120\uD22C\uC601 \uD654\uAC01=2atan(\uC13C\uC11C \uAE38\uC774/2f). \uC870\uC0AC \uBC94\uC704=2r\xB7tan(\uAC01/2).");
@@ -755,19 +857,22 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (remember) this.rememberDetails();
     const i = this.plugin.state.inputs;
     this.results.replaceChildren();
+    this.resultDetails.replaceChildren();
     this.root.dataset.tab = i.tab;
+    this.root.dataset.linked = String(i.linked);
     const flashPanel = node(this.results, "div", void 0, "pfm-flash-results");
     try {
       const f = flash(i);
       node(flashPanel, "p", "\uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC", "pfm-eyebrow");
       node(flashPanel, "div", metres(f.d), "pfm-hero");
-      node(flashPanel, "p", `1/${i.denominator} \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} \xB7 GN ${fmt(f.g)}m @ ${fmt(i.zoom)}mm`);
-      node(flashPanel, "p", i.conditions, "pfm-conditions");
+      node(flashPanel, "p", `1/${i.denominator} \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} \xB7 GN ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300)`);
+      if (i.conditions.includes("\uC5F0\uC2B5\uC6A9 \uAC00\uC0C1 GN")) node(flashPanel, "small", "\uC5F0\uC2B5\uC6A9 GN \xB7 \uC2E4\uC81C \uC7A5\uBE44 \uC0AC\uC591 \uC544\uB2D8", "pfm-model-note");
       const label = f.ev > i.tolerance ? "\uC608\uC0C1 \uACFC\uB2E4 \uB178\uCD9C" : f.ev < -i.tolerance ? "\uC608\uC0C1 \uBD80\uC871 \uB178\uCD9C" : "\uD5C8\uC6A9 \uBC94\uC704 \uB0B4";
       node(flashPanel, "p", `${metres(f.r)}\uC5D0\uC11C ${f.ev > 0 ? "+" : ""}${fmt(f.ev)} EV \xB7 ${label}`, "pfm-ev");
-      node(flashPanel, "p", `\xB1${fmt(i.tolerance)}EV: ${metres(f.low)} ~ ${metres(f.high)}. \uAC00\uAE4C\uC6B0\uBA74 \uACFC\uB2E4 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.`);
-      const d = node(flashPanel, "details", void 0, "pfm-flash-details");
+      const d = node(this.resultDetails, "details", void 0, "pfm-flash-details");
       node(d, "summary", "\uD544\uC694 \uCD9C\uB825\xB7\uC870\uB9AC\uAC1C\xB7\uAC70\uB9AC\uBCC4 \uD45C");
+      node(d, "p", i.conditions);
+      node(d, "p", `\xB1${fmt(i.tolerance)}EV: ${metres(f.low)} ~ ${metres(f.high)}. \uAC00\uAE4C\uC6B0\uBA74 \uACFC\uB2E4 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.`);
       node(d, "p", `\uD544\uC694 \uC870\uB9AC\uAC1C f/${fmt(f.requiredAperture)} \xB7 \uD544\uC694 \uCD9C\uB825 ${fmt(f.needed * 100)}% \xB7 ${f.status}`);
       node(d, "p", `\uAC00\uAE4C\uC6B4 \uC9C0\uC6D0 \uB2E8\uACC4 1/${f.nearest} \u2192 \uB0A8\uB294 \uC624\uCC28 ${f.residual > 0 ? "+" : ""}${fmt(f.residual)} EV`);
       this.table(d, ["\uCD9C\uB825", "\uC608\uC0C1 \uAC70\uB9AC"], f.distances.map((x) => [`1/${x.n}`, metres(x.d)]));
@@ -777,32 +882,42 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(flashPanel, "div", "\u2014", "pfm-hero");
       node(flashPanel, "p", e instanceof Error ? e.message : String(e), "pfm-error");
     }
+    this.results.append(this.picture);
     const dof = node(this.results, "div", void 0, "pfm-dof-results");
     try {
       const o = optics(i);
       node(dof, "h2", "\uC2EC\uB3C4\xB7\uD654\uAC01");
-      node(dof, "p", `\uADFC\uAC70\uB9AC ${metres(o.near)} \xB7 \uC6D0\uAC70\uB9AC ${metres(o.far)}`, "pfm-ev");
-      const od = node(dof, "details");
+      const grid = node(dof, "div", void 0, "pfm-stat-grid");
+      for (const [key, label, value] of [["near", "\uADFC\uAC70\uB9AC", o.near], ["far", "\uC6D0\uAC70\uB9AC", o.far], ["total", "\uC804\uCCB4 \uC2EC\uB3C4", o.total], ["hyperfocal", "\uACFC\uCD08\uC810", o.hyperfocal]]) {
+        const card = node(grid, "div", void 0, "pfm-stat");
+        card.dataset.stat = key;
+        node(card, "span", label);
+        node(card, "strong", metres(value));
+      }
+      const bar = node(dof, "div", void 0, "pfm-dof-bar");
+      node(bar, "span", o.total < 0.1524 ? "\uC811\uC0AC\xB7\uC81C\uD488 \uCC38\uACE0" : o.total < 0.6096 ? "\uC778\uBB3C \uCC38\uACE0" : o.total < 3.048 ? "\uADF8\uB8F9\xB7\uD589\uC0AC \uCC38\uACE0" : o.total < 9.144 ? "\uAC70\uB9AC\xB7\uAC74\uCD95 \uCC38\uACE0" : "\uD48D\uACBD \uCC38\uACE0", "pfm-dof-badge");
+      const focus = node(bar, "button", "\uACFC\uCD08\uC810 \uB9DE\uCD94\uAE30");
+      focus.type = "button";
+      focus.dataset.pfmHyperfocal = "true";
+      const od = node(this.resultDetails, "details", void 0, "pfm-dof-details");
       node(od, "summary", "\uC804\uCCB4 \uC2EC\uB3C4\xB7\uACFC\uCD08\uC810\xB7\uD654\uAC01\xB7\uD68C\uC808");
-      node(od, "p", `\uC804\uCCB4 ${metres(o.total)} \xB7 \uACFC\uCD08\uC810 ${metres(o.hyperfocal)}`);
+      node(od, "p", `\uADFC\uAC70\uB9AC ${metres(o.near)} \xB7 \uC6D0\uAC70\uB9AC ${metres(o.far)} \xB7 \uC804\uCCB4 ${metres(o.total)} \xB7 \uACFC\uCD08\uC810 ${metres(o.hyperfocal)}`);
       node(od, "p", `\uD654\uAC01 \uC218\uD3C9 ${fmt(o.horizontal, 1)}\xB0 / \uC218\uC9C1 ${fmt(o.vertical, 1)}\xB0 / \uB300\uAC01 ${fmt(o.diagonal, 1)}\xB0`);
       node(od, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm \u2192 35mm \uD658\uC0B0 ${fmt(o.equivalent, 1)}mm \xB7 CoC ${fmt(o.c, 5)}mm`);
       node(od, "p", `\uD68C\uC808 \uADFC\uC0AC: \uD30C\uC7A5 550nm, Airy \uC9C0\uB984 ${fmt(o.airy, 5)}mm (${fmt(o.airy / o.c)}\xD7CoC). ${o.airy > o.c ? "CoC\uBCF4\uB2E4 \uCEE4\uC9C8 \uC218 \uC788\uC74C." : "CoC \uC774\uD558."} \uC808\uB300 \uC120\uBA85\uB3C4 \uD310\uC815\uC774 \uC544\uB2D9\uB2C8\uB2E4.`);
     } catch (e) {
       node(dof, "p", e instanceof Error ? e.message : String(e), "pfm-error");
     }
-    const exposureDetails = flashPanel.querySelector("details");
-    if (exposureDetails) this.results.append(exposureDetails);
     try {
       const c = coverage(i);
-      const p = node(this.results, "details", void 0, "pfm-coverage-results");
+      const p = node(this.resultDetails, "details", void 0, "pfm-coverage-results");
       node(p, "summary", "\uD504\uB808\uC784\xB7\uC870\uC0AC \uBC94\uC704 \uBE44\uAD50");
       node(p, "p", `\uD504\uB808\uC784 ${fmt(c.camera.width)}\xD7${fmt(c.camera.height)}m \xB7 \uC870\uC0AC \uBC94\uC704 ${fmt(c.flash.width)}\xD7${fmt(c.flash.height)}m`);
       node(p, "p", i.linked ? c.narrow ? "\uC8FC\uC758: \uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uC624\uD504\uCE74\uBA54\uB77C: \uAC01\uAC01\uC758 \uAC70\uB9AC \uD3C9\uBA74 \uBC94\uC704\uC785\uB2C8\uB2E4. \uC704\uCE58\xB7\uBC29\uD5A5\uC744 \uC785\uB825\uD558\uC9C0 \uC54A\uC544 \uACF5\uAC04 \uC911\uCCA9\uC744 \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     } catch (e) {
-      node(this.results, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+      node(this.resultDetails, "p", e instanceof Error ? e.message : String(e), "pfm-error");
     }
-    if (i.loss > 0) node(this.results, "p", "\uCD94\uAC00 \uC190\uC2E4\uC744 \uC801\uC6A9\uD55C \uCD94\uC815. GN\uC5D0 \uD3EC\uD568\uB41C \uC190\uC2E4\uC758 \uC911\uBCF5 \uBCF4\uC815\uC5D0 \uC8FC\uC758\uD558\uC138\uC694.");
+    if (i.loss > 0) node(this.resultDetails, "p", "\uCD94\uAC00 \uC190\uC2E4\uC744 \uC801\uC6A9\uD55C \uCD94\uC815. GN\uC5D0 \uD3EC\uD568\uB41C \uC190\uC2E4\uC758 \uC911\uBCF5 \uBCF4\uC815\uC5D0 \uC8FC\uC758\uD558\uC138\uC694.");
     this.restoreDetails();
     diagram(this.picture, i);
   }
