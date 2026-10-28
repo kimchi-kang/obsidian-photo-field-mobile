@@ -1,36 +1,36 @@
 
-> photo-field-mobile@1.0.2 test
+> photo-field-mobile@1.0.3 test
 > node --import tsx --test tests/*.test.ts
 
-✔ runtime imports only Obsidian host API, all bundled inputs are our TS (0.871708ms)
-✔ GN40 ISO100 f4 最大 output -> 10m (0.773125ms)
-✔ 1/4 -> 5m, not 2.5m (0.05525ms)
-✔ 1/16 -> 2.5m (0.046917ms)
-✔ ISO400 1/16 -> 5m (0.0455ms)
-✔ one stop loss reduces distance by sqrt2 (0.051209ms)
-✔ double distance -> -2EV (0.047292ms)
-✔ inverse power round trip across ISO, loss, apertures (0.126041ms)
-✔ 36x24 / 50mm angles (0.049583ms)
-✔ finite DOF beyond old 360in scene remains finite (0.146042ms)
-✔ hyperfocal boundary consistent with H=f²/Nc+f (0.112541ms)
-✔ unit conversion m-ft round trip including GN (0.321625ms)
-✔ reject zero, negative, NaN, empty and impossible focus distance (0.272042ms)
-✔ fixed flash unaffected by focal/sensor changes (0.075542ms)
-✔ missing zoom GN and unsupported modes do not compute (0.17925ms)
-✔ power limit, rounding residual and exposure tolerance (0.131834ms)
-✔ off camera distances independent; coverage warns on narrow flash (0.068916ms)
-✔ equipment table normalizes ft and refuses duplicate/blank values (0.138ms)
-✔ restores only well formed data and presets (0.704166ms)
-✔ plain markdown includes inputs, results, source, date and limits (13.126625ms)
-✔ independent thin lens defocus circle equals CoC at both DOF bounds (0.073333ms)
-✔ rounding EV agrees with forward distance equation at selected output (0.061791ms)
-✔ huge values reject arithmetic overflow instead of displaying spurious infinity (0.074166ms)
-✔ blank input preserves its last finite value while equipment and tab changes persist (1.506542ms)
-✔ rapid valid then blank edits preserve latest finite snapshot (0.105375ms)
-✔ missing preset GN remains unavailable after persistence and restore (0.272375ms)
-✔ hyperfocal button distance reliably gives infinity across focal lengths and apertures (1.381583ms)
-✔ inactive offcamera field does not invalidate linked flash calculation (0.221041ms)
-✔ overflowing footprints and underflowing distances reject rather than claim infinity/zero (0.091167ms)
+✔ runtime imports only Obsidian host API, all bundled inputs are our TS (1.047375ms)
+✔ GN40 ISO100 f4 最大 output -> 10m (0.771167ms)
+✔ 1/4 -> 5m, not 2.5m (0.069542ms)
+✔ 1/16 -> 2.5m (0.047833ms)
+✔ ISO400 1/16 -> 5m (0.096542ms)
+✔ one stop loss reduces distance by sqrt2 (0.094916ms)
+✔ double distance -> -2EV (0.0635ms)
+✔ inverse power round trip across ISO, loss, apertures (0.139042ms)
+✔ 36x24 / 50mm angles (0.054708ms)
+✔ finite DOF beyond old 360in scene remains finite (0.154958ms)
+✔ hyperfocal boundary consistent with H=f²/Nc+f (0.118583ms)
+✔ unit conversion m-ft round trip including GN (0.347583ms)
+✔ reject zero, negative, NaN, empty and impossible focus distance (0.290042ms)
+✔ fixed flash unaffected by focal/sensor changes (0.077959ms)
+✔ missing zoom GN and unsupported modes do not compute (0.182208ms)
+✔ power limit, rounding residual and exposure tolerance (0.129791ms)
+✔ off camera distances independent; coverage warns on narrow flash (0.066833ms)
+✔ equipment table normalizes ft and refuses duplicate/blank values (0.140333ms)
+✔ restores only well formed data and presets (0.710208ms)
+✔ plain markdown includes inputs, results, source, date and limits (12.237083ms)
+✔ independent thin lens defocus circle equals CoC at both DOF bounds (0.074542ms)
+✔ rounding EV agrees with forward distance equation at selected output (0.053667ms)
+✔ huge values reject arithmetic overflow instead of displaying spurious infinity (0.068917ms)
+✔ blank input preserves its last finite value while equipment and tab changes persist (1.635ms)
+✔ rapid valid then blank edits preserve latest finite snapshot (0.099167ms)
+✔ missing preset GN remains unavailable after persistence and restore (0.272042ms)
+✔ hyperfocal button distance reliably gives infinity across focal lengths and apertures (1.407583ms)
+✔ inactive offcamera field does not invalidate linked flash calculation (0.194917ms)
+✔ overflowing footprints and underflowing distances reject rather than claim infinity/zero (0.083458ms)
 ℹ tests 29
 ℹ suites 0
 ℹ pass 29
@@ -38,4 +38,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 161.729958
+ℹ duration_ms 130.861042

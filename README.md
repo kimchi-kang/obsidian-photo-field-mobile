@@ -25,7 +25,7 @@ GitHub: https://github.com/kimchi-kang/obsidian-photo-field-mobile
 
 iOS: Files에서 보관함을 찾고 Mac/PC로 `.obsidian/plugins/photo-field-mobile`을 복사한 후 보관함 전체를 동기화하는 방식이 편리하다. 숨김 폴더 접근이 어려우면 데스크톱에서 설치한 뒤 **설정/플러그인 폴더도 동기화하는 수단**을 사용한다. Obsidian Sync에서는 플러그인·설정 동기화 선택을 확인한다. Android: 보관함 폴더에 접근 가능한 파일 관리자 또는 USB로 복사한다. Android의 보관함 접근 권한과 저장 위치는 OS/앱 구성에 따라 다르다. 설치/동기화 이후 계산과 저장에는 인터넷이 필요 없다. Obsidian 자체의 동기화 동작은 플러그인과 별개다.
 
-플러그인은 설치한 보관함 안에서만 작동한다. 검증 결과는 `docs/VALIDATION.md`에 기록한다. 현재 버전 **1.0.2**의 버그 수정 내역은 [CHANGELOG.md](CHANGELOG.md)에 정리했다. 기존 보관함 내용이나 다른 플러그인을 변경하지 않는다.
+플러그인은 설치한 보관함 안에서만 작동한다. 검증 결과는 `docs/VALIDATION.md`에 기록한다. 현재 버전 **1.0.3**의 버그 수정 내역은 [CHANGELOG.md](CHANGELOG.md)에 정리했다. 기존 보관함 내용이나 다른 플러그인을 변경하지 않는다.
 
 ## 30초 사용 예
 

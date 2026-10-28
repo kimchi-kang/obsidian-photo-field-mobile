@@ -106,7 +106,7 @@
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 20180,
+      "bytes": 20268,
       "imports": [
         {
           "path": "obsidian",
@@ -214,7 +214,7 @@
           "bytesInOutput": 1612
         },
         "src/view.ts": {
-          "bytesInOutput": 24890
+          "bytesInOutput": 24990
         },
         "src/diagram.ts": {
           "bytesInOutput": 5121
@@ -223,7 +223,7 @@
           "bytesInOutput": 7181
         }
       },
-      "bytes": 51978
+      "bytes": 52078
     }
   }
 }

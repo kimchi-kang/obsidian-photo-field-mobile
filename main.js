@@ -419,9 +419,11 @@ var PhotoView = class extends import_obsidian.ItemView {
     return "camera";
   }
   async onOpen() {
+    this.containerEl.dataset.ignoreSwipe = "true";
     this.render();
   }
   async onClose() {
+    delete this.containerEl.dataset.ignoreSwipe;
     this.clean();
     this.contentEl.replaceChildren();
   }

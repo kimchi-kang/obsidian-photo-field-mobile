@@ -21,8 +21,8 @@ export class PhotoView extends ItemView {
   getViewType():string{return VIEW;}
   getDisplayText():string{return '사진 촬영 도우미';}
   getIcon():string{return 'camera';}
-  async onOpen():Promise<void>{this.render();}
-  async onClose():Promise<void>{this.clean();this.contentEl.replaceChildren();}
+  async onOpen():Promise<void>{this.containerEl.dataset.ignoreSwipe='true';this.render();}
+  async onClose():Promise<void>{delete this.containerEl.dataset.ignoreSwipe;this.clean();this.contentEl.replaceChildren();}
   private clean():void {for(const a of this.aborters)a.abort();this.aborters.length=0;this.numeric.clear();this.power=undefined;}
   private listen(el:HTMLElement,event:string,fn:(e:Event)=>void):void {const a=new AbortController();el.addEventListener(event,fn,{signal:a.signal});this.aborters.push(a);}
   private changed():void {
