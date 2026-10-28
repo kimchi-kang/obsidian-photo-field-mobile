@@ -1,7 +1,7 @@
 {
   "inputs": {
     "src/model.ts": {
-      "bytes": 1548,
+      "bytes": 2179,
       "imports": [],
       "format": "esm"
     },
@@ -11,7 +11,7 @@
       "format": "esm"
     },
     "src/engine.ts": {
-      "bytes": 5323,
+      "bytes": 5551,
       "imports": [
         {
           "path": "./model",
@@ -27,7 +27,7 @@
       "format": "esm"
     },
     "src/presets.ts": {
-      "bytes": 955,
+      "bytes": 2604,
       "imports": [
         {
           "path": "./model",
@@ -48,7 +48,7 @@
       "format": "esm"
     },
     "src/storage.ts": {
-      "bytes": 1810,
+      "bytes": 3611,
       "imports": [
         {
           "path": "src/model.ts",
@@ -61,6 +61,11 @@
           "original": "./presets"
         }
       ],
+      "format": "esm"
+    },
+    "src/writer.ts": {
+      "bytes": 1465,
+      "imports": [],
       "format": "esm"
     },
     "src/diagram.ts": {
@@ -85,7 +90,7 @@
       "format": "esm"
     },
     "src/note.ts": {
-      "bytes": 5040,
+      "bytes": 5808,
       "imports": [
         {
           "path": "./model",
@@ -106,7 +111,7 @@
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 24077,
+      "bytes": 28356,
       "imports": [
         {
           "path": "obsidian",
@@ -147,7 +152,7 @@
       "format": "esm"
     },
     "src/main.ts": {
-      "bytes": 3047,
+      "bytes": 5183,
       "imports": [
         {
           "path": "obsidian",
@@ -163,6 +168,16 @@
           "path": "src/storage.ts",
           "kind": "import-statement",
           "original": "./storage"
+        },
+        {
+          "path": "src/writer.ts",
+          "kind": "import-statement",
+          "original": "./writer"
+        },
+        {
+          "path": "src/presets.ts",
+          "kind": "import-statement",
+          "original": "./presets"
         },
         {
           "path": "src/view.ts",
@@ -196,34 +211,37 @@
       "entryPoint": "src/main.ts",
       "inputs": {
         "src/main.ts": {
-          "bytesInOutput": 3270
+          "bytesInOutput": 5794
         },
         "src/model.ts": {
-          "bytesInOutput": 846
+          "bytesInOutput": 1040
         },
         "src/units.ts": {
           "bytesInOutput": 374
         },
         "src/engine.ts": {
-          "bytesInOutput": 5591
+          "bytesInOutput": 5914
         },
         "src/presets.ts": {
-          "bytesInOutput": 902
+          "bytesInOutput": 2629
         },
         "src/storage.ts": {
-          "bytesInOutput": 1612
+          "bytesInOutput": 3659
+        },
+        "src/writer.ts": {
+          "bytesInOutput": 1413
         },
         "src/view.ts": {
-          "bytesInOutput": 29370
+          "bytesInOutput": 34694
         },
         "src/diagram.ts": {
           "bytesInOutput": 7742
         },
         "src/note.ts": {
-          "bytesInOutput": 7181
+          "bytesInOutput": 8128
         }
       },
-      "bytes": 59079
+      "bytes": 73596
     }
   }
 }

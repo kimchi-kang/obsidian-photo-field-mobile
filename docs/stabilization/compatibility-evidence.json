@@ -1,0 +1,11 @@
+{
+  "minAppVersion": "1.7.4",
+  "runtimeTested": "macOS Obsidian 1.14.5 mobile emulation",
+  "oldestRuntimeTested": false,
+  "apiTypeCheck172": "passed",
+  "ignoreSwipeInOfficial174": true,
+  "hashes": {
+    "officialApp174": "454462e6316bb9ea9726403e887a8be691eb34b2cff70a0a8d6db4d3de7615d9",
+    "officialTypes172": "422eb0b21da5c69aef689cbfc643f2b953b5b31537328e01022490a3944b5830"
+  }
+}

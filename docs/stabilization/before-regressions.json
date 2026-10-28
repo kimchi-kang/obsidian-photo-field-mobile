@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-28T14:17:46.552Z",
+  "results": [
+    {
+      "name": "v1 device migration preserves fields and assigns stable IDs",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 2\n"
+    },
+    {
+      "name": "unsupported output is visibly theoretical and device changes do not silently replace it",
+      "passed": false,
+      "error": "TimeoutError: locator.selectOption: Timeout 2500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('저장된 장비', { exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <select aria-label=\"저장된 장비\">…</select>\u001b[22m\n\u001b[2m  - attempting select option action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and enabled\u001b[22m\n\u001b[2m      - did not find some options\u001b[22m\n\u001b[2m    - retrying select option action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and enabled\u001b[22m\n\u001b[2m      - did not find some options\u001b[22m\n\u001b[2m    - retrying select option action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    5 × waiting for element to be visible and enabled\u001b[22m\n\u001b[2m      - did not find some options\u001b[22m\n\u001b[2m    - retrying select option action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "name": "device zoom selects exact GN; missing zoom blocks old GN and lists alternatives",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'40' !== '30'\n"
+    },
+    {
+      "name": "selected device and manual override each restore without ambiguity",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'legacy-1'\n"
+    },
+    {
+      "name": "draft survives secondary render and reload; editing keeps ID and updates selected device",
+      "passed": false,
+      "error": "TimeoutError: locator.selectOption: Timeout 2500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('저장된 장비', { exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <select aria-label=\"저장된 장비\">…</select>\u001b[22m\n\u001b[2m  - attempting select option action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and enabled\u001b[22m\n\u001b[2m      - did not find some options\u001b[22m\n\u001b[2m    - retrying select option action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and enabled\u001b[22m\n\u001b[2m      - did not find some options\u001b[22m\n\u001b[2m    - retrying select option action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    5 × waiting for element to be visible and enabled\u001b[22m\n\u001b[2m      - did not find some options\u001b[22m\n\u001b[2m    - retrying select option action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "name": "deletion is recoverable after reload with device identity intact",
+      "passed": false,
+      "error": "TimeoutError: locator.click: Timeout 2500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '삭제 되돌리기', exact: true })\u001b[22m\n"
+    },
+    {
+      "name": "120 continuous edits persist only latest state including valid-then-blank and fast reentry",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(performanceResult.writes<=3)\n"
+    },
+    {
+      "name": "failed settings save is visible and retry preserves latest value",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(failure.rejected&&failure.visible)\n"
+    },
+    {
+      "name": "12 concurrent notes with identical timestamps and missing folder never overwrite",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 12\n"
+    },
+    {
+      "name": "inactive blanks save but active errors and HSS reject before creating a note",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    bad: true,\n+   good: false,\n-   good: true,\n    hss: true\n  }\n"
+    },
+    {
+      "name": "saved theoretical note contains device, source, zoom, version and matching recommendation",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Synthetic A"
+    }
+  ],
+  "performance": {
+    "events": 120,
+    "paints": 121,
+    "writes": 122,
+    "paintMs": 107,
+    "elapsedMs": 1680,
+    "injectedWriteLatencyMs": 10,
+    "lastSaved": 13.9
+  },
+  "actualIos": false,
+  "actualAndroid": false
+}

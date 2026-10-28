@@ -2,10 +2,12 @@
 
 ## 결과
 
-현재 빌드: **1.1.0**. 버그 재현·회귀 검증 **8/8 통과**, 이전 1.0.0에서 같은 8개 시나리오 실패를 기록했다. 자세한 비교: `bugfix-1.0.1/before.json`, `bugfix-1.0.1/after.json`.
+1.2.0의 수정 전/후14개 안정화 검사와 저장 부하·장비·마이그레이션·노트 동시 실행 결과는 [안정화 보고서](stabilization/REPORT.md). 원문 자동 검사46개는 `stabilization/unit-results.txt`. 최소 버전 근거는 [COMPATIBILITY.md](COMPATIBILITY.md), 데이터 복구는 [MIGRATION.md](MIGRATION.md).
+
+현재 빌드: **1.2.0**. 버그 재현·회귀 검증 **8/8 통과**, 이전 1.0.0에서 같은 8개 시나리오 실패를 기록했다. 자세한 비교: `bugfix-1.0.1/before.json`, `bugfix-1.0.1/after.json`.
 
 - TypeScript strict 타입 검사 + esbuild browser-target 빌드: **통과**.
-- 자동 수치·오류·배포 검사: **31/31 통과**, 실패 0. 원문 `unit-test-results.txt`.
+- 자동 수치·오류·배포 검사: **46/46 통과**, 실패 0. 원문 `unit-test-results.txt`.
 - 실제 macOS Obsidian의 모바일 에뮬레이션 + Chromium DevTools 자동 시나리오: **17/17 통과**, 미처리 런타임 예외 0. 원문 `mobile-test-results.txt`, 기계 판독 `mobile-results.json`.
 - 테스트 보관함: `/private/tmp/photo-field-qa-vault`. 사용자의 기존 노트에서 파괴적 검증을 하지 않았다.
 - 오프라인 모드에서 실제 ItemView 재진입, 수치 변경, Vault API로 새 노트 두 개 생성, 중복 경로 없음, 일반 Markdown 내용 읽기를 검증했다. `example-note.md`는 그 실제 저장물이다.

@@ -17,6 +17,7 @@ try{
  for(const size of [[360,800],[390,844],[844,390]]){await cdp.send('Emulation.setDeviceMetricsOverride',{width:size[0],height:size[1],mobile:true,deviceScaleFactor:1});assert.ok(await page.locator('.pfm-root').evaluate(e=>e.scrollWidth<=e.clientWidth+1));}
  pass('360px portrait and landscape have no horizontal overflow');
  await cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:1000,mobile:true,deviceScaleFactor:1});
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.locator('[data-pfm-subject]').scrollIntoViewIfNeeded();
  const frame=await page.locator('.pfm-root').boundingBox();await page.screenshot({path:'docs/visual-comparison/plugin-after-mobile.png',clip:{x:frame.x,y:frame.y,width:frame.width,height:Math.min(844,1000-frame.y)}});
  await page.screenshot({path:'docs/visual-comparison/scene-preview.png',clip:{x:frame.x,y:frame.y,width:frame.width,height:420}});
  // A real pointer gesture, not a synthetic state update, must move the scene subject.

@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-28T14:10:17.256Z",
+  "unsupported": {
+    "hero": "5.77 m",
+    "marked": false
+  },
+  "performance": {
+    "events": 120,
+    "paints": 120,
+    "writes": 121,
+    "elapsedMs": 1574,
+    "injectedWriteLatencyMs": 10
+  },
+  "notes": {
+    "fulfilled": 8,
+    "rejected": []
+  }
+}
