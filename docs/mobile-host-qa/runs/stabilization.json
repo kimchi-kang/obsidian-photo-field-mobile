@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-29T02:00:03.639Z",
+  "results": [
+    {
+      "name": "v1 device migration preserves fields and assigns stable IDs",
+      "passed": true
+    },
+    {
+      "name": "unsupported output is visibly theoretical and device changes do not silently replace it",
+      "passed": true
+    },
+    {
+      "name": "device zoom selects exact GN; missing zoom blocks old GN and lists alternatives",
+      "passed": true
+    },
+    {
+      "name": "selected device and manual override each restore without ambiguity",
+      "passed": true
+    },
+    {
+      "name": "draft survives secondary render and reload; editing keeps ID and updates selected device",
+      "passed": true
+    },
+    {
+      "name": "deletion is recoverable after reload with device identity intact",
+      "passed": true
+    },
+    {
+      "name": "120 continuous edits persist only latest state including valid-then-blank and fast reentry",
+      "passed": true
+    },
+    {
+      "name": "failed settings save is visible and retry preserves latest value",
+      "passed": true
+    },
+    {
+      "name": "touch drag ending and immediate view close/reentry retain last value",
+      "passed": true
+    },
+    {
+      "name": "save commands and button may run repeatedly without failed or overwritten notes",
+      "passed": true
+    },
+    {
+      "name": "note I/O failure rejects visibly and next request recovers",
+      "passed": true
+    },
+    {
+      "name": "12 concurrent notes with identical timestamps and missing folder never overwrite",
+      "passed": true
+    },
+    {
+      "name": "inactive blanks save but active errors and HSS reject before creating a note",
+      "passed": true
+    },
+    {
+      "name": "saved theoretical note contains device, source, zoom, version and matching recommendation",
+      "passed": true
+    }
+  ],
+  "performance": {
+    "events": 120,
+    "paints": 121,
+    "writes": 1,
+    "paintMs": 109,
+    "elapsedMs": 125,
+    "injectedWriteLatencyMs": 10,
+    "lastSaved": 13.9
+  },
+  "actualIos": false,
+  "actualAndroid": false
+}

@@ -1,0 +1,23 @@
+PASS four mobile viewports and both themes keep all three tab layouts inside the viewport
+PASS large text and reduced available height keep both save buttons reachable above host overlays
+PASS expanded camera and GN controls retain scroll position when closed in view
+FAIL blank input and equipment editor states remain readable without horizontal overflow: locator.scrollIntoViewIfNeeded: Timeout 4000ms exceeded.
+Call log:
+[2m  - waiting for getByLabel('장비 이름', { exact: true })[22m
+
+PASS all visible control targets remain at least 44px and no uncaught errors were observed
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: mobile host QA failed
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/mobile-host-qa.mjs:86:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.0.0

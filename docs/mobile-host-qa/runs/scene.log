@@ -1,0 +1,10 @@
+PASS primary layout restores scene, four DOF readouts, then optical controls
+PASS 360px portrait and landscape have no horizontal overflow
+PASS dragging the subject updates distance and optical results
+PASS touch dragging moves the subject without opening a sidebar
+PASS subject keyboard control remains available without dragging
+PASS direct numeric distance entry updates the scene marker
+PASS aperture updates DOF region and flash distance together
+PASS offcamera mode separates flash geometry from the camera scene
+PASS blank numeric edits do not emit NaN geometry
+PASS finite out-of-scene DOF stays numeric with an arrow
