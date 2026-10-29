@@ -1,0 +1,37 @@
+{
+  "version": "1.2.0",
+  "base": "74d3303",
+  "entries": [
+    {
+      "archive": "dist/photo-field-mobile-1.2.0-post-design-qa-74d3303.zip",
+      "recovery": false,
+      "sha256": "aef776296012b4fc3e6b9d6e0374107e9e68d97e60e997b4ca7d469420e0de0f",
+      "fileMatch": {
+        "photo-field-mobile/main.js": "b9e25afe89aec0c15b369c3d8e480aec81420e1b8264490a523f8dc381624a45",
+        "photo-field-mobile/manifest.json": "255a4e46df9c48559bdfe0b236612e0b57391a06ff12d1d2e35b7639d08c9d4c",
+        "photo-field-mobile/styles.css": "f20a2291f62ca6cc24515978446f5b12546377477d83b5aa45df26487af5ab2e",
+        "photo-field-mobile/LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+        "photo-field-mobile/THIRD_PARTY_NOTICES.md": "c4b91b59d4ed41507df5b4abb618f9a979930a80f0816b161744a2ae16b9a641",
+        "photo-field-mobile/vendor/depth-of-field-LICENSE.txt": "d9ded95dec98e5d03c794d743d9b5aad33cf0f1988c44e252f3a8af6906c9b9d",
+        "photo-field-mobile/CANDIDATE.md": "43c83bb74d7a71b307cf36e06c43d1667654308eae89ae59065e242e14270cb8"
+      },
+      "dataExcluded": true,
+      "licensesVerified": true
+    },
+    {
+      "archive": "dist/photo-field-mobile-1.2.0-74d3303-recovery.zip",
+      "recovery": true,
+      "sha256": "67d9f0401c233f548c880c33cc047565660a5680a7635d93ec75502104db86b2",
+      "fileMatch": {
+        "photo-field-mobile/main.js": "b9e25afe89aec0c15b369c3d8e480aec81420e1b8264490a523f8dc381624a45",
+        "photo-field-mobile/manifest.json": "255a4e46df9c48559bdfe0b236612e0b57391a06ff12d1d2e35b7639d08c9d4c",
+        "photo-field-mobile/styles.css": "def8a58bb75c22c50df080b365b40b3d94f2c75c9238ca4a399e8b9773893f60",
+        "photo-field-mobile/LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+        "photo-field-mobile/THIRD_PARTY_NOTICES.md": "c4b91b59d4ed41507df5b4abb618f9a979930a80f0816b161744a2ae16b9a641",
+        "photo-field-mobile/vendor/depth-of-field-LICENSE.txt": "d9ded95dec98e5d03c794d743d9b5aad33cf0f1988c44e252f3a8af6906c9b9d"
+      },
+      "dataExcluded": true,
+      "licensesVerified": true
+    }
+  ]
+}

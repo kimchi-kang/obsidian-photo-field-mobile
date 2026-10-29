@@ -1,0 +1,65 @@
+
+> photo-field-mobile@1.2.0 test
+> node --import tsx --test tests/*.test.ts
+
+✔ runtime imports only Obsidian host API, all bundled inputs are our TS (1.397333ms)
+✔ important control edges meet 3:1 on the actual light/dark surface tokens (1.372333ms)
+✔ body, error, warning, primary action and focus colors meet their numeric contrast thresholds (0.161125ms)
+✔ every plugin CSS selector remains scoped and contains no remote asset import (2.154417ms)
+✔ GN40 ISO100 f4 最大 output -> 10m (1.005958ms)
+✔ 1/4 -> 5m, not 2.5m (0.075917ms)
+✔ 1/16 -> 2.5m (0.048625ms)
+✔ ISO400 1/16 -> 5m (0.046ms)
+✔ one stop loss reduces distance by sqrt2 (0.053542ms)
+✔ double distance -> -2EV (0.047125ms)
+✔ inverse power round trip across ISO, loss, apertures (0.133666ms)
+✔ 36x24 / 50mm angles (0.048709ms)
+✔ finite DOF beyond old 360in scene remains finite (0.148709ms)
+✔ hyperfocal boundary consistent with H=f²/Nc+f (0.797625ms)
+✔ unit conversion m-ft round trip including GN (0.511833ms)
+✔ reject zero, negative, NaN, empty and impossible focus distance (1.1915ms)
+✔ fixed flash unaffected by focal/sensor changes (0.113875ms)
+✔ missing zoom GN and unsupported modes do not compute (0.216167ms)
+✔ power limit, rounding residual and exposure tolerance (0.139208ms)
+✔ off camera distances independent; coverage warns on narrow flash (0.307ms)
+✔ equipment table normalizes ft and refuses duplicate/blank values (0.392625ms)
+✔ restores only well formed data and presets (0.892833ms)
+✔ plain markdown includes inputs, results, source, date and limits (13.657125ms)
+✔ independent thin lens defocus circle equals CoC at both DOF bounds (0.105292ms)
+✔ rounding EV agrees with forward distance equation at selected output (0.073083ms)
+✔ huge values reject arithmetic overflow instead of displaying spurious infinity (0.099958ms)
+✔ valid optics can be exported with missing GN, unsupported mode and invalid coverage (16.92275ms)
+✔ optics-only export still rejects invalid optics rather than exporting unavailable results (0.127125ms)
+✔ flash export keeps theoretical classification and rejects unsupported flash model (0.631917ms)
+✔ all and combined exports retain full validation and result sections (1.359583ms)
+✔ blank input preserves its last finite value while equipment and tab changes persist (1.623166ms)
+✔ rapid valid then blank edits preserve latest finite snapshot (0.110333ms)
+✔ missing preset GN remains unavailable after persistence and restore (0.276125ms)
+✔ hyperfocal button distance reliably gives infinity across focal lengths and apertures (2.305ms)
+✔ inactive offcamera field does not invalidate linked flash calculation (0.191875ms)
+✔ overflowing footprints and underflowing distances reject rather than claim infinity/zero (0.073583ms)
+✔ scene position maps to metric focus distance independent of view size (1.502416ms)
+✔ dragging cannot produce a nonphysical focus distance or exceed scene extent (0.279375ms)
+✔ unsupported power remains theoretical and recommendation has matching distance and EV (1.000833ms)
+✔ v1 migration preserves gear content and old inputs without inferring a selected device (0.945709ms)
+✔ duplicate or missing ids migrate once and remain stable (0.147083ms)
+✔ equipment restore applies exact zoom data and missing zoom blocks stale GN (0.253541ms)
+✔ manual mode restores independently of retained equipment id (0.08375ms)
+✔ future data versions refuse migration rather than overwriting (0.052167ms)
+✔ draft and deletion undo survive snapshots including blank numeric edits (0.208042ms)
+✔ latest writer coalesces a burst and flush saves final value (0.485209ms)
+✔ latest value arriving during a write is flushed without stale overwrite (3.145208ms)
+✔ failed save retains dirty data and explicit retry recovers (0.721916ms)
+✔ sustained edits are not postponed indefinitely (110.757417ms)
+✔ note includes version, device attribution and theoretical power classification (12.472291ms)
+✔ inactive blanks allow valid note while active invalid input and HSS do not (0.157042ms)
+✔ manual GN settings survive switching to equipment and back after restoration (0.329042ms)
+✔ blank manual value before choosing device restores last finite manual snapshot (0.178416ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 278.650125

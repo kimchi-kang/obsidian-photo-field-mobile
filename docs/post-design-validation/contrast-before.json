@@ -1,0 +1,37 @@
+{
+  "method": "static production CSS token + sRGB luminance calculation; no rendered-browser claim",
+  "results": [
+    {
+      "theme": "light",
+      "border": "#c3bfb5",
+      "background": "#f5f1e8",
+      "ratio": 1.6284864870857856,
+      "required": 3,
+      "passed": false
+    },
+    {
+      "theme": "light",
+      "border": "#c3bfb5",
+      "background": "#fffdf7",
+      "ratio": 1.8046527574979525,
+      "required": 3,
+      "passed": false
+    },
+    {
+      "theme": "dark",
+      "border": "#575a63",
+      "background": "#1c1d20",
+      "ratio": 2.4461774952611783,
+      "required": 3,
+      "passed": false
+    },
+    {
+      "theme": "dark",
+      "border": "#575a63",
+      "background": "#26282d",
+      "ratio": 2.1406340036279707,
+      "required": 3,
+      "passed": false
+    }
+  ]
+}
