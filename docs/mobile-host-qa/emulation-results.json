@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-29T02:02:19.526Z",
+  "host": "macOS Obsidian mobile emulation; Chromium; iOS screen-size proxy only",
+  "vault": "/private/tmp/photo-field-qa-vault",
+  "mobileMode": "app.emulateMobile(true)",
+  "cdpMobile": true,
+  "touchEnabled": true,
+  "actualIos": false,
+  "results": [
+    {
+      "name": "four mobile viewports and both themes keep all three tab layouts inside the viewport",
+      "passed": true
+    },
+    {
+      "name": "large text and reduced available height keep both save buttons reachable above host overlays",
+      "passed": true
+    },
+    {
+      "name": "expanded camera and GN controls retain scroll position when closed in view",
+      "passed": true
+    },
+    {
+      "name": "blank input and equipment editor states remain readable without horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "all visible control targets remain at least 44px and no uncaught errors were observed",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "screenshots": [
+    "360-800-light-combined",
+    "360-800-light-flash",
+    "360-800-light-dof",
+    "360-800-dark-combined",
+    "360-800-dark-flash",
+    "360-800-dark-dof",
+    "390-844-light-combined",
+    "390-844-light-flash",
+    "390-844-light-dof",
+    "390-844-dark-combined",
+    "390-844-dark-flash",
+    "390-844-dark-dof",
+    "430-932-light-combined",
+    "430-932-light-flash",
+    "430-932-light-dof",
+    "430-932-dark-combined",
+    "430-932-dark-flash",
+    "430-932-dark-dof",
+    "844-390-light-combined",
+    "844-390-light-flash",
+    "844-390-light-dof",
+    "844-390-dark-combined",
+    "844-390-dark-flash",
+    "844-390-dark-dof",
+    "390-534-light-large-footer",
+    "430-600-dark-large-footer",
+    "844-260-light-large-footer",
+    "expanded-camera",
+    "expanded-gn",
+    "blank-gn",
+    "equipment-add",
+    "equipment-edit",
+    "equipment-delete-undo"
+  ]
+}

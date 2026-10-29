@@ -1,0 +1,50 @@
+{
+  "base": "6fe771e",
+  "version": "1.2.0",
+  "startWorktree": "clean",
+  "testPaths": {
+    "/private/tmp/photo-field-qa-vault": "/private/tmp/photo-field-qa-vault",
+    "/private/tmp/photo-field-qa-profile": "/private/tmp/photo-field-qa-profile"
+  },
+  "files": {
+    "main.js": {
+      "sha256": "b9e25afe89aec0c15b369c3d8e480aec81420e1b8264490a523f8dc381624a45",
+      "bytes": 76900,
+      "identicalToStartCommit": true
+    },
+    "manifest.json": {
+      "sha256": "255a4e46df9c48559bdfe0b236612e0b57391a06ff12d1d2e35b7639d08c9d4c",
+      "bytes": 341,
+      "identicalToStartCommit": true
+    },
+    "styles.css": {
+      "sha256": "f20a2291f62ca6cc24515978446f5b12546377477d83b5aa45df26487af5ab2e",
+      "bytes": 12970,
+      "identicalToStartCommit": true
+    },
+    "package.json": {
+      "sha256": "5483c985e6f13aab6e7c2528fad640953ded5d365e2ff2a6d464cec808a1376f",
+      "bytes": 441,
+      "identicalToStartCommit": true
+    },
+    "package-lock.json": {
+      "sha256": "00f9ef7ebde386587266af77762d38ccf75b2d50c457b1a888f878162cbcb73f",
+      "bytes": 36659,
+      "identicalToStartCommit": true
+    },
+    "src/view.ts": {
+      "sha256": "542432a045f048ca597cb6e9dac95f7b6dcdf0245230299571c6016053dc882a",
+      "bytes": 30017,
+      "identicalToStartCommit": true
+    },
+    "src/diagram.ts": {
+      "sha256": "54e658a8ed8ffdf43515671e4fd5e584bf79db5d8444d1364279a90f9e700111",
+      "bytes": 6862,
+      "identicalToStartCommit": true
+    }
+  },
+  "productModified": false,
+  "actualHostTests": 69,
+  "unitTestsPassed": 53,
+  "bundleHostDoubleTestsPassed": 15
+}

@@ -1,0 +1,15 @@
+{
+  "archive": "dist/photo-field-mobile-1.2.0-post-design-qa-74d3303.zip",
+  "sha256": "aef776296012b4fc3e6b9d6e0374107e9e68d97e60e997b4ca7d469420e0de0f",
+  "matchesCurrentFiles": {
+    "main.js": true,
+    "manifest.json": true,
+    "styles.css": true,
+    "LICENSE.txt": true,
+    "THIRD_PARTY_NOTICES.md": true,
+    "vendor/depth-of-field-LICENSE.txt": true
+  },
+  "whitelistExact": true,
+  "userDataExcluded": true,
+  "newVisualQAPassed": false
+}

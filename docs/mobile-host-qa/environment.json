@@ -1,0 +1,68 @@
+{
+  "scope": "macOS Obsidian mobile emulation attempt; not completed",
+  "launchServices": {
+    "exit": 1,
+    "error": "NSOSStatusErrorDomain -10827 kLSNoExecutableErr"
+  },
+  "directExecutable": {
+    "exit": 134
+  },
+  "playwrightCDP": {
+    "endpoint": "http://127.0.0.1:9338",
+    "error": "connect EPERM 127.0.0.1:9338 - Local (0.0.0.0:0)"
+  },
+  "nativeInventory": "available; front Obsidian window belongs to live vault; no mutation performed",
+  "mobileModeApplied": false,
+  "viewportApplied": false,
+  "touchApplied": false,
+  "freshScreenshots": 0,
+  "escalationAttempted": false,
+  "resolved": {
+    "launchServicesExit": 0,
+    "cdpConnected": true,
+    "vault": "/private/tmp/photo-field-qa-vault",
+    "profile": "/private/tmp/photo-field-qa-profile",
+    "mobileMode": "app.emulateMobile(true)",
+    "touch": "CDP setTouchEmulationEnabled + Input.dispatchTouchEvent",
+    "viewports": [
+      [
+        360,
+        800
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        430,
+        932
+      ],
+      [
+        844,
+        390
+      ]
+    ],
+    "heightSurrogates": [
+      [
+        390,
+        534
+      ],
+      [
+        430,
+        600
+      ],
+      [
+        844,
+        260
+      ]
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "fontProxy": "20px CSS root",
+    "actualIos": false,
+    "newToolsInstalled": false,
+    "permission": "User explicitly authorized previously permission-requiring execution; reviewed escalation succeeded"
+  }
+}

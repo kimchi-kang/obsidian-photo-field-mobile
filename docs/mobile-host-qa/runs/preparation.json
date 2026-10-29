@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-29T02:00:11.328Z",
+  "host": "macOS Obsidian 1.14.5 Electron/Chromium mobile emulation",
+  "actualIos": false,
+  "actualAndroid": false,
+  "simulator": false,
+  "results": [
+    {
+      "name": "A manual GN40 ISO100 f4 quarter power: screen, Markdown and restored state agree",
+      "passed": true
+    },
+    {
+      "name": "GN decimal typing retains focus and insertion order after clear and reentry",
+      "passed": true
+    },
+    {
+      "name": "distance and custom CoC decimals keep focus and restore after plugin reactivation",
+      "passed": true
+    },
+    {
+      "name": "B create synthetic equipment, exact zoom, missing zoom, theoretical power, note, draft and selection restoration",
+      "passed": true
+    },
+    {
+      "name": "C valid DOF with missing GN and HSS saves only current tab; full save rejects; reentry restores",
+      "passed": true
+    },
+    {
+      "name": "D offcamera axes, independent distances and explicit spatial limitation persist to note and restore",
+      "passed": true
+    },
+    {
+      "name": "view close immediately after edit flushes final state before reactivation",
+      "passed": true
+    },
+    {
+      "name": "background/pagehide hooks flush edits; failed setting save stays failed until explicit retry",
+      "passed": true
+    },
+    {
+      "name": "rapid tabs and offline partial/full Markdown exports with view reentry",
+      "passed": true
+    },
+    {
+      "name": "new save actions remain reachable at 360px, large rem font, landscape and reduced viewport",
+      "passed": true
+    }
+  ],
+  "exceptions": []
+}
