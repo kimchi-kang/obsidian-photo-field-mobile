@@ -1,0 +1,32 @@
+[
+  {
+    "name": "preparation",
+    "exit": 0,
+    "passed": 10
+  },
+  {
+    "name": "stabilization",
+    "exit": 0,
+    "passed": 14
+  },
+  {
+    "name": "mobile-followup",
+    "exit": 0,
+    "passed": 4
+  },
+  {
+    "name": "mobile",
+    "exit": 0,
+    "passed": 17
+  },
+  {
+    "name": "swipe",
+    "exit": 0,
+    "passed": 6
+  },
+  {
+    "name": "mobile-host-qa",
+    "exit": 0,
+    "passed": 5
+  }
+]

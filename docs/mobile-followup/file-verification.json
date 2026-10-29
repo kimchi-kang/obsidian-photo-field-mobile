@@ -1,0 +1,34 @@
+{
+  "base": "bcb428b",
+  "version": "1.2.0",
+  "startWorktree": "clean",
+  "productFiles": {
+    "main.js": {
+      "bytes": 76988,
+      "sha256": "20c250b1595844f8642abf12faffbfa0b4cb70d83633ba6baa93b069d2b51017",
+      "testInstallMatches": true
+    },
+    "manifest.json": {
+      "bytes": 341,
+      "sha256": "255a4e46df9c48559bdfe0b236612e0b57391a06ff12d1d2e35b7639d08c9d4c",
+      "testInstallMatches": true
+    },
+    "styles.css": {
+      "bytes": 13033,
+      "sha256": "240f447ddb5161d5874e688155fb7851bb5bfa1fbefa71bdbc7c939d6efc674b",
+      "testInstallMatches": true
+    }
+  },
+  "unchangedContracts": {
+    "src/engine.ts": true,
+    "src/storage.ts": true,
+    "src/model.ts": true,
+    "src/note.ts": true,
+    "package.json": true,
+    "package-lock.json": true,
+    "manifest.json": true,
+    "LICENSE.txt": true,
+    "THIRD_PARTY_NOTICES.md": true,
+    "vendor/depth-of-field-LICENSE.txt": true
+  }
+}

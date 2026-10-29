@@ -1,0 +1,7 @@
+PASS real ItemView runs in dedicated vault with mobile emulation
+PASS decimal target and focus entry, explicit application, infinity and independent flash save
+PASS nominal conversion label and camera dimension caveats update without losing input focus
+PASS viewport/theme/large font matrix, all tabs, scroll and footer reachability
+PASS touch drag, slider and vertical scrolling keep working
+PASS impossible ranges, blank values, long finite endpoints and custom CoC stay readable
+PASS settings restore and ItemView reentry retain zone and conversion criteria

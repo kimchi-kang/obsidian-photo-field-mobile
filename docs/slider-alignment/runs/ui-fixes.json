@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-29T03:06:37.621Z",
+  "host": "macOS Obsidian mobile emulation; no actual iOS claim",
+  "phase": "after",
+  "results": [
+    {
+      "name": "large flash values and EV never overlap at normal/large text in either theme",
+      "passed": true
+    },
+    {
+      "name": "DOF does not show unused flash-coverage errors; combined still reports them",
+      "passed": true
+    },
+    {
+      "name": "valid DOF-only Markdown saves with missing flash zoom while full/invalid optical results reject",
+      "passed": true
+    },
+    {
+      "name": "GN decimal cursor regression remains fixed after layout changes",
+      "passed": true
+    }
+  ],
+  "exceptions": []
+}

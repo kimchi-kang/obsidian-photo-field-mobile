@@ -23,6 +23,17 @@ export function applyEquipment(state:Saved):void {
 }
 export function equipmentId(equipment:Equipment[]):string {let id=`equipment-${Date.now().toString(36)}`,n=1;while(equipment.some(e=>e.id===id))id=`equipment-${Date.now().toString(36)}-${n++}`;return id;}
 
+// Manufacturer nominal specification, not a measured calibration or a zoom table.
+export function addQ20iii(state:Saved):Equipment {
+  const spec:Omit<Equipment,'id'>={name:'LightPix Labs FlashQ Q20III',
+    conditions:'제조사 공칭 GN20m · ISO100·최대 출력 · 고정 32mm 커버리지 (35mm판). 직광·일반 동조 계산용. 디퓨저·젤 손실 미측정, 실측값 아님.',
+    source:'LightPix Labs Q20III 제품 사양·Quick Manual: https://www.lightpixlabs.com/pages/q20iii',
+    table:{'32':20},minDenominator:64,steps:'1,2,4,8,16,32,64'};
+  let equipment=state.equipment.find(e=>e.name===spec.name&&e.source===spec.source&&e.conditions===spec.conditions&&e.minDenominator===spec.minDenominator&&e.steps===spec.steps&&Object.keys(e.table).length===1&&e.table['32']===20);
+  if(!equipment){equipment={...spec,id:equipmentId(state.equipment)};state.equipment.push(equipment);}
+  state.inputs.zoom=32;selectEquipment(state,equipment.id);return equipment;
+}
+
 export function manualFlash(i:Inputs):ManualFlash {return {gn:i.gn,gnUnit:i.gnUnit,gnZoom:i.gnZoom,conditions:i.conditions,minDenominator:i.minDenominator,steps:i.steps};}
 export function selectEquipment(state:Saved,id:string):void {
   if(state.inputs.gnMode==='manual')state.manualFlash=manualFlash(state.inputs);

@@ -2,6 +2,7 @@
  * All geometry and figure symbols below are newly authored; no original asset paths are reused. */
 import {Inputs} from './model';
 import {optics,flash,coverage} from './engine';
+import {zoneTarget} from './zone';
 import {metres,fmt} from './units';
 const ns='http://www.w3.org/2000/svg';
 export const SCENE={width:400,start:54,end:382};
@@ -12,7 +13,7 @@ export function sceneDistance(x:number,max:number,focal:number):number {
 export function diagram(host:HTMLElement,i:Inputs):void {
   host.replaceChildren();
   if(!Number.isFinite(i.diagramMax)||i.diagramMax<=0){const p=document.createElement('p');p.textContent='그림 최대 거리를 양수로 입력하세요.';host.append(p);return;}
-  const showDof=i.tab!=='flash',showFlash=i.tab!=='dof';
+  const showDof=i.tab!=='flash',showFlash=i.tab!=='dof'&&i.tab!=='zone';
   const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 400 ${showFlash?260:212}`);svg.setAttribute('role','group');svg.setAttribute('aria-label','카메라와 피사체, 렌즈 화각과 심도를 함께 보는 촬영 장면');svg.dataset.scene='true';host.append(svg);
   function el(tag:string,attrs:Record<string,string|number>,text?:string,parent:Element=svg):SVGElement {
     const n=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;parent.append(n);return n;
@@ -31,6 +32,7 @@ export function diagram(host:HTMLElement,i:Inputs):void {
       for(const d of [o.near,o.far])el('line',{x1:x(d),x2:x(d),y1:24,y2:164,class:'pfm-dof-limit'});
     }
   }catch{el('text',{x:70,y:65},'렌즈·초점 입력을 확인하세요.');}
+  if(i.tab==='zone'&&i.zoneFlow==='target')try{const t=zoneTarget(i);el('rect',{x:x(t.near),y:145,width:Math.max(0,x(t.far)-x(t.near)),height:13,fill:`url(#${id}-hatch)`,class:'pfm-target-zone'});el('text',{x:SCENE.start,y:57,class:'pfm-axis-label'},'목표 구간 · 빗금');}catch{/* Target errors appear in the zone result. */}
   if(showFlash&&i.linked)try{cone(coverage(i).v,'pfm-flash-cone');}catch{/* Coverage errors remain visible in the result details. */}
   el('line',{x1:4,x2:390,y1:164,y2:164,class:'pfm-ground'});
   // Photographer and camera are symbols rather than life-size or licensed illustrations.
@@ -46,7 +48,7 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   el('circle',{cx:0,cy:82,r:8},undefined,person);
   el('path',{d:'M0 96 L0 129 M-13 113 L0 100 L13 113 M0 129 L-10 155 M0 129 L10 155',fill:'none',stroke:'currentColor','stroke-width':9,'stroke-linecap':'round','stroke-linejoin':'round'},undefined,person);
   el('circle',{cx:0,cy:177,r:5,class:'pfm-focus-dot'},undefined,person);
-  el('text',{x:Math.max(92,Math.min(subject,340)),y:38,'text-anchor':'middle',class:'pfm-subject-label'},`피사체 ${out(i.cameraDistance)}`);
+  el('text',{x:Math.max(92,Math.min(subject,340)),y:38,'text-anchor':'middle',class:'pfm-subject-label'},`${i.tab==='zone'?'초점':'피사체'} ${i.cameraDistance>i.diagramMax?'→ 그림 밖':out(i.cameraDistance)}`);
   el('line',{x1:SCENE.start,x2:SCENE.end,y1:192,y2:192,class:'pfm-distance-axis'});
   for(let n=0;n<=4;n++){const d=i.diagramMax*n/4;el('line',{x1:x(d),x2:x(d),y1:189,y2:195,class:'pfm-distance-axis'});el('text',{x:x(d),y:208,'text-anchor':n===4?'end':'middle',class:'pfm-axis-label'},`${fmt(d,1)}m`);}
   if(showFlash)try{
@@ -58,8 +60,9 @@ export function diagram(host:HTMLElement,i:Inputs):void {
     el('text',{x:SCENE.start,y:257,class:'pfm-axis-label'},`${i.linked?'플래시':'플래시 독립 거리 축'} · 허용 ${out(f.low)} ~ ${out(f.high)}`);
   }catch{el('text',{x:SCENE.start,y:243,class:'pfm-axis-label'},'플래시 거리: 현재 조건에서 계산 불가');}
   const legend=document.createElement('figcaption');legend.className='pfm-scene-legend';
-  const items=[['pfm-key-camera','카메라 화각'],...(showDof?[['pfm-key-dof','심도']]:[]),...(showFlash&&i.linked?[['pfm-key-flash','플래시 조사각']]:[])];
+  const items=[['pfm-key-camera','카메라 화각'],...(showDof?[['pfm-key-dof','실제 심도 · 실선']]:[]),...(i.tab==='zone'&&i.zoneFlow==='target'?[['pfm-key-target','목표 구간 · 빗금']]:[]),...(showFlash&&i.linked?[['pfm-key-flash','플래시 조사각']]:[])];
   for(const [cls,text]of items){const label=document.createElement('span');label.className=cls;label.textContent=text;legend.append(label);}host.append(legend);
+  if(i.tab==='zone'&&i.zoneFlow==='target')try{const t=zoneTarget(i),p=document.createElement('p');p.className='pfm-scene-note';p.textContent=`목표 구간 · 빗금 ${out(t.near)} ~ ${out(t.far)} · 실제 심도는 실선`;host.append(p);}catch{/* Errors are shown by the zone panel. */}
   const hint=document.createElement('p');hint.className='pfm-scene-hint';hint.textContent='피사체 드래그 · 거리 직접 입력';host.append(hint);
   if(showFlash){const p=document.createElement('p');p.className='pfm-scene-note';p.textContent=i.linked?'플래시 띠: 점선=과다 · 빗금=허용 · 파선=부족 (배광 아님)':'오프카메라: 위치·방향 미입력. 플래시 거리와 카메라 장면은 독립 계산입니다.';host.append(p);}
   try{const o=optics(i);if(showDof&&(o.near>i.diagramMax||o.far>i.diagramMax)){const p=document.createElement('p');p.className='pfm-scene-note';p.textContent=`그림 밖 심도: ${out(o.near)} ~ ${out(o.far)}`;host.append(p);}}catch{/* Result details report the input error. */}

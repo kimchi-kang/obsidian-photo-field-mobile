@@ -1,0 +1,5 @@
+PASS four mobile viewports and both themes keep all three tab layouts inside the viewport
+PASS large text and reduced available height keep both save buttons reachable above host overlays
+PASS expanded camera and GN controls retain scroll position when closed in view
+PASS blank input and equipment editor states remain readable without horizontal overflow
+PASS all visible control targets remain at least 44px and no uncaught errors were observed

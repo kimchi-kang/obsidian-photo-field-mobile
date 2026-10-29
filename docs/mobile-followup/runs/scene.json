@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-29T02:26:19.003Z",
+  "results": [
+    "primary layout restores scene, four DOF readouts, then optical controls",
+    "360px portrait and landscape have no horizontal overflow",
+    "dragging the subject updates distance and optical results",
+    "touch dragging moves the subject without opening a sidebar",
+    "subject keyboard control remains available without dragging",
+    "direct numeric distance entry updates the scene marker",
+    "aperture updates DOF region and flash distance together",
+    "offcamera mode separates flash geometry from the camera scene",
+    "blank numeric edits do not emit NaN geometry",
+    "finite out-of-scene DOF stays numeric with an arrow"
+  ],
+  "actualIos": false,
+  "actualAndroid": false
+}

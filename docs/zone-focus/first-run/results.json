@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-29T03:13:23.744Z",
+  "phase": "after",
+  "vault": "/private/tmp/photo-field-qa-vault",
+  "host": "Obsidian ItemView + app.emulateMobile(true) + CDP mobile viewport and actual touch events",
+  "actualIOS": false,
+  "checks": [
+    {
+      "name": "real ItemView runs in dedicated vault with mobile emulation",
+      "passed": true
+    },
+    {
+      "name": "decimal target and focus entry, explicit application, infinity and independent flash save",
+      "passed": true
+    },
+    {
+      "name": "nominal conversion label and camera dimension caveats update without losing input focus",
+      "passed": true
+    },
+    {
+      "name": "viewport/theme/large font matrix, all tabs, scroll and footer reachability",
+      "passed": true
+    },
+    {
+      "name": "touch drag, slider and vertical scrolling keep working",
+      "passed": true
+    },
+    {
+      "name": "impossible ranges, blank values, long finite endpoints and custom CoC stay readable",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /사용자 지정 CoC/. Input:\n\n'APS-C 명목 1.5× (23.6×15.6mm) · 명목 계수 1.5× · 실제 85mm f/10\\n' +\n  '\\n' +\n  '풀프레임 화각 환산 127.5mm · 심도 대응 약 f/15\\n' +\n  '\\n' +\n  '실제 센서 23.6×15.6mm · 실치수 대각 계수 1.5294×. 화각·실제 심도는 이 치수로 계산합니다. 화면비가 다르므로 대각 기준 환산입니다. 실제 조리개와 노출은 f/10이며 ISO·플래시 출력은 바뀌지 않습니다.\\n' +\n  '심도 대응 조건·화각'\n"
+    },
+    {
+      "name": "settings restore and ItemView reentry retain zone and conversion criteria",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    aperture: 10,\n    apertureMax: 2,\n    apertureMin: 1.4,\n    apertureSteps: '1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32',\n...\n    focal: 85,\n+   gn: 40,\n-   gn: NaN,\n    gnMode: 'manual',\n    gnUnit: 'm',\n    gnZoom: 50,\n    height: 15.6,\n    horizontal: 40,\n...\n    zoneNear: 1,\n+   zoom: 50\n-   zoom: NaN\n  }\n"
+    }
+  ],
+  "errors": [
+    "e.isShown is not a function"
+  ]
+}

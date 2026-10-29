@@ -80,11 +80,20 @@ var defaults = {
   vertical: 27,
   mode: "manual",
   diagramMax: 15,
-  tab: "combined"
+  tab: "combined",
+  cropBasis: "nominal",
+  zoneFlow: "current",
+  zoneNear: 2,
+  zoneFar: 5,
+  zoneInfinity: false,
+  apertureMin: 1.4,
+  apertureMax: 16,
+  apertureSteps: "1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32"
 };
 var sensors = {
   ff: { name: "\uD480\uD504\uB808\uC784", width: 36, height: 24 },
-  apsc: { name: "APS-C (23.6\xD715.6)", width: 23.6, height: 15.6 },
+  apsc: { name: "APS-C \uBA85\uBAA9 1.5\xD7 (23.6\xD715.6mm)", width: 23.6, height: 15.6 },
+  apsc16: { name: "APS-C \uBA85\uBAA9 1.6\xD7 (22.3\xD714.9mm)", width: 22.3, height: 14.9 },
   mft: { name: "Micro Four Thirds", width: 17.3, height: 13 }
 };
 
@@ -256,6 +265,24 @@ function equipmentId(equipment) {
   while (equipment.some((e) => e.id === id)) id = `equipment-${Date.now().toString(36)}-${n++}`;
   return id;
 }
+function addQ20iii(state) {
+  const spec = {
+    name: "LightPix Labs FlashQ Q20III",
+    conditions: "\uC81C\uC870\uC0AC \uACF5\uCE6D GN20m \xB7 ISO100\xB7\uCD5C\uB300 \uCD9C\uB825 \xB7 \uACE0\uC815 32mm \uCEE4\uBC84\uB9AC\uC9C0 (35mm\uD310). \uC9C1\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870 \uACC4\uC0B0\uC6A9. \uB514\uD4E8\uC800\xB7\uC824 \uC190\uC2E4 \uBBF8\uCE21\uC815, \uC2E4\uCE21\uAC12 \uC544\uB2D8.",
+    source: "LightPix Labs Q20III \uC81C\uD488 \uC0AC\uC591\xB7Quick Manual: https://www.lightpixlabs.com/pages/q20iii",
+    table: { "32": 20 },
+    minDenominator: 64,
+    steps: "1,2,4,8,16,32,64"
+  };
+  let equipment = state.equipment.find((e) => e.name === spec.name && e.source === spec.source && e.conditions === spec.conditions && e.minDenominator === spec.minDenominator && e.steps === spec.steps && Object.keys(e.table).length === 1 && e.table["32"] === 20);
+  if (!equipment) {
+    equipment = { ...spec, id: equipmentId(state.equipment) };
+    state.equipment.push(equipment);
+  }
+  state.inputs.zoom = 32;
+  selectEquipment(state, equipment.id);
+  return equipment;
+}
 function manualFlash(i) {
   return { gn: i.gn, gnUnit: i.gnUnit, gnZoom: i.gnZoom, conditions: i.conditions, minDenominator: i.minDenominator, steps: i.steps };
 }
@@ -291,8 +318,11 @@ function restore(data) {
     }
   }
   const i = result.inputs;
+  if (!["nominal", "dimensions"].includes(i.cropBasis)) i.cropBasis = "nominal";
+  if (!["current", "target"].includes(i.zoneFlow)) i.zoneFlow = "current";
+  if (typeof d.inputs === "object" && d.inputs && !("zoneFlow" in d.inputs) && !result.migrationBackup) result.migrationBackup = JSON.parse(JSON.stringify(data));
   if (!["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(i.mode)) i.mode = "manual";
-  if (!["flash", "dof", "combined"].includes(i.tab)) i.tab = "combined";
+  if (!["flash", "dof", "combined", "zone"].includes(i.tab)) i.tab = "combined";
   if (!["m", "ft"].includes(i.gnUnit)) i.gnUnit = "m";
   if (!["approx", "angles"].includes(i.coverage)) i.coverage = "approx";
   if (!["estimate", "custom"].includes(i.cocMode)) i.cocMode = "estimate";
@@ -401,6 +431,60 @@ var LatestWriter = class {
 // src/view.ts
 var import_obsidian = require("obsidian");
 
+// src/zone.ts
+function equivalence(i) {
+  positive(i.width, i.height, i.focal, i.aperture);
+  const dimensional = Math.hypot(36, 24) / Math.hypot(i.width, i.height);
+  const nominal = { ff: 1, apsc: 1.5, apsc16: 1.6, mft: 2 };
+  const useNominal = i.cropBasis === "nominal" && i.sensor in nominal;
+  const crop = useNominal ? nominal[i.sensor] : dimensional;
+  return {
+    crop,
+    dimensional,
+    basis: useNominal ? "\uBA85\uBAA9 \uACC4\uC218" : "\uC2E4\uCE58\uC218 \uB300\uAC01 \uBE44\uC728",
+    focal: i.focal * crop,
+    aperture: i.aperture * crop,
+    differentAspect: Math.abs(i.width / i.height - 1.5) > 1e-3,
+    comparable: i.cocMode === "estimate"
+  };
+}
+function zoneTarget(i) {
+  positive(i.zoneNear, i.focal);
+  if (i.zoneNear * 1e3 <= i.focal) throw Error("\uBAA9\uD45C \uADFC\uAC70\uB9AC\uB294 \uC2E4\uC81C \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4.");
+  if (!i.zoneInfinity) {
+    positive(i.zoneFar);
+    if (i.zoneNear >= i.zoneFar) throw Error("\uBAA9\uD45C \uADFC\uAC70\uB9AC\uB294 \uC6D0\uAC70\uB9AC\uBCF4\uB2E4 \uC791\uC544\uC57C \uD569\uB2C8\uB2E4.");
+  }
+  return { near: i.zoneNear, far: i.zoneInfinity ? Infinity : i.zoneFar };
+}
+function includesTarget(o, t) {
+  return o.near <= t.near + 1e-9 && (t.far === Infinity ? o.far === Infinity : o.far + 1e-9 >= t.far);
+}
+function solveZone(i) {
+  const target = zoneTarget(i);
+  positive(i.apertureMin, i.apertureMax);
+  if (i.apertureMin > i.apertureMax) throw Error("\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12\uC740 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12 \uC774\uD558\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  const c = i.cocMode === "estimate" ? Math.hypot(i.width, i.height) / 1500 : i.coc;
+  positive(i.width, i.height, c);
+  const a = target.near * 1e3, b = target.far * 1e3, f = i.focal;
+  const focus = target.far === Infinity ? 2 * a : 2 * a / (1 + a / b);
+  const h = target.far === Infinity ? 2 * a - f : (2 * a - f * (1 + a / b)) / (1 - a / b);
+  positive(h);
+  const required = f * f / (c * h);
+  const raw = i.apertureSteps.split(",").map((v) => v.trim());
+  if (raw.some((v) => !v || !Number.isFinite(Number(v)) || Number(v) <= 0)) throw Error("\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4\uB97C \uC591\uC218 f\uAC12\uC73C\uB85C \uC785\uB825\uD558\uC138\uC694.");
+  const steps = [...new Set(raw.map(Number))].filter((v) => v >= i.apertureMin && v <= i.apertureMax).sort((a2, b2) => a2 - b2);
+  if (!steps.length) throw Error("\uB80C\uC988 \uBC94\uC704 \uC548\uC5D0 \uC120\uD0DD \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  for (const aperture2 of steps) {
+    const cameraDistance2 = target.far === Infinity ? (f * f / (aperture2 * c) + f) / 1e3 : focus / 1e3;
+    const actual = optics({ ...i, aperture: aperture2, cameraDistance: cameraDistance2 });
+    if (includesTarget(actual, target)) return { possible: true, aperture: aperture2, cameraDistance: cameraDistance2, actual, required, target };
+  }
+  const aperture = steps[steps.length - 1];
+  const cameraDistance = target.far === Infinity ? (f * f / (aperture * c) + f) / 1e3 : focus / 1e3;
+  return { possible: false, aperture, cameraDistance, actual: optics({ ...i, aperture, cameraDistance }), required, target };
+}
+
 // src/diagram.ts
 var ns = "http://www.w3.org/2000/svg";
 var SCENE = { width: 400, start: 54, end: 382 };
@@ -416,7 +500,7 @@ function diagram(host, i) {
     host.append(p);
     return;
   }
-  const showDof = i.tab !== "flash", showFlash = i.tab !== "dof";
+  const showDof = i.tab !== "flash", showFlash = i.tab !== "dof" && i.tab !== "zone";
   const svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", `0 0 400 ${showFlash ? 260 : 212}`);
   svg.setAttribute("role", "group");
@@ -450,6 +534,12 @@ function diagram(host, i) {
   } catch {
     el("text", { x: 70, y: 65 }, "\uB80C\uC988\xB7\uCD08\uC810 \uC785\uB825\uC744 \uD655\uC778\uD558\uC138\uC694.");
   }
+  if (i.tab === "zone" && i.zoneFlow === "target") try {
+    const t = zoneTarget(i);
+    el("rect", { x: x(t.near), y: 145, width: Math.max(0, x(t.far) - x(t.near)), height: 13, fill: `url(#${id}-hatch)`, class: "pfm-target-zone" });
+    el("text", { x: SCENE.start, y: 57, class: "pfm-axis-label" }, "\uBAA9\uD45C \uAD6C\uAC04 \xB7 \uBE57\uAE08");
+  } catch {
+  }
   if (showFlash && i.linked) try {
     cone(coverage(i).v, "pfm-flash-cone");
   } catch {
@@ -468,7 +558,7 @@ function diagram(host, i) {
   el("circle", { cx: 0, cy: 82, r: 8 }, void 0, person);
   el("path", { d: "M0 96 L0 129 M-13 113 L0 100 L13 113 M0 129 L-10 155 M0 129 L10 155", fill: "none", stroke: "currentColor", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, void 0, person);
   el("circle", { cx: 0, cy: 177, r: 5, class: "pfm-focus-dot" }, void 0, person);
-  el("text", { x: Math.max(92, Math.min(subject, 340)), y: 38, "text-anchor": "middle", class: "pfm-subject-label" }, `\uD53C\uC0AC\uCCB4 ${out(i.cameraDistance)}`);
+  el("text", { x: Math.max(92, Math.min(subject, 340)), y: 38, "text-anchor": "middle", class: "pfm-subject-label" }, `${i.tab === "zone" ? "\uCD08\uC810" : "\uD53C\uC0AC\uCCB4"} ${i.cameraDistance > i.diagramMax ? "\u2192 \uADF8\uB9BC \uBC16" : out(i.cameraDistance)}`);
   el("line", { x1: SCENE.start, x2: SCENE.end, y1: 192, y2: 192, class: "pfm-distance-axis" });
   for (let n = 0; n <= 4; n++) {
     const d = i.diagramMax * n / 4;
@@ -488,7 +578,7 @@ function diagram(host, i) {
   }
   const legend = document.createElement("figcaption");
   legend.className = "pfm-scene-legend";
-  const items = [["pfm-key-camera", "\uCE74\uBA54\uB77C \uD654\uAC01"], ...showDof ? [["pfm-key-dof", "\uC2EC\uB3C4"]] : [], ...showFlash && i.linked ? [["pfm-key-flash", "\uD50C\uB798\uC2DC \uC870\uC0AC\uAC01"]] : []];
+  const items = [["pfm-key-camera", "\uCE74\uBA54\uB77C \uD654\uAC01"], ...showDof ? [["pfm-key-dof", "\uC2E4\uC81C \uC2EC\uB3C4 \xB7 \uC2E4\uC120"]] : [], ...i.tab === "zone" && i.zoneFlow === "target" ? [["pfm-key-target", "\uBAA9\uD45C \uAD6C\uAC04 \xB7 \uBE57\uAE08"]] : [], ...showFlash && i.linked ? [["pfm-key-flash", "\uD50C\uB798\uC2DC \uC870\uC0AC\uAC01"]] : []];
   for (const [cls, text] of items) {
     const label = document.createElement("span");
     label.className = cls;
@@ -496,6 +586,13 @@ function diagram(host, i) {
     legend.append(label);
   }
   host.append(legend);
+  if (i.tab === "zone" && i.zoneFlow === "target") try {
+    const t = zoneTarget(i), p = document.createElement("p");
+    p.className = "pfm-scene-note";
+    p.textContent = `\uBAA9\uD45C \uAD6C\uAC04 \xB7 \uBE57\uAE08 ${out(t.near)} ~ ${out(t.far)} \xB7 \uC2E4\uC81C \uC2EC\uB3C4\uB294 \uC2E4\uC120`;
+    host.append(p);
+  } catch {
+  }
   const hint = document.createElement("p");
   hint.className = "pfm-scene-hint";
   hint.textContent = "\uD53C\uC0AC\uCCB4 \uB4DC\uB798\uADF8 \xB7 \uAC70\uB9AC \uC9C1\uC811 \uC785\uB825";
@@ -522,7 +619,8 @@ function diagram(host, i) {
 var limitations = "\uC218\uB3D9 \uD50C\uB798\uC2DC\xB7\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870\xB7\uC911\uC2EC\uBD80 \uB178\uCD9C\uC758 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC2E4\uC81C \uBC30\uAD11\xB7\uBC18\uC0AC\uC728\xB7\uD658\uACBD\uAD11\xB7\uC7A5\uBE44 \uD3B8\uCC28\uB97C \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. TTL, HSS, \uBC14\uC6B4\uC2A4, \uC18C\uD504\uD2B8\uBC15\uC2A4, \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC740 \uC774 \uAE30\uBCF8 \uBAA8\uB378\uB85C \uD655\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC190\uC2E4 \uBCF4\uC815\uC740 \uCD94\uC815\uC774\uBA70 GN\uC5D0 \uC774\uBBF8 \uD3EC\uD568\uB41C \uC190\uC2E4\uC744 \uC911\uBCF5 \uC801\uC6A9\uD558\uC9C0 \uB9C8\uC138\uC694.";
 function validateNote(i, scope = "all") {
   if (scope !== "flash") optics(i);
-  if (scope !== "dof") flash(i);
+  if (scope === "zone" && i.zoneFlow === "target") solveZone(i);
+  if (scope !== "dof" && scope !== "zone") flash(i);
   if (scope === "all" || scope === "combined") coverage(i);
 }
 function note(i, date = /* @__PURE__ */ new Date(), context) {
@@ -531,17 +629,17 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
 \uB0A0\uC9DC: ${date.toISOString()} (${date.toLocaleString("ko-KR")}, \uAE30\uAE30 \uD604\uC9C0 \uC2DC\uAC01)`, `
 ## \uC785\uB825\uAC12
 `, `| \uD56D\uBAA9 | \uAC12 |`, `| --- | --- |`];
-  lines.push(`\uC800\uC7A5 \uBC94\uC704: ${scope === "dof" ? "\uD604\uC7AC \uD0ED \xB7 \uC2EC\uB3C4\xB7\uD654\uAC01 (\uD50C\uB798\uC2DC\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "flash" ? "\uD604\uC7AC \uD0ED \xB7 \uD50C\uB798\uC2DC (\uC2EC\uB3C4\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "combined" ? "\uD604\uC7AC \uD0ED \xB7 \uD1B5\uD569 (\uC804\uCCB4 \uACC4\uC0B0)" : "\uC804\uCCB4 \uACC4\uC0B0"}`);
+  lines.push(`\uC800\uC7A5 \uBC94\uC704: ${scope === "zone" ? "\uD604\uC7AC \uD0ED \xB7 \uC874 \uD3EC\uCEE4\uC2F1 (\uD50C\uB798\uC2DC \uC81C\uC678)" : scope === "dof" ? "\uD604\uC7AC \uD0ED \xB7 \uC2EC\uB3C4\xB7\uD654\uAC01 (\uD50C\uB798\uC2DC\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "flash" ? "\uD604\uC7AC \uD0ED \xB7 \uD50C\uB798\uC2DC (\uC2EC\uB3C4\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "combined" ? "\uD604\uC7AC \uD0ED \xB7 \uD1B5\uD569 (\uC804\uCCB4 \uACC4\uC0B0)" : "\uC804\uCCB4 \uACC4\uC0B0"}`);
   lines.push(`\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804: ${context?.version ?? "\uAC1C\uBC1C/\uBBF8\uC9C0\uC815"}`, `GN \uC785\uB825 \uBAA8\uB4DC: ${i.gnMode === "equipment" ? "\uC7A5\uBE44 \uD45C" : "\uC218\uB3D9 GN"}`, `\uC120\uD0DD \uC7A5\uBE44: ${context?.equipment?.name ?? "\uC5C6\uC74C \xB7 \uC218\uB3D9 GN"}`, `\uC7A5\uBE44 \uCD9C\uCC98: ${context?.equipment?.source ?? "GN \uC870\uAC74 \uCC38\uC870"}`);
-  const labels = { gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44 ID (\uC218\uB3D9 \uBAA8\uB4DC\uC5D0\uC11C\uB294 \uC801\uC6A9 \uC548 \uD568)", sensor: "\uC13C\uC11C \uD504\uB9AC\uC14B", width: "\uC13C\uC11C \uAC00\uB85C mm", height: "\uC13C\uC11C \uC138\uB85C mm", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC mm", aperture: "\uC870\uB9AC\uAC1C f/", iso: "ISO", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC m", linked: "\uC628\uCE74\uBA54\uB77C \uC5F0\uB3D9", flashDistance: "\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC m", cocMode: "CoC \uBC29\uC2DD", coc: "\uC0AC\uC6A9\uC790 CoC mm", gn: "ISO100 \uCD5C\uB300 \uCD9C\uB825 GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C mm", zoom: "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C mm", conditions: "GN \uC870\uAC74", denominator: "\uCD9C\uB825 1/n\uC758 n", loss: "\uCD94\uAC00 \uC190\uC2E4 stop", tolerance: "\uD5C8\uC6A9 \uC624\uCC28 \xB1EV", minDenominator: "\uCD5C\uC18C \uCD9C\uB825 1/n\uC758 n", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coverage: "\uC870\uC0AC\uAC01 \uBC29\uC2DD (approx=\uD480\uD504\uB808\uC784 \uAC00\uC815)", horizontal: "\uC9C1\uC811 \uC785\uB825 \uC218\uD3C9 \uC870\uC0AC\uAC01 \xB0", vertical: "\uC9C1\uC811 \uC785\uB825 \uC218\uC9C1 \uC870\uC0AC\uAC01 \xB0", mode: "\uBC1C\uAD11 \uC870\uAC74", diagramMax: "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC m", tab: "\uD654\uBA74" };
-  const opticalKeys = /* @__PURE__ */ new Set(["sensor", "width", "height", "focal", "aperture", "cameraDistance", "cocMode", "coc", "tab"]);
+  const labels = { gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44 ID (\uC218\uB3D9 \uBAA8\uB4DC\uC5D0\uC11C\uB294 \uC801\uC6A9 \uC548 \uD568)", sensor: "\uC13C\uC11C \uD504\uB9AC\uC14B", width: "\uC13C\uC11C \uAC00\uB85C mm", height: "\uC13C\uC11C \uC138\uB85C mm", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC mm", aperture: "\uC870\uB9AC\uAC1C f/", iso: "ISO", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC m", linked: "\uC628\uCE74\uBA54\uB77C \uC5F0\uB3D9", flashDistance: "\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC m", cocMode: "CoC \uBC29\uC2DD", coc: "\uC0AC\uC6A9\uC790 CoC mm", gn: "ISO100 \uCD5C\uB300 \uCD9C\uB825 GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C mm", zoom: "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C mm", conditions: "GN \uC870\uAC74", denominator: "\uCD9C\uB825 1/n\uC758 n", loss: "\uCD94\uAC00 \uC190\uC2E4 stop", tolerance: "\uD5C8\uC6A9 \uC624\uCC28 \xB1EV", minDenominator: "\uCD5C\uC18C \uCD9C\uB825 1/n\uC758 n", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coverage: "\uC870\uC0AC\uAC01 \uBC29\uC2DD (approx=\uD480\uD504\uB808\uC784 \uAC00\uC815)", horizontal: "\uC9C1\uC811 \uC785\uB825 \uC218\uD3C9 \uC870\uC0AC\uAC01 \xB0", vertical: "\uC9C1\uC811 \uC785\uB825 \uC218\uC9C1 \uC870\uC0AC\uAC01 \xB0", mode: "\uBC1C\uAD11 \uC870\uAC74", diagramMax: "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC m", tab: "\uD654\uBA74", cropBasis: "\uD658\uC0B0 \uAE30\uC900", zoneFlow: "\uC874 \uD750\uB984", zoneNear: "\uBAA9\uD45C \uADFC\uAC70\uB9AC m", zoneFar: "\uBAA9\uD45C \uC720\uD55C \uC6D0\uAC70\uB9AC m (\uBB34\uD55C\uB300 \uC120\uD0DD \uC2DC \uBBF8\uC0AC\uC6A9)", zoneInfinity: "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300", apertureMin: "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12", apertureMax: "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12", apertureSteps: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC2E4\uC81C \uC870\uB9AC\uAC1C \uB2E8\uACC4" };
+  const opticalKeys = /* @__PURE__ */ new Set(["sensor", "width", "height", "focal", "aperture", "cameraDistance", "cocMode", "coc", "tab", "cropBasis"]);
   const flashKeys = /* @__PURE__ */ new Set(["gnMode", "equipmentId", "aperture", "iso", "linked", "cameraDistance", "flashDistance", "gn", "gnUnit", "gnZoom", "zoom", "conditions", "denominator", "loss", "tolerance", "minDenominator", "steps", "mode", "tab"]);
   for (const key of Object.keys(labels)) {
-    if (scope === "dof" && !opticalKeys.has(key) || scope === "flash" && !flashKeys.has(key)) continue;
+    if ((scope === "dof" || scope === "zone") && !opticalKeys.has(key) && !["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity", "apertureMin", "apertureMax", "apertureSteps"].includes(key) || scope === "flash" && !flashKeys.has(key)) continue;
     lines.push(`| ${labels[key]} | ${String(key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode === "estimate" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" ? "\uBBF8\uC0AC\uC6A9" : i[key]).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
   }
   lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n");
-  if (scope !== "dof") try {
+  if (scope !== "dof" && scope !== "zone") try {
     const f = flash(i);
     lines.push(`- \uC120\uD0DD \uCD9C\uB825 1/${i.denominator}: **${f.powerLabel}**`, `- \uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC: ${metres(f.d)}`, `- \uD50C\uB798\uC2DC\u2013\uD53C\uC0AC\uCCB4 \uAC70\uB9AC: ${metres(f.r)} \xB7 \uB178\uCD9C \uCC28\uC774: ${fmt(f.ev)} EV (${f.ev > 0 ? "\uC608\uC0C1 \uACFC\uB2E4" : f.ev < 0 ? "\uC608\uC0C1 \uBD80\uC871" : "\uAE30\uC900 \uC801\uC815"})`, `- \uC720\uD6A8 GN(m): ${fmt(f.gn)}`, `- \xB1${i.tolerance}EV \uAC70\uB9AC \uAD6C\uAC04: ${metres(f.low)} ~ ${metres(f.high)}`, `- \uD544\uC694\uD55C \uC870\uB9AC\uAC1C f/${fmt(f.requiredAperture)} \xB7 \uD544\uC694 \uCD9C\uB825 ${fmt(f.needed * 100)}% \xB7 ${f.status}`, `- \uAD8C\uC7A5 \uC9C0\uC6D0 \uB2E8\uACC4 1/${f.nearest} \xB7 \uD574\uB2F9 \uB2E8\uACC4 \uC608\uC0C1 \uAC70\uB9AC ${metres(f.nearestDistance)}, \uB0A8\uB294 \uB178\uCD9C \uC624\uCC28 ${fmt(f.residual)} EV`);
     lines.push("\n### \uCD9C\uB825\uBCC4 \uAC70\uB9AC\n", "| \uCD9C\uB825 | \uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC |", "| --- | --- |", ...f.distances.map((x) => `| 1/${x.n} | ${metres(x.d)} |`));
@@ -551,9 +649,22 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
   if (scope !== "flash") try {
     const o = optics(i);
     lines.push(`
-- \uC2EC\uB3C4 \uADFC\uAC70\uB9AC ${metres(o.near)} / \uC6D0\uAC70\uB9AC ${metres(o.far)} / \uC804\uCCB4 ${metres(o.total)}`, `- \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(o.hyperfocal)} \xB7 CoC ${fmt(o.c, 5)} mm`, `- \uC218\uD3C9/\uC218\uC9C1/\uB300\uAC01 \uD654\uAC01 ${fmt(o.horizontal)}\xB0 / ${fmt(o.vertical)}\xB0 / ${fmt(o.diagonal)}\xB0`, `- 35mm \uD658\uC0B0 \uCD08\uC810\uAC70\uB9AC ${fmt(o.equivalent)} mm`, `- \uD68C\uC808 Airy \uC9C0\uB984 (\uD30C\uC7A5 550nm) ${fmt(o.airy, 5)} mm, CoC \uB300\uBE44 ${fmt(o.airy / o.c)}\uBC30 (\uADFC\uC0AC)`);
+- \uC2EC\uB3C4 \uADFC\uAC70\uB9AC ${metres(o.near)} / \uC6D0\uAC70\uB9AC ${metres(o.far)} / \uC804\uCCB4 ${metres(o.total)}`, `- \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(o.hyperfocal)} \xB7 CoC ${fmt(o.c, 5)} mm`, `- \uC218\uD3C9/\uC218\uC9C1/\uB300\uAC01 \uD654\uAC01 ${fmt(o.horizontal)}\xB0 / ${fmt(o.vertical)}\xB0 / ${fmt(o.diagonal)}\xB0`, `- \uC2E4\uCE58\uC218 \uB300\uAC01 \uAE30\uC900 \uD480\uD504\uB808\uC784 \uD658\uC0B0 \uCD08\uC810\uAC70\uB9AC ${fmt(o.equivalent)} mm`, `- \uD68C\uC808 Airy \uC9C0\uB984 (\uD30C\uC7A5 550nm) ${fmt(o.airy, 5)} mm, CoC \uB300\uBE44 ${fmt(o.airy / o.c)}\uBC30 (\uADFC\uC0AC)`);
   } catch (e) {
     lines.push(`- \uAD11\uD559 \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (scope !== "flash") try {
+    const e = equivalence(i);
+    lines.push(`
+## \uD480\uD504\uB808\uC784 \uD658\uC0B0
+- ${e.basis} ${fmt(e.crop, 4)}\xD7 \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7`, `- \uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)} \u2192 \uD654\uAC01 \uD658\uC0B0 ${fmt(e.focal)}mm \xB7 \uC2EC\uB3C4 \uB300\uC751 \uC57D f/${fmt(e.aperture)}`, "- \uC2E4\uC81C \uB178\uCD9C \uC870\uB9AC\uAC1C\uB294 \uADF8\uB300\uB85C\uC785\uB2C8\uB2E4. \uAC19\uC740 \uC704\uCE58\xB7\uAD6C\uB3C4\xB7\uBE44\uAD50 \uAC10\uC0C1 \uC870\uAC74\uC758 \uADFC\uC0AC\uC774\uBA70 \uADFC\uC811 \uCD2C\uC601\xB7\uBE0C\uB9AC\uB529\xB7\uD654\uBA74\uBE44 \uCC28\uC774\uB294 \uBBF8\uBC18\uC601.", i.cocMode === "custom" ? "- \uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC: \uC815\uD655\uD55C \uC2EC\uB3C4 \uC77C\uCE58 \uC544\uB2D8." : "- CoC\uB294 \uC13C\uC11C \uB300\uAC01/1500. \uD480\uD504\uB808\uC784 CoC\uB3C4 \uB300\uC751\uC2DC\uCF1C \uBE44\uAD50\uD574\uC57C \uD569\uB2C8\uB2E4. \uBA85\uBAA9/\uC2E4\uCE58\uC218 \uCC28\uC774 \uC874\uC7AC.");
+    if (i.zoneFlow === "target") {
+      const r = solveZone(i);
+      lines.push("\n## \uC874 \uD3EC\uCEE4\uC2F1 \uC5ED\uC0B0", `- \uBAA9\uD45C ${metres(r.target.near)} ~ ${metres(r.target.far)}`, `- ${r.possible ? "\uC81C\uC548 \uAC00\uB2A5" : "\uB2EC\uC131 \uBD88\uAC00 \xB7 \uC870\uB9AC\uAC1C \uC81C\uD55C"}: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(r.cameraDistance)}, \uC2E4\uC81C f/${fmt(r.aperture)}`, `- \uC81C\uC548 \uAC80\uC0B0 ${metres(r.actual.near)} ~ ${metres(r.actual.far)} \xB7 \uC774\uB860 \uD544\uC694 f/${fmt(r.required, 4)}`);
+    }
+    lines.push("- \uC5ED\uC0B0 \uAC00\uC815: \uC720\uD55C \uAD6C\uAC04 a,b\uC5D0\uC11C s=2ab/(a+b), h=(2ab\u2212f(a+b))/(b\u2212a), N=f\xB2/(c\xB7h). \uBB34\uD55C\uB300\uB294 H\u22642a, \uC801\uC6A9 \uCD08\uC810=H. \uC2E4\uC81C \uC0AC\uC6A9 \uB2E8\uACC4 \uC911 \uAC00\uC7A5 \uAC1C\uBC29\uB41C \uC870\uB9AC\uAC1C\uBD80\uD130 \uAE30\uC874 \uC2EC\uB3C4 \uC5D4\uC9C4\uC73C\uB85C \uC7AC\uAC80\uC0B0. CoC \uD5C8\uC6A9 \uBC94\uC704\uC774\uBA70 \uC808\uB300 \uC120\uBA85\uB3C4 \uACBD\uACC4 \uC544\uB2D8.");
+  } catch (e) {
+    lines.push(`- \uC874/\uD658\uC0B0 \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
   }
   if (scope === "all" || scope === "combined") try {
     const c = coverage(i);
@@ -706,7 +817,7 @@ var PhotoView = class extends import_obsidian.ItemView {
   number(parent, label, key, options) {
     const wrap = node(parent, "label", void 0, "pfm-field");
     wrap.dataset.field = key;
-    const compact = { cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC (m)", aperture: "\uC870\uB9AC\uAC1C (f/)", focal: "\uCD08\uC810\uAC70\uB9AC (mm)" };
+    const compact = { cameraDistance: "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC (m)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C (f/)", focal: "\uCD08\uC810\uAC70\uB9AC (mm)" };
     node(wrap, "span", compact[key] ?? label);
     const input = node(wrap, "input");
     input.type = "number";
@@ -855,9 +966,11 @@ var PhotoView = class extends import_obsidian.ItemView {
     const header = node(this.root, "header");
     node(header, "h1", "\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8");
     node(header, "p", "\uC870\uB9AC\uAC1C \uD558\uB098\uB85C, \uBE5B\uACFC \uC2EC\uB3C4\uB97C \uD568\uAED8.");
+    const version = node(this.root, "p", `v${this.plugin.manifest.version}`, "pfm-version");
+    version.setAttribute("aria-label", `\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804 ${this.plugin.manifest.version}`);
     const tabs = node(this.root, "nav", void 0, "pfm-tabs");
     tabs.setAttribute("aria-label", "\uACC4\uC0B0 \uD654\uBA74");
-    for (const [v, t] of Object.entries({ flash: "\uD50C\uB798\uC2DC", dof: "\uC2EC\uB3C4\xB7\uD654\uAC01", combined: "\uD1B5\uD569" })) {
+    for (const [v, t] of Object.entries({ flash: "\uD50C\uB798\uC2DC", dof: "\uC2EC\uB3C4\xB7\uD654\uAC01", combined: "\uD1B5\uD569", zone: "\uC874 \uD3EC\uCEE4\uC2F1" })) {
       const b = this.button(tabs, t, () => {
         this.plugin.update("tab", v);
         this.changed();
@@ -900,6 +1013,8 @@ var PhotoView = class extends import_obsidian.ItemView {
       const r = this.numeric.get("flashDistance")?.range;
       if (r) r.disabled = check.checked;
     });
+    this.equivalent = node(quick, "div", void 0, "pfm-equivalence");
+    this.zonePanel();
     this.resultDetails = node(this.root, "section", void 0, "pfm-result-details");
     const camera = this.details("\uCE74\uBA54\uB77C\xB7\uB80C\uC988\xB7CoC");
     this.select(quick, "\uC13C\uC11C \uD504\uB9AC\uC14B", "sensor", { ...Object.fromEntries(Object.entries(sensors).map(([k, v]) => [k, v.name])), custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815" }, () => {
@@ -911,13 +1026,14 @@ var PhotoView = class extends import_obsidian.ItemView {
         this.syncNumeric("height");
       }
     });
+    this.select(camera, "\uD480\uD504\uB808\uC784 \uD658\uC0B0 \uAE30\uC900", "cropBasis", { nominal: "\uD504\uB9AC\uC14B \uBA85\uBAA9 \uACC4\uC218 (\uC0AC\uC6A9\uC790 \uC13C\uC11C\uB294 \uC2E4\uCE58\uC218)", dimensions: "\uC13C\uC11C \uC2E4\uCE58\uC218 \uB300\uAC01 \uBE44\uC728" });
     this.number(camera, "\uC13C\uC11C \uAC00\uB85C (mm)", "width");
     this.number(camera, "\uC13C\uC11C \uC138\uB85C (mm)", "height");
     for (const key of ["width", "height"]) this.listen(this.numeric.get(key).input, "input", () => {
       this.plugin.update("sensor", "custom");
       const s = this.root.querySelector("select[data-key=sensor]");
       if (s) s.value = "custom";
-      void this.plugin.persist().catch((e) => this.plugin.reportSaveError(e));
+      this.changed();
     });
     this.number(quick, "ISO", "iso");
     this.number(quick, "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC (mm)", "focal", { min: 8, max: 200, step: 1 });
@@ -1006,10 +1122,98 @@ var PhotoView = class extends import_obsidian.ItemView {
     node(footer, "p", "\uD604\uC7AC \uD0ED: \uC2EC\uB3C4\xB7\uD654\uAC01 \uB610\uB294 \uD50C\uB798\uC2DC \uACB0\uACFC\uB9CC \uC800\uC7A5 \xB7 \uD1B5\uD569/\uC804\uCCB4: \uBAA8\uB4E0 \uACC4\uC0B0 \uC870\uAC74 \uD544\uC694 \xB7 \uC77C\uBC18 Markdown \xB7 \uC0C8 \uB178\uD2B8 \uC0DD\uC131 \xB7 \uC624\uD504\uB77C\uC778");
     this.paint(false);
   }
+  zonePanel() {
+    const section = node(this.root, "section", void 0, "pfm-zone-panel");
+    node(section, "h2", "\uC874 \uD3EC\uCEE4\uC2F1");
+    this.select(section, "\uC874 \uD3EC\uCEE4\uC2F1 \uD750\uB984", "zoneFlow", { current: "\uD604\uC7AC \uC124\uC815\uC73C\uB85C \uD655\uC778", target: "\uC6D0\uD558\uB294 \uCD2C\uC601 \uAD6C\uAC04\uC73C\uB85C \uC5ED\uC0B0" });
+    const target = node(section, "div", void 0, "pfm-zone-target");
+    this.number(target, "\uBAA9\uD45C \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uAC70\uB9AC (m)", "zoneNear");
+    this.number(target, "\uBAA9\uD45C \uAC00\uC7A5 \uBA3C \uAC70\uB9AC (m)", "zoneFar");
+    const wrap = node(target, "label", void 0, "pfm-check");
+    const infinity = node(wrap, "input");
+    infinity.type = "checkbox";
+    infinity.checked = this.plugin.state.inputs.zoneInfinity;
+    infinity.dataset.key = "zoneInfinity";
+    node(wrap, "span", "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300");
+    this.listen(infinity, "change", () => {
+      this.plugin.update("zoneInfinity", infinity.checked);
+      this.changed();
+    });
+    this.number(target, "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12 (\uD558\uD55C)", "apertureMin");
+    this.number(target, "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12 (\uC0C1\uD55C)", "apertureMax");
+    const steps = this.text(target, "\uC2E4\uC81C \uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4 (\uC27C\uD45C \uAD6C\uBD84)", this.plugin.state.inputs.apertureSteps);
+    steps.dataset.key = "apertureSteps";
+    this.listen(steps, "input", () => {
+      this.plugin.update("apertureSteps", steps.value);
+      this.changed();
+    });
+    this.zoneResult = node(section, "div", void 0, "pfm-zone-result");
+    this.zoneResult.setAttribute("aria-live", "polite");
+    node(section, "p", "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC(m)\uB294 \uB80C\uC988\uC758 \uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)\uC640 \uB2E4\uB985\uB2C8\uB2E4. CoC \uAE30\uC900\uC758 \uD5C8\uC6A9 \uBC94\uC704\uC774\uBA70 \uC808\uB300\uC801\uC778 \uC120\uBA85\xB7\uD750\uB9BC \uACBD\uACC4\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uC774 \uB3C4\uAD6C\uB294 \uCD2C\uC601 \uCC38\uACE0\uC6A9 \uACC4\uC0B0\uC774\uBA70 \uCE74\uBA54\uB77C\xB7\uB80C\uC988\uB97C \uC81C\uC5B4\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  }
+  paintEquivalence() {
+    const i = this.plugin.state.inputs;
+    this.equivalent.replaceChildren();
+    try {
+      const e = equivalence(i);
+      node(this.equivalent, "p", `${sensors[i.sensor]?.name ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 ${e.basis} ${fmt(e.crop, 3)}\xD7 \xB7 \uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)}`);
+      node(this.equivalent, "p", `\uD480\uD504\uB808\uC784 \uD654\uAC01 \uD658\uC0B0 ${fmt(e.focal, 2)}mm \xB7 \uC2EC\uB3C4 \uB300\uC751 \uC57D f/${fmt(e.aperture, 2)}`);
+      node(this.equivalent, "small", `\uC2E4\uC81C \uC13C\uC11C ${fmt(i.width)}\xD7${fmt(i.height)}mm \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7. \uD654\uAC01\xB7\uC2E4\uC81C \uC2EC\uB3C4\uB294 \uC774 \uCE58\uC218\uB85C \uACC4\uC0B0\uD569\uB2C8\uB2E4. ${e.differentAspect ? "\uD654\uBA74\uBE44\uAC00 \uB2E4\uB974\uBBC0\uB85C \uB300\uAC01 \uAE30\uC900 \uD658\uC0B0\uC785\uB2C8\uB2E4. " : ""}\uC2E4\uC81C \uC870\uB9AC\uAC1C\uC640 \uB178\uCD9C\uC740 f/${fmt(i.aperture)}\uC774\uBA70 ISO\xB7\uD50C\uB798\uC2DC \uCD9C\uB825\uC740 \uBC14\uB00C\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`);
+      if (i.cocMode === "custom") node(this.equivalent, "p", "\uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC \xB7 \uC2EC\uB3C4 \uB300\uC751\uAC12\uC740 \uC815\uD655\uD55C \uC77C\uCE58\uAC00 \uC544\uB2D9\uB2C8\uB2E4.", "pfm-equivalence-caveat");
+      const details = node(this.equivalent, "details");
+      node(details, "summary", "\uC2EC\uB3C4 \uB300\uC751 \uC870\uAC74\xB7\uD654\uAC01");
+      node(details, "p", "\uAC19\uC740 \uCD2C\uC601 \uC704\uCE58\xB7\uAD6C\uB3C4\uC640 \uBE44\uAD50 \uAC00\uB2A5\uD55C \uAC10\uC0C1 \uC870\uAC74\uC5D0\uC11C\uC758 \uADFC\uC0AC\uC785\uB2C8\uB2E4. \uADFC\uC811 \uCD2C\uC601\xB7\uD3EC\uCEE4\uC2A4 \uBE0C\uB9AC\uB529\xB7\uC11C\uB85C \uB2E4\uB978 \uD654\uBA74\uBE44\uC5D0\uC11C\uB294 \uC644\uC804 \uC77C\uCE58\uB97C \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      node(details, "p", i.cocMode === "custom" ? "\uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC: \uBE44\uAD50 \uAC10\uC0C1 \uC870\uAC74\uC774 \uB2EC\uB77C \uAE30\uBCF8 \uC2EC\uB3C4 \uD658\uC0B0\uC744 \uC815\uD655\uD55C \uC77C\uCE58\uB85C \uBCFC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." : "\uAE30\uBCF8 CoC\uB294 \uC13C\uC11C \uB300\uAC01/1500. \uBE44\uAD50\uD560 \uD480\uD504\uB808\uC784 CoC\uB3C4 \uAC19\uC740 \uAC10\uC0C1 \uAE30\uC900\uC73C\uB85C \uB300\uC751\uD574\uC57C \uD569\uB2C8\uB2E4. \uBA85\uBAA9 \uACC4\uC218\uC640 \uC2E4\uCE58\uC218 \uACC4\uC218 \uCC28\uC774\uAC00 \uC788\uC5B4 \uC815\uD655\uD55C \uC2EC\uB3C4 \uC77C\uCE58\uB97C \uB73B\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      const o = optics(i);
+      node(details, "p", `\uC2E4\uC81C \uD654\uAC01 \uC218\uD3C9 ${fmt(o.horizontal, 1)}\xB0 \xB7 \uC218\uC9C1 ${fmt(o.vertical, 1)}\xB0 \xB7 \uB300\uAC01 ${fmt(o.diagonal, 1)}\xB0`);
+    } catch (e) {
+      node(this.equivalent, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+    }
+  }
+  paintZone() {
+    const i = this.plugin.state.inputs;
+    this.root.dataset.zoneFlow = i.zoneFlow;
+    const far = this.numeric.get("zoneFar");
+    if (far) far.input.disabled = i.zoneInfinity;
+    this.zoneResult.replaceChildren();
+    try {
+      const current = optics(i);
+      node(this.zoneResult, "p", `${metres(i.cameraDistance)}\uC5D0 \uCD08\uC810\uC744 \uB9DE\uCD94\uBA74 \uC57D ${metres(current.near)} ~ ${metres(current.far)} \uBC94\uC704\uAC00 \uD5C8\uC6A9 \uC120\uBA85\uB3C4 \uC548\uC5D0 \uB4E4\uC5B4\uC635\uB2C8\uB2E4.`);
+      node(this.zoneResult, "p", `\uC804\uCCB4 \uC2EC\uB3C4 ${metres(current.total)} \xB7 \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(current.hyperfocal)}`);
+      if (i.zoneFlow === "target") {
+        const r = solveZone(i);
+        const included = includesTarget(current, r.target);
+        node(this.zoneResult, "strong", included ? "\uBAA9\uD45C \uAD6C\uAC04 \uD3EC\uD568" : r.possible ? "\uC77C\uBD80 \uBD80\uC871 \xB7 \uC81C\uC548 \uC124\uC815\uC744 \uC801\uC6A9\uD558\uC138\uC694" : "\uB2EC\uC131 \uBD88\uAC00 \xB7 \uB80C\uC988 \uC870\uB9AC\uAC1C \uC81C\uD55C", "pfm-zone-status");
+        node(this.zoneResult, "p", `\uBAA9\uD45C ${metres(r.target.near)} ~ ${metres(r.target.far)} \xB7 \uC774\uB860 \uD544\uC694 f/${fmt(r.required, 3)}`);
+        node(this.zoneResult, "p", `${r.possible ? "\uC81C\uC548" : "\uB80C\uC988 \uD55C\uACC4\uC5D0\uC11C \uB300\uC548"}: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(r.aperture)} \u2192 ${metres(r.actual.near)} ~ ${metres(r.actual.far)}`);
+        if (r.possible) {
+          const b = node(this.zoneResult, "button", "\uC5ED\uC0B0 \uACB0\uACFC\uB97C \uD604\uC7AC \uC124\uC815\uC5D0 \uC801\uC6A9");
+          b.type = "button";
+          b.dataset.zoneApply = "true";
+          b.onclick = () => {
+            this.plugin.update("cameraDistance", r.cameraDistance);
+            this.plugin.update("aperture", r.aperture);
+            this.syncNumeric("cameraDistance");
+            this.syncNumeric("aperture");
+            this.changed();
+          };
+        } else node(this.zoneResult, "p", "\uC9C0\uC6D0\uD558\uB294 \uC870\uB9AC\uAC1C \uB2E8\uACC4\uB85C \uBAA9\uD45C \uC804\uCCB4\uB97C \uD3EC\uD568\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uBAA9\uD45C \uADFC\uAC70\uB9AC\uB97C \uB354 \uBA40\uB9AC \uD558\uAC70\uB098 \uC6D0\uAC70\uB9AC\uB97C \uC904\uC774\uAC70\uB098 \uC2E4\uC81C \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC(mm)\uB97C \uC9E7\uAC8C \uD574 \uB2E4\uC2DC \uACC4\uC0B0\uD558\uC138\uC694. \uC704 \uB300\uC548\uC740 \uC804\uCCB4 \uD3EC\uD568\uC744 \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.", "pfm-error");
+      }
+    } catch (e) {
+      node(this.zoneResult, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+    }
+  }
   equipmentPanel() {
     const p = this.details("\uB0B4 \uC7A5\uBE44 \uD504\uB9AC\uC14B \xB7 \uC90C\uBCC4 GN \uD45C");
-    node(p, "p", "\uC81C\uC870\uC0AC \uB0B4\uC7A5 \uC218\uCE58 \uC5C6\uC74C. \uC124\uBA85\uC11C/\uC2E4\uCE21\uC758 ISO100\xB7\uCD5C\uB300 \uCD9C\uB825 GN\uACFC \uC9C0\uC6D0 \uCD9C\uB825\uC744 \uC785\uB825\uD558\uC138\uC694.");
+    node(p, "p", "Q20III \uACF5\uC2DD \uC0AC\uC591\uC744 \uBD88\uB7EC\uC624\uAC70\uB098, \uC124\uBA85\uC11C/\uC2E4\uCE21\uC758 ISO100\xB7\uCD5C\uB300 \uCD9C\uB825 GN\uACFC \uC9C0\uC6D0 \uCD9C\uB825\uC744 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.");
     const state = this.plugin.state;
+    this.button(p, "FlashQ Q20III \uCD94\uAC00\xB7\uC120\uD0DD", () => {
+      addQ20iii(state);
+      this.changed();
+      this.render();
+      void this.plugin.flush().then(() => new import_obsidian.Notice("Q20III \uC120\uD0DD \xB7 \uACE0\uC815 32mm \uCEE4\uBC84\uB9AC\uC9C0 \xB7 \uC81C\uC870\uC0AC \uACF5\uCE6D GN20m")).catch((e) => this.plugin.reportSaveError(e));
+    });
+    node(p, "p", "Q20III: ISO100 GN20m \xB7 1/1~1/64\uC758 7\uB2E8\uACC4. 32mm\uB294 \uD50C\uB798\uC2DC\uC758 \uACE0\uC815 \uCEE4\uBC84\uB9AC\uC9C0\uC774\uBA70 \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC\uC640 \uBCC4\uAC1C\uC785\uB2C8\uB2E4. \uB514\uD4E8\uC800\xB7\uC824\xB7\uBC14\uC6B4\uC2A4 \uC190\uC2E4\uC740 \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     const list = node(p, "select");
     list.setAttribute("aria-label", "\uC800\uC7A5\uB41C \uC7A5\uBE44");
     const placeholder = node(list, "option", "\uC7A5\uBE44 \uC120\uD0DD");
@@ -1185,7 +1389,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(od, "summary", "\uC804\uCCB4 \uC2EC\uB3C4\xB7\uACFC\uCD08\uC810\xB7\uD654\uAC01\xB7\uD68C\uC808");
       node(od, "p", `\uADFC\uAC70\uB9AC ${metres(o.near)} \xB7 \uC6D0\uAC70\uB9AC ${metres(o.far)} \xB7 \uC804\uCCB4 ${metres(o.total)} \xB7 \uACFC\uCD08\uC810 ${metres(o.hyperfocal)}`);
       node(od, "p", `\uD654\uAC01 \uC218\uD3C9 ${fmt(o.horizontal, 1)}\xB0 / \uC218\uC9C1 ${fmt(o.vertical, 1)}\xB0 / \uB300\uAC01 ${fmt(o.diagonal, 1)}\xB0`);
-      node(od, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm \u2192 35mm \uD658\uC0B0 ${fmt(o.equivalent, 1)}mm \xB7 CoC ${fmt(o.c, 5)}mm`);
+      node(od, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm \u2192 \uC2E4\uCE58\uC218 \uB300\uAC01 \uAE30\uC900 \uD658\uC0B0 ${fmt(o.equivalent, 1)}mm \xB7 CoC ${fmt(o.c, 5)}mm`);
       node(od, "p", `\uD68C\uC808 \uADFC\uC0AC: \uD30C\uC7A5 550nm, Airy \uC9C0\uB984 ${fmt(o.airy, 5)}mm (${fmt(o.airy / o.c)}\xD7CoC). ${o.airy > o.c ? "CoC\uBCF4\uB2E4 \uCEE4\uC9C8 \uC218 \uC788\uC74C." : "CoC \uC774\uD558."} \uC808\uB300 \uC120\uBA85\uB3C4 \uD310\uC815\uC774 \uC544\uB2D9\uB2C8\uB2E4.`);
     } catch (e) {
       node(dof, "p", e instanceof Error ? e.message : String(e), "pfm-error");
@@ -1197,9 +1401,11 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(p, "p", `\uD504\uB808\uC784 ${fmt(c.camera.width)}\xD7${fmt(c.camera.height)}m \xB7 \uC870\uC0AC \uBC94\uC704 ${fmt(c.flash.width)}\xD7${fmt(c.flash.height)}m`);
       node(p, "p", i.linked ? c.narrow ? "\uC8FC\uC758: \uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uC624\uD504\uCE74\uBA54\uB77C: \uAC01\uAC01\uC758 \uAC70\uB9AC \uD3C9\uBA74 \uBC94\uC704\uC785\uB2C8\uB2E4. \uC704\uCE58\xB7\uBC29\uD5A5\uC744 \uC785\uB825\uD558\uC9C0 \uC54A\uC544 \uACF5\uAC04 \uC911\uCCA9\uC744 \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     } catch (e) {
-      node(this.resultDetails, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+      node(this.resultDetails, "p", `\uD504\uB808\uC784\xB7\uC870\uC0AC \uBC94\uC704 \uBE44\uAD50: ${e instanceof Error ? e.message : String(e)}`, "pfm-error pfm-coverage-results");
     }
     if (i.loss > 0) node(this.resultDetails, "p", "\uCD94\uAC00 \uC190\uC2E4\uC744 \uC801\uC6A9\uD55C \uCD94\uC815. GN\uC5D0 \uD3EC\uD568\uB41C \uC190\uC2E4\uC758 \uC911\uBCF5 \uBCF4\uC815\uC5D0 \uC8FC\uC758\uD558\uC138\uC694.");
+    this.paintEquivalence();
+    this.paintZone();
     this.restoreDetails();
     diagram(this.picture, i);
   }

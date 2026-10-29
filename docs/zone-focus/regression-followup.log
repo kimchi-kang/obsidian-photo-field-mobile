@@ -1,0 +1,4 @@
+PASS large flash values and EV never overlap at normal/large text in either theme
+PASS DOF does not show unused flash-coverage errors; combined still reports them
+PASS valid DOF-only Markdown saves with missing flash zoom while full/invalid optical results reject
+PASS GN decimal cursor regression remains fixed after layout changes

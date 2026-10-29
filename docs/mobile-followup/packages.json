@@ -1,0 +1,33 @@
+[
+  {
+    "file": "dist/photo-field-mobile-1.2.0-mobile-fix-bcb428b.zip",
+    "recovery": false,
+    "sha256": "0e726620ef1de7910632ee6a7b90168a99d485bc5a7d00a224fb0487fa3a6085",
+    "entries": [
+      "photo-field-mobile/main.js",
+      "photo-field-mobile/manifest.json",
+      "photo-field-mobile/styles.css",
+      "photo-field-mobile/LICENSE.txt",
+      "photo-field-mobile/THIRD_PARTY_NOTICES.md",
+      "photo-field-mobile/vendor/depth-of-field-LICENSE.txt",
+      "photo-field-mobile/CANDIDATE.md"
+    ],
+    "exactMatch": true,
+    "userDataExcluded": true
+  },
+  {
+    "file": "dist/photo-field-mobile-1.2.0-bcb428b-recovery.zip",
+    "recovery": true,
+    "sha256": "f771c1796087d211eb69019145848a56d77f735fe3c3e01f9436467781cda3b4",
+    "entries": [
+      "photo-field-mobile/main.js",
+      "photo-field-mobile/manifest.json",
+      "photo-field-mobile/styles.css",
+      "photo-field-mobile/LICENSE.txt",
+      "photo-field-mobile/THIRD_PARTY_NOTICES.md",
+      "photo-field-mobile/vendor/depth-of-field-LICENSE.txt"
+    ],
+    "exactMatch": true,
+    "userDataExcluded": true
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "main.js": {
+    "sha256": "b0b6a661abbc8c53e4cd75c17f6fe49447fed78af0e0e644bb8d5aca209bf52a",
+    "bytes": 78835,
+    "testInstallMatches": true
+  },
+  "manifest.json": {
+    "sha256": "255a4e46df9c48559bdfe0b236612e0b57391a06ff12d1d2e35b7639d08c9d4c",
+    "bytes": 341,
+    "testInstallMatches": true
+  },
+  "styles.css": {
+    "sha256": "14b2bb1198d6726068aebe62aa1e115a912023dda1f1834f3b763c2185914883",
+    "bytes": 13039,
+    "testInstallMatches": true
+  }
+}

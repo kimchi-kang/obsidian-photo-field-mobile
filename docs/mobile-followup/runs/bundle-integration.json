@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-29 KST",
+  "host": "Node VM + actual production main.js; Obsidian API boundary doubles and a separate temporary filesystem vault; no rendered UI claim",
+  "results": [
+    {
+      "name": "actual bundle exports correct GN40/ISO100/f4 full/quarter distance and double-distance EV to Markdown",
+      "passed": true
+    },
+    {
+      "name": "aperture changes both optical/flash note results and fixed GN is independent of focal length",
+      "passed": true
+    },
+    {
+      "name": "offcamera camera/flash distance planes and EV remain independent in actual bundle notes",
+      "passed": true
+    },
+    {
+      "name": "hyperfocal infinity and finite out-of-diagram depth stay distinct in exported results",
+      "passed": true
+    },
+    {
+      "name": "inactive numeric blanks export as unused, active optical errors create no note",
+      "passed": true
+    },
+    {
+      "name": "partial DOF note accepts unsupported flash but full note creates no false result",
+      "passed": true
+    },
+    {
+      "name": "12 concurrent notes preserve existing sentinel and create unique physical Markdown files",
+      "passed": true
+    },
+    {
+      "name": "note write rejects without success Notice and next request recovers",
+      "passed": true
+    },
+    {
+      "name": "120 actual plugin persistence requests coalesce to one write and preserve last finite value",
+      "passed": true
+    },
+    {
+      "name": "settings failure retains last disk snapshot and explicit retry saves latest value",
+      "passed": true
+    },
+    {
+      "name": "pagehide listener flushes the current pending snapshot",
+      "passed": true
+    },
+    {
+      "name": "20 plugin unload/reactivation cycles leave no registered listeners or writer timers",
+      "passed": true
+    },
+    {
+      "name": "v1 migration preserves entire original, gear contents and manual GN before v2 save/restore",
+      "passed": true
+    },
+    {
+      "name": "equipment selection and incomplete draft survive actual plugin save/reload",
+      "passed": true
+    },
+    {
+      "name": "selected equipment unsupported output is explicitly theoretical with matching GN source",
+      "passed": true
+    }
+  ],
+  "measurement": {
+    "requests": 121,
+    "writes": 1,
+    "elapsedMs": 1.4495409999999964,
+    "lastValue": 13.9,
+    "scope": "Node + actual plugin writer + filesystem host double; not UI or phone performance"
+  },
+  "expectedInjectedErrors": [
+    "Photo Field Mobile Error: Synthetic settings I/O failure"
+  ],
+  "notices": 27,
+  "noteFiles": 26,
+  "listenersAfterUnload": 0,
+  "timersAfterUnload": 0
+}

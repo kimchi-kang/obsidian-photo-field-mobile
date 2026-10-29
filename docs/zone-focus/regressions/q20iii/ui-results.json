@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-29T03:15:27.264Z",
+  "host": "macOS Obsidian mobile emulation",
+  "actualIos": false,
+  "results": [
+    {
+      "name": "touch import selects Q20III GN20/32mm and preserves the unfinished draft without duplicate imports",
+      "passed": true
+    },
+    {
+      "name": "all seven hardware powers calculate; lens focal length is independent and missing flash zoom blocks calculation",
+      "passed": true
+    },
+    {
+      "name": "Markdown records Q20III manufacturer source and matched conditions; reload restores equipment and draft",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

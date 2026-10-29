@@ -1,29 +1,14 @@
-# Design QA · 후속 종합 검증 · 2026-10-29
+# Design QA · 존 포커싱 확장 · 2026-10-29
 
-final result: blocked
+final result: pass (별도 macOS Obsidian 모바일 에뮬레이션 범위)
 
-현재 기준74d3303의 바우하우스 방향은 유지했다. 중요 조작부 경계 대비의 정적 수치 결함만 수정했으며 새로운 화면 캡처를 얻지 못해 **이번 후보의 시각적 통과를 승인하지 않는다**. 빌드 실패를 뜻하는 상태는 아니다.
+현재 바우하우스 방향·촬영 장면·기존 안정화 수정을 보존했다. 좁은 화면의 4개 탭은 2×2로 배치하며 존 목표는 빗금/파선/라벨, 실제 심도는 실선/음영으로 구별한다. 실제 f값과 환산 심도 f값은 별도 라벨로 표시한다. 사용자 CoC 주의는 환산값 바로 아래 노출한다.
 
-## 근거와 제한
+실제 ItemView에서 app.emulateMobile(true), CDP 모바일 크기와 터치 이벤트로 360×800·390×844·430×932·844×390, 라이트/다크, 큰 글씨, 축소 높이를 검사했다. 실제 캡처를 열어 장면·라벨·변환 설명·목표/결과·가로/다크/큰 글씨를 확인했다. 저장 버튼의 도달성과 중앙 클릭 가능 여부도 확인했다. iOS 실기 통과를 뜻하지 않는다.
 
-- 이전 바우하우스 시각 QA: `docs/post-design-validation/baseline/design-qa.md`에 원문 보존.
-- source visual truth: 기존 바우하우스 `docs/bauhaus/target.png`는 방향 참고 자료. 이번엔 새디자인을 생성하거나 방향을 바꾸지 않음.
-- current implementation screenshot: **없음**. Native Mac 잠금, 기존 검사 포트 연결 실패, 내장 브라우저 file: 프로토콜 정책 거부.
-- source/implementation full-view/focused comparison: **이번 실행 불가**. 과거 캡처·생성 이미지·요소 존재 검사로 대체하지 않음.
-- viewport/density normalization: 새 캡처가 없어 수행하지 않음. 이전390×844·780×1688 기록을 이번 결과로 집계하지 않음.
-
-## 수정과 회귀
-
-[P2 코드 수치 결함, 수정 완료 / 시각 확인 미수행] 기본 입력/보조 버튼/range 경계가 장식용 선색을 공유하여 지정 테마의 경계 대비1.63~2.45:1이었다. 중요 조작부 전용색을 추가하여3.63~4.87:1로 수정했다. 장식 선·장면·숫자·간격은 그대로다. 수정 전 회귀1실패, 수정 후53/53통과. 실제main.js의 계산/저장 통합15/15통과.
-
-폰트/줄바꿈, 간격/가림, 실제 색상·호스트 테마, SVG선/라벨, 문구 배치는 새 화면으로 검사하지 못했다. staticCSS의 수치 대비와 스코프·원격 자산 부재는 검사했다. 전체WCAG준수·실제44px·no-overflow/터치 통과를 주장하지 않는다.
-
-## 남은 시각 체크리스트
-
-- [ ]360/390세로·844×390가로, 라이트/다크 대표 조합 새 캡처.
-- [ ]큰 글씨/좁은 높이·긴 이름/오류, 호스트 도구막대 가림.
-- [ ]GN40.5·CoC/거리/조리개 입력·선택·포커스·스크롤.
-- [ ]피사체 드래그·range/세로스크롤/사이드바·재진입.
-- [ ]수정 전후 같은 상태의 실제 화면 비교.
-
-자세한 수행/보류 구분과 코드 검증 후보/복구 방법: `docs/post-design-validation/REPORT.md`. 추가 접근을 얻으려고 잠금 해제·권한 확대·다른 브라우저/프로토콜 우회를 하지 않았다.
+- 변경 전: docs/zone-focus/before/390-844-light-dof.png
+- 변경 후: docs/zone-focus/after/example-2m-5m-scene.png
+- 환산: docs/zone-focus/after/equivalent-35mm-f2-15x.png
+- 역산 결과: docs/zone-focus/after/example-2m-5m-result.png
+- 상세 결과·제한·복구: docs/zone-focus/REPORT.md
+- 이전 차단 보고 원문: docs/zone-focus/before/design-qa.md

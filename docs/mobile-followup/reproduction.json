@@ -1,0 +1,96 @@
+[
+  {
+    "name": "normal",
+    "geometry": {
+      "hero": "10 m",
+      "heroScroll": 169,
+      "heroWidth": 169,
+      "overlap": false,
+      "outside": false,
+      "value": {
+        "x": 12,
+        "right": 67.9375,
+        "top": 228.6875,
+        "bottom": 281.6875
+      },
+      "ev": {
+        "left": 192.5703125,
+        "right": 378,
+        "top": 235.8046875,
+        "bottom": 256.1015625
+      }
+    }
+  },
+  {
+    "name": "high-iso",
+    "geometry": {
+      "hero": "228.57 m",
+      "heroScroll": 176,
+      "heroWidth": 169,
+      "overlap": false,
+      "outside": false,
+      "value": {
+        "x": 12,
+        "right": 161.359375,
+        "top": 228.6875,
+        "bottom": 281.6875
+      },
+      "ev": {
+        "left": 192.5703125,
+        "right": 378,
+        "top": 225.65625,
+        "bottom": 266.25
+      }
+    }
+  },
+  {
+    "name": "narrow-high-iso",
+    "geometry": {
+      "hero": "228.57 m",
+      "heroScroll": 158,
+      "heroWidth": 158,
+      "overlap": false,
+      "outside": false,
+      "value": {
+        "x": 8,
+        "right": 141.640625,
+        "top": 229.1875,
+        "bottom": 276.1875
+      },
+      "ev": {
+        "left": 178.09375,
+        "right": 352,
+        "top": 223.0625,
+        "bottom": 263.65625
+      }
+    }
+  },
+  {
+    "name": "large-text-high-iso",
+    "overlap": true,
+    "unitRight": 230.5,
+    "evLeft": 192.5703125
+  },
+  {
+    "name": "GN-unit-roundtrip",
+    "value": "40"
+  },
+  {
+    "name": "GN-clear-scroll",
+    "before": 1148.5,
+    "after": 1147.5
+  },
+  {
+    "name": "equipment-edit-touch-scroll",
+    "before": 2257,
+    "after": 2257,
+    "editorVisible": 1
+  },
+  {
+    "name": "dof-unused-flash-zoom-error",
+    "errors": [
+      "양의 유한한 수가 필요합니다."
+    ],
+    "near": "4.07 m"
+  }
+]
