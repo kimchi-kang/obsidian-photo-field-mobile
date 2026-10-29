@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-29 KST",
+  "comparisons": {
+    "b26f4d8": {
+      "main.js": {
+        "baselineBytes": 73596,
+        "currentBytes": 76900,
+        "deltaBytes": 3304,
+        "identical": false
+      },
+      "styles.css": {
+        "baselineBytes": 8490,
+        "currentBytes": 12970,
+        "deltaBytes": 4480,
+        "identical": false
+      },
+      "package.json": {
+        "baselineBytes": 441,
+        "currentBytes": 441,
+        "deltaBytes": 0,
+        "identical": true
+      },
+      "package-lock.json": {
+        "baselineBytes": 36659,
+        "currentBytes": 36659,
+        "deltaBytes": 0,
+        "identical": true
+      },
+      "manifest.json": {
+        "baselineBytes": 341,
+        "currentBytes": 341,
+        "deltaBytes": 0,
+        "identical": true
+      }
+    },
+    "74d3303": {
+      "main.js": {
+        "baselineBytes": 76900,
+        "currentBytes": 76900,
+        "deltaBytes": 0,
+        "identical": true
+      },
+      "styles.css": {
+        "baselineBytes": 12839,
+        "currentBytes": 12970,
+        "deltaBytes": 131,
+        "identical": false
+      },
+      "package.json": {
+        "baselineBytes": 441,
+        "currentBytes": 441,
+        "deltaBytes": 0,
+        "identical": true
+      },
+      "package-lock.json": {
+        "baselineBytes": 36659,
+        "currentBytes": 36659,
+        "deltaBytes": 0,
+        "identical": true
+      },
+      "manifest.json": {
+        "baselineBytes": 341,
+        "currentBytes": 341,
+        "deltaBytes": 0,
+        "identical": true
+      }
+    }
+  },
+  "runtimeExternalImports": [
+    {
+      "path": "obsidian",
+      "kind": "require-call",
+      "external": true
+    },
+    {
+      "path": "obsidian",
+      "kind": "require-call",
+      "external": true
+    }
+  ],
+  "inputs": [
+    "src/model.ts",
+    "src/units.ts",
+    "src/engine.ts",
+    "src/presets.ts",
+    "src/storage.ts",
+    "src/writer.ts",
+    "src/diagram.ts",
+    "src/note.ts",
+    "src/view.ts",
+    "src/main.ts"
+  ],
+  "runtimeNetworkApiCalls": false,
+  "note": "Bundle test checks remote calls, runtime host imports and full MIT banner; CSS contract checks all selectors scoped and no external asset imports. Actual host offline mode not run."
+}

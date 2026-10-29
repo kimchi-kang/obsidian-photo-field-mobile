@@ -1,0 +1,1 @@
+PASS: current src strict typecheck with preserved official Obsidian 1.7.2 types; compiler exit 0. No app/runtime execution claim.

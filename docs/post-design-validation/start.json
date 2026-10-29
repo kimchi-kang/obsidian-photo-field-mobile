@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-29 KST",
+  "commit": "74d3303dde4a9a30a6a3dfbbe6c0bc9a9a7804e9",
+  "version": "1.2.0",
+  "startingWorktree": "clean",
+  "files": {
+    "src/view.ts": "542432a045f048ca597cb6e9dac95f7b6dcdf0245230299571c6016053dc882a",
+    "src/diagram.ts": "54e658a8ed8ffdf43515671e4fd5e584bf79db5d8444d1364279a90f9e700111",
+    "src/main.ts": "ba9169fe6be9d4d68049b9a687499c859a3f778f0a08abdaebc292ad020b088f",
+    "src/note.ts": "a0ebca85d8c35f41ab46c428a21fa329b78042882ec25b3a5ab760085d9a93b5",
+    "src/storage.ts": "74184d80a43f501da605828de5747bff44d87f1a861a4dc2265de8ec967963d4",
+    "src/writer.ts": "706426f99da95aad138be8191809faa544eeee4c6ea6b1fe33194307952eddda",
+    "styles.css": "def8a58bb75c22c50df080b365b40b3d94f2c75c9238ca4a399e8b9773893f60",
+    "main.js": "b9e25afe89aec0c15b369c3d8e480aec81420e1b8264490a523f8dc381624a45",
+    "manifest.json": "255a4e46df9c48559bdfe0b236612e0b57391a06ff12d1d2e35b7639d08c9d4c",
+    "package.json": "5483c985e6f13aab6e7c2528fad640953ded5d365e2ff2a6d464cec808a1376f",
+    "package-lock.json": "00f9ef7ebde386587266af77762d38ccf75b2d50c457b1a888f878162cbcb73f",
+    "design-qa.md": "ae1f1c2479ba9a235e330ab8442b56b11a2ee4856f5730985c8566b1e1325516"
+  },
+  "permissions": "No escalation, no live vault access, no push/release/system changes"
+}
