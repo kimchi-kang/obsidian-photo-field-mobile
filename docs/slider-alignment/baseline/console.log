@@ -1,0 +1,17 @@
+FAIL native thumb and track centres align within 0.5px at rest and while pressed: 192 failures
+PASS CDP touch min/middle/max values match the direct numeric inputs and targets stay >=44px: 0 failures
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: slider alignment regression failed
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/slider-alignment.mjs:50:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.0.0

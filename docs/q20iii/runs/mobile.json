@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-29T02:40:14.697Z",
+  "host": "macOS Obsidian mobile emulation + Chromium DevTools",
+  "actualIos": false,
+  "actualAndroid": false,
+  "results": [
+    "actual Obsidian ItemView and commands load, GN40 1/4 = 5m",
+    "360px no overflow, hero/exposure/near-far first screen, controls >=44px",
+    "direct number entry updates flash and DOF together",
+    "linked distances and -2EV at double distance",
+    "off camera independent distance and no spatial overlap claim",
+    "focal change preserves fixed flash GN distance",
+    "blank input not converted to zero or stale computed distance",
+    "unknown zoom and HSS withhold calculated distances",
+    "GN unit change converts value without changing exposure",
+    "user zoom-GN equipment preset created",
+    "disable/enable restores inputs and zoom-GN preset through loadData/saveData",
+    "offline real Vault API saves two distinct plain Markdown notes without overwrite",
+    "offline view reentry and synthetic touch slider interaction",
+    "portrait/landscape, light/dark, reduced viewport keyboard surrogate, no overflow",
+    "numeric input focus survives rerender of results",
+    "view close/plugin disable abort handlers and detach leaves",
+    "no uncaught runtime exception during QA"
+  ],
+  "exceptions": []
+}

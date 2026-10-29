@@ -1,0 +1,59 @@
+PASS real ItemView runs in dedicated vault with mobile emulation
+PASS decimal target and focus entry, explicit application, infinity and independent flash save
+PASS nominal conversion label and camera dimension caveats update without losing input focus
+PASS viewport/theme/large font matrix, all tabs, scroll and footer reachability
+PASS touch drag, slider and vertical scrolling keep working
+FAIL impossible ranges, blank values, long finite endpoints and custom CoC stay readable: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /사용자 지정 CoC/. Input:
+
+'APS-C 명목 1.5× (23.6×15.6mm) · 명목 계수 1.5× · 실제 85mm f/10\n' +
+  '\n' +
+  '풀프레임 화각 환산 127.5mm · 심도 대응 약 f/15\n' +
+  '\n' +
+  '실제 센서 23.6×15.6mm · 실치수 대각 계수 1.5294×. 화각·실제 심도는 이 치수로 계산합니다. 화면비가 다르므로 대각 기준 환산입니다. 실제 조리개와 노출은 f/10이며 ISO·플래시 출력은 바뀌지 않습니다.\n' +
+  '심도 대응 조건·화각'
+
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/zone-mobile.mjs:77:136
+    at async check (file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/zone-mobile.mjs:25:35)
+    at async file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/zone-mobile.mjs:73:2
+FAIL settings restore and ItemView reentry retain zone and conversion criteria: AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  {
+    aperture: 10,
+    apertureMax: 2,
+    apertureMin: 1.4,
+    apertureSteps: '1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32',
+...
+    focal: 85,
++   gn: 40,
+-   gn: NaN,
+    gnMode: 'manual',
+    gnUnit: 'm',
+    gnZoom: 50,
+    height: 15.6,
+    horizontal: 40,
+...
+    zoneNear: 1,
++   zoom: 50
+-   zoom: NaN
+  }
+
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/zone-mobile.mjs:84:10
+    at async check (file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/zone-mobile.mjs:25:35)
+    at async file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/zone-mobile.mjs:80:2
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: zone mobile QA failed
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/zone-mobile.mjs:92:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.0.0

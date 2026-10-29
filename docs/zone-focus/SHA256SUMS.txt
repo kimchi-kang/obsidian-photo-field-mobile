@@ -1,0 +1,2 @@
+1b9a93a3ecef3ea642ee4c1abab30ae9d7489583b02a6a4546903d286c4bbe35  dist/photo-field-mobile-1.3.0-zone-candidate.zip
+eaedec72bea322e91d6c6aef2210a12bed2faeca8d6db3051afa744a01862284  dist/photo-field-mobile-1.2.0-pre-zone-recovery.zip

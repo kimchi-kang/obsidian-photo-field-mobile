@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-29T02:40:22.705Z",
+  "host": "macOS Obsidian 1.14.5 mobile emulation / CDP touch",
+  "actualIos": false,
+  "actualAndroid": false,
+  "results": [
+    "unguarded control reproduces sidebar opening",
+    "both horizontal directions and edge starts keep sidebars closed",
+    "native vertical touch scrolling remains functional",
+    "range dragging changes aperture without opening sidebars",
+    "closing cleans attribute and reentry restores scoped guard",
+    "ordinary notes still retain standard sidebar gestures"
+  ]
+}

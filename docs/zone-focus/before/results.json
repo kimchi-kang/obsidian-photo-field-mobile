@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-29T03:12:56.837Z",
+  "phase": "before",
+  "vault": "/private/tmp/photo-field-qa-vault",
+  "host": "Obsidian ItemView + app.emulateMobile(true) + CDP mobile viewport and actual touch events",
+  "actualIOS": false,
+  "checks": [],
+  "errors": []
+}

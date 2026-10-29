@@ -13,8 +13,11 @@ export function restore(data:unknown):Saved {
     }
   }
   const i=result.inputs;
+  if(!['nominal','dimensions'].includes(i.cropBasis))i.cropBasis='nominal';
+  if(!['current','target'].includes(i.zoneFlow))i.zoneFlow='current';
+  if(typeof d.inputs==='object'&&d.inputs&&!('zoneFlow' in d.inputs)&&!result.migrationBackup)result.migrationBackup=JSON.parse(JSON.stringify(data));
   if(!['manual','ttl','hss','bounce','modifier','near'].includes(i.mode))i.mode='manual';
-  if(!['flash','dof','combined'].includes(i.tab))i.tab='combined';
+  if(!['flash','dof','combined','zone'].includes(i.tab))i.tab='combined';
   if(!['m','ft'].includes(i.gnUnit))i.gnUnit='m';
   if(!['approx','angles'].includes(i.coverage))i.coverage='approx';
   if(!['estimate','custom'].includes(i.cocMode))i.cocMode='estimate';

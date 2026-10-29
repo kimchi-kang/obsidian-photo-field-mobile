@@ -1,0 +1,226 @@
+FAIL large flash values and EV never overlap at normal/large text in either theme: Expected values to be strictly deep-equal:
++ actual - expected
+
++ [
++   {
++     clipped: false,
++     font: 16,
++     h: 800,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'light',
++     value: '1,828.57 m',
++     w: 360
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 800,
++     iso: 6400,
++     n: 1.4,
++     overlaps: true,
++     t: 'light',
++     value: '228.57 m',
++     w: 360
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 800,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'light',
++     value: '1,828.57 m',
++     w: 360
++   },
++   {
++     clipped: false,
++     font: 16,
++     h: 800,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'dark',
++     value: '1,828.57 m',
++     w: 360
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 800,
++     iso: 6400,
++     n: 1.4,
++     overlaps: true,
++     t: 'dark',
++     value: '228.57 m',
++     w: 360
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 800,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'dark',
++     value: '1,828.57 m',
++     w: 360
++   },
++   {
++     clipped: false,
++     font: 16,
++     h: 844,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'light',
++     value: '1,828.57 m',
++     w: 390
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 844,
++     iso: 6400,
++     n: 1.4,
++     overlaps: true,
++     t: 'light',
++     value: '228.57 m',
++     w: 390
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 844,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'light',
++     value: '1,828.57 m',
++     w: 390
++   },
++   {
++     clipped: false,
++     font: 16,
++     h: 844,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'dark',
++     value: '1,828.57 m',
++     w: 390
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 844,
++     iso: 6400,
++     n: 1.4,
++     overlaps: true,
++     t: 'dark',
++     value: '228.57 m',
++     w: 390
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 844,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'dark',
++     value: '1,828.57 m',
++     w: 390
++   },
++   {
++     clipped: false,
++     font: 16,
++     h: 932,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'light',
++     value: '1,828.57 m',
++     w: 430
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 932,
++     iso: 6400,
++     n: 1.4,
++     overlaps: true,
++     t: 'light',
++     value: '228.57 m',
++     w: 430
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 932,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'light',
++     value: '1,828.57 m',
++     w: 430
++   },
++   {
++     clipped: false,
++     font: 16,
++     h: 932,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'dark',
++     value: '1,828.57 m',
++     w: 430
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 932,
++     iso: 6400,
++     n: 1.4,
++     overlaps: true,
++     t: 'dark',
++     value: '228.57 m',
++     w: 430
++   },
++   {
++     clipped: false,
++     font: 20,
++     h: 932,
++     iso: 102400,
++     n: 0.7,
++     overlaps: true,
++     t: 'dark',
++     value: '1,828.57 m',
++     w: 430
++   }
++ ]
+- []
+
+FAIL DOF does not show unused flash-coverage errors; combined still reports them: Expected values to be strictly equal:
+
+1 !== 0
+
+PASS valid DOF-only Markdown saves with missing flash zoom while full/invalid optical results reject
+PASS GN decimal cursor regression remains fixed after layout changes
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: mobile followup regression failed
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/mobile-followup.mjs:68:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.0.0

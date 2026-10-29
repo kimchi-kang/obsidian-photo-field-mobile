@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-29T02:17:11.662Z",
+  "host": "macOS Obsidian mobile emulation; no actual iOS claim",
+  "phase": "baseline",
+  "results": [
+    {
+      "name": "large flash values and EV never overlap at normal/large text in either theme",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   {\n+     clipped: false,\n+     font: 16,\n+     h: 800,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'light',\n+     value: '1,828.57 m',\n+     w: 360\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 800,\n+     iso: 6400,\n+     n: 1.4,\n+     overlaps: true,\n+     t: 'light',\n+     value: '228.57 m',\n+     w: 360\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 800,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'light',\n+     value: '1,828.57 m',\n+     w: 360\n+   },\n+   {\n+     clipped: false,\n+     font: 16,\n+     h: 800,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'dark',\n+     value: '1,828.57 m',\n+     w: 360\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 800,\n+     iso: 6400,\n+     n: 1.4,\n+     overlaps: true,\n+     t: 'dark',\n+     value: '228.57 m',\n+     w: 360\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 800,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'dark',\n+     value: '1,828.57 m',\n+     w: 360\n+   },\n+   {\n+     clipped: false,\n+     font: 16,\n+     h: 844,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'light',\n+     value: '1,828.57 m',\n+     w: 390\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 844,\n+     iso: 6400,\n+     n: 1.4,\n+     overlaps: true,\n+     t: 'light',\n+     value: '228.57 m',\n+     w: 390\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 844,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'light',\n+     value: '1,828.57 m',\n+     w: 390\n+   },\n+   {\n+     clipped: false,\n+     font: 16,\n+     h: 844,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'dark',\n+     value: '1,828.57 m',\n+     w: 390\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 844,\n+     iso: 6400,\n+     n: 1.4,\n+     overlaps: true,\n+     t: 'dark',\n+     value: '228.57 m',\n+     w: 390\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 844,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'dark',\n+     value: '1,828.57 m',\n+     w: 390\n+   },\n+   {\n+     clipped: false,\n+     font: 16,\n+     h: 932,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'light',\n+     value: '1,828.57 m',\n+     w: 430\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 932,\n+     iso: 6400,\n+     n: 1.4,\n+     overlaps: true,\n+     t: 'light',\n+     value: '228.57 m',\n+     w: 430\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 932,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'light',\n+     value: '1,828.57 m',\n+     w: 430\n+   },\n+   {\n+     clipped: false,\n+     font: 16,\n+     h: 932,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'dark',\n+     value: '1,828.57 m',\n+     w: 430\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 932,\n+     iso: 6400,\n+     n: 1.4,\n+     overlaps: true,\n+     t: 'dark',\n+     value: '228.57 m',\n+     w: 430\n+   },\n+   {\n+     clipped: false,\n+     font: 20,\n+     h: 932,\n+     iso: 102400,\n+     n: 0.7,\n+     overlaps: true,\n+     t: 'dark',\n+     value: '1,828.57 m',\n+     w: 430\n+   }\n+ ]\n- []\n"
+    },
+    {
+      "name": "DOF does not show unused flash-coverage errors; combined still reports them",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n"
+    },
+    {
+      "name": "valid DOF-only Markdown saves with missing flash zoom while full/invalid optical results reject",
+      "passed": true
+    },
+    {
+      "name": "GN decimal cursor regression remains fixed after layout changes",
+      "passed": true
+    }
+  ],
+  "exceptions": []
+}

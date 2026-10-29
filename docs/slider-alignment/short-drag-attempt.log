@@ -1,0 +1,19 @@
+APERTURE_DIAGNOSTIC {"box":{"x":186,"y":379.71875,"width":166,"height":44},"initial":{"track":{"centreX":269,"centreY":401.71875,"height":4},"thumb":{"centreX":212.96875,"centreY":401.71875,"height":24},"delta":0},"start":212.96875,"dragY":401.71875,"target":198,"point":{"hit":"<input type=\"range\" min=\"0.7\" max=\"32\" step=\"0.1\" aria-label=\"조리개 f-number 빠른 조절\" data-range=\"aperture\" style=\"--pfm-range-progress: 10.543130990415335%;\">","scrollY":0,"scale":1}}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: aperture reaches endpoint by touch
+
+4 !== 0.7
+
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/slider-alignment.mjs:35:42 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0.7,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.0.0

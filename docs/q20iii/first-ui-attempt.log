@@ -1,0 +1,36 @@
+PASS touch import selects Q20III GN20/32mm and preserves the unfinished draft without duplicate imports
+FAIL all seven hardware powers calculate; lens focal length is independent and missing flash zoom blocks calculation: locator.fill: Timeout 4000ms exceeded.
+Call log:
+[2m  - waiting for locator('.pfm-root input[data-key=zoom]')[22m
+[2m    - locator resolved to <input step="any" type="number" data-key="zoom" inputmode="decimal" aria-label="선택 플래시 줌 (mm)"/>[22m
+[2m    - fill("50")[22m
+[2m  - attempting fill action[22m
+[2m    2 × waiting for element to be visible, enabled and editable[22m
+[2m      - element is not visible[22m
+[2m    - retrying fill action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and editable[22m
+[2m      - element is not visible[22m
+[2m    - retrying fill action[22m
+[2m      - waiting 100ms[22m
+[2m    8 × waiting for element to be visible, enabled and editable[22m
+[2m      - element is not visible[22m
+[2m    - retrying fill action[22m
+[2m      - waiting 500ms[22m
+
+PASS Markdown records Q20III manufacturer source and matched conditions; reload restores equipment and draft
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Q20III UI regression failed
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/q20iii-ui.mjs:40:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.0.0

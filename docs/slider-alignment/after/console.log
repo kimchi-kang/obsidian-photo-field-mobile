@@ -1,0 +1,2 @@
+PASS native thumb and track centres align within 0.5px at rest and while pressed: 0 failures
+PASS CDP touch min/middle/max values match the direct numeric inputs and targets stay >=44px: 0 failures

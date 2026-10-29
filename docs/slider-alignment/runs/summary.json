@@ -1,0 +1,22 @@
+[
+  {
+    "name": "mobile",
+    "exit": 0,
+    "passed": 17
+  },
+  {
+    "name": "swipe",
+    "exit": 0,
+    "passed": 6
+  },
+  {
+    "name": "q20iii-ui",
+    "exit": 0,
+    "passed": 3
+  },
+  {
+    "name": "mobile-followup",
+    "exit": 0,
+    "passed": 4
+  }
+]

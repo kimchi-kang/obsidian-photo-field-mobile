@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-29T02:18:41.205Z",
+  "host": "macOS Obsidian mobile emulation; no actual iOS claim",
+  "phase": "after",
+  "results": [
+    {
+      "name": "large flash values and EV never overlap at normal/large text in either theme",
+      "passed": false,
+      "error": "TimeoutError: page.screenshot: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+    },
+    {
+      "name": "DOF does not show unused flash-coverage errors; combined still reports them",
+      "passed": false,
+      "error": "TimeoutError: page.screenshot: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+    },
+    {
+      "name": "valid DOF-only Markdown saves with missing flash zoom while full/invalid optical results reject",
+      "passed": true
+    },
+    {
+      "name": "GN decimal cursor regression remains fixed after layout changes",
+      "passed": true
+    }
+  ],
+  "exceptions": []
+}

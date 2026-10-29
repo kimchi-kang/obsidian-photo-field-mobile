@@ -1,0 +1,31 @@
+FAIL large flash values and EV never overlap at normal/large text in either theme: page.screenshot: Timeout 15000ms exceeded.
+Call log:
+[2m  - taking page screenshot[22m
+[2m    - disabled all CSS animations[22m
+[2m  - waiting for fonts to load...[22m
+[2m  - fonts loaded[22m
+
+FAIL DOF does not show unused flash-coverage errors; combined still reports them: page.screenshot: Timeout 15000ms exceeded.
+Call log:
+[2m  - taking page screenshot[22m
+[2m    - disabled all CSS animations[22m
+[2m  - waiting for fonts to load...[22m
+[2m  - fonts loaded[22m
+
+PASS valid DOF-only Markdown saves with missing flash zoom while full/invalid optical results reject
+PASS GN decimal cursor regression remains fixed after layout changes
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: mobile followup regression failed
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/mobile-followup.mjs:68:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.0.0

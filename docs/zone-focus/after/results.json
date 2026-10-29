@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-29T03:21:29.321Z",
+  "phase": "after",
+  "vault": "/private/tmp/photo-field-qa-vault",
+  "host": "Obsidian ItemView + app.emulateMobile(true) + CDP mobile viewport and actual touch events",
+  "actualIOS": false,
+  "checks": [
+    {
+      "name": "real ItemView runs in dedicated vault with mobile emulation",
+      "passed": true
+    },
+    {
+      "name": "decimal target and focus entry, explicit application, infinity and independent flash save",
+      "passed": true
+    },
+    {
+      "name": "nominal conversion label and camera dimension caveats update without losing input focus",
+      "passed": true
+    },
+    {
+      "name": "viewport/theme/large font matrix, all tabs, scroll and footer reachability",
+      "passed": true
+    },
+    {
+      "name": "touch drag, slider and vertical scrolling keep working",
+      "passed": true
+    },
+    {
+      "name": "impossible ranges, blank values, long finite endpoints and custom CoC stay readable",
+      "passed": true
+    },
+    {
+      "name": "settings restore and ItemView reentry retain zone and conversion criteria",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

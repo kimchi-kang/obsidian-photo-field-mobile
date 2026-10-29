@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-29T02:38:20.902Z",
+  "host": "macOS Obsidian mobile emulation",
+  "actualIos": false,
+  "results": [
+    {
+      "name": "touch import selects Q20III GN20/32mm and preserves the unfinished draft without duplicate imports",
+      "passed": true
+    },
+    {
+      "name": "all seven hardware powers calculate; lens focal length is independent and missing flash zoom blocks calculation",
+      "passed": false,
+      "error": "TimeoutError: locator.fill: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.pfm-root input[data-key=zoom]')\u001b[22m\n\u001b[2m    - locator resolved to <input step=\"any\" type=\"number\" data-key=\"zoom\" inputmode=\"decimal\" aria-label=\"선택 플래시 줌 (mm)\"/>\u001b[22m\n\u001b[2m    - fill(\"50\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    8 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "name": "Markdown records Q20III manufacturer source and matched conditions; reload restores equipment and draft",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

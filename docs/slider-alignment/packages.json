@@ -1,0 +1,33 @@
+[
+  {
+    "archive": "dist/photo-field-mobile-1.2.0-q20iii-slider-fix.zip",
+    "recovery": false,
+    "sha256": "fa546e3bdc74c737446c93f2d07539c8b7f4b568377c373d5bfaec16ca328e28",
+    "allBytesMatch": true,
+    "entries": [
+      "photo-field-mobile/main.js",
+      "photo-field-mobile/manifest.json",
+      "photo-field-mobile/styles.css",
+      "photo-field-mobile/LICENSE.txt",
+      "photo-field-mobile/THIRD_PARTY_NOTICES.md",
+      "photo-field-mobile/vendor/depth-of-field-LICENSE.txt",
+      "photo-field-mobile/CANDIDATE.md"
+    ],
+    "userDataExcluded": true
+  },
+  {
+    "archive": "dist/photo-field-mobile-1.2.0-before-slider-recovery.zip",
+    "recovery": true,
+    "sha256": "bc7809853f5284d0959bd7c2f80622500a276c1d956410c12d092ad9f74677cd",
+    "allBytesMatch": true,
+    "entries": [
+      "photo-field-mobile/main.js",
+      "photo-field-mobile/manifest.json",
+      "photo-field-mobile/styles.css",
+      "photo-field-mobile/LICENSE.txt",
+      "photo-field-mobile/THIRD_PARTY_NOTICES.md",
+      "photo-field-mobile/vendor/depth-of-field-LICENSE.txt"
+    ],
+    "userDataExcluded": true
+  }
+]

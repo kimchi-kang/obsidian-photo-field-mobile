@@ -1,0 +1,226 @@
+diff --git a/docs/VALIDATION.md b/docs/VALIDATION.md
+index 480da8d..ab6ee62 100644
+--- a/docs/VALIDATION.md
++++ b/docs/VALIDATION.md
+@@ -1,3 +1,15 @@
++# 빠른 조절 손잡이 정렬 · 2026-10-29 (KST)
++
++[정렬 수정 보고서](slider-alignment/REPORT.md). 호스트의 top 보정이 남아 손잡이가 선보다9px 위에 뜨는 문제를 실제 화면에서 재현했다. 플러그인 thumb의 top을0으로 초기화. 네이티브 track/thumb 중심192회 비교에서 수정 전−9px→수정 후0px. Q20III와 앞선 UI 수정 유지. 새 후보/복구 ZIP 제공.
++
++# Q20III 공식 프리셋 · 2026-10-29 (KST)
++
++[Q20III 추가 보고서](q20iii/REPORT.md). 제조사 GN20m·ISO100·32mm·1/1~1/64의7단계를 추가. 기존 초안·장비·수동값 및 앞선 모바일 수정을 유지했다. 자동55개·새 UI3개·관련 기존56개 통과. 현재 소스와 일치하는 새 Q20III 후보/복구 ZIP 포함. 실사용 설치·실기·공개 배포 없음.
++
++# 모바일 추가 재현·수정 · 2026-10-29 (KST)
++
++기준bcb428b의 [추가 재현 보고서](mobile-followup/REPORT.md). 큰 결과 숫자와 EV의 내부 겹침, 심도 탭의 미사용 플래시 범위 오류 노출을 재현·수정했다. 수정 전 새 검사2개 실패→수정 후4개 통과, 기존69개와 합계73개 실제 Obsidian 시나리오·자동53개·대역15개 통과. 계산/저장 형식·버전 유지. 현재 파일과 일치하는 후보/복구 ZIP 및 수정 전후 화면 포함. 이전 ‘새 버그 미발견’은 당시 조건에 한정된 결과로 읽어야 한다.
++
+ # 로컬 Obsidian 모바일 에뮬레이션 재검증 · 2026-10-29 (KST)
+ 
+ 기준6fe771e의 [최종 보고서](mobile-host-qa/REPORT.md). 사용자의 실행 권한 승인 후 전용 앱/CDP 연결 성공. 실제 Obsidian 모바일 시나리오69개·자동53개·대역 통합15개 및 빌드 통과.360/390/430px·가로·양 테마·큰 글씨·축소 높이·CDP 터치 및 실제 화면 캡처 확인. 새 제품 버그 없어 제품 코드 수정 없음. 실기·새 설치·실사용 보관함 변경·배포·push 없음.
+diff --git a/docs/build-meta.json b/docs/build-meta.json
+index b674fed..a58db55 100644
+--- a/docs/build-meta.json
++++ b/docs/build-meta.json
+@@ -27,7 +27,7 @@
+       "format": "esm"
+     },
+     "src/presets.ts": {
+-      "bytes": 2604,
++      "bytes": 3584,
+       "imports": [
+         {
+           "path": "./model",
+@@ -111,7 +111,7 @@
+       "format": "esm"
+     },
+     "src/view.ts": {
+-      "bytes": 30017,
++      "bytes": 30578,
+       "imports": [
+         {
+           "path": "obsidian",
+@@ -223,7 +223,7 @@
+           "bytesInOutput": 5914
+         },
+         "src/presets.ts": {
+-          "bytesInOutput": 2629
++          "bytesInOutput": 3713
+         },
+         "src/storage.ts": {
+           "bytesInOutput": 3659
+@@ -232,7 +232,7 @@
+           "bytesInOutput": 1413
+         },
+         "src/view.ts": {
+-          "bytesInOutput": 36636
++          "bytesInOutput": 37487
+         },
+         "src/diagram.ts": {
+           "bytesInOutput": 7627
+@@ -241,7 +241,7 @@
+           "bytesInOutput": 9374
+         }
+       },
+-      "bytes": 76900
++      "bytes": 78835
+     }
+   }
+ }
+\ No newline at end of file
+diff --git a/main.js b/main.js
+index d21a6bd..e296760 100644
+--- a/main.js
++++ b/main.js
+@@ -256,6 +256,24 @@ function equipmentId(equipment) {
+   while (equipment.some((e) => e.id === id)) id = `equipment-${Date.now().toString(36)}-${n++}`;
+   return id;
+ }
++function addQ20iii(state) {
++  const spec = {
++    name: "LightPix Labs FlashQ Q20III",
++    conditions: "\uC81C\uC870\uC0AC \uACF5\uCE6D GN20m \xB7 ISO100\xB7\uCD5C\uB300 \uCD9C\uB825 \xB7 \uACE0\uC815 32mm \uCEE4\uBC84\uB9AC\uC9C0 (35mm\uD310). \uC9C1\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870 \uACC4\uC0B0\uC6A9. \uB514\uD4E8\uC800\xB7\uC824 \uC190\uC2E4 \uBBF8\uCE21\uC815, \uC2E4\uCE21\uAC12 \uC544\uB2D8.",
++    source: "LightPix Labs Q20III \uC81C\uD488 \uC0AC\uC591\xB7Quick Manual: https://www.lightpixlabs.com/pages/q20iii",
++    table: { "32": 20 },
++    minDenominator: 64,
++    steps: "1,2,4,8,16,32,64"
++  };
++  let equipment = state.equipment.find((e) => e.name === spec.name && e.source === spec.source && e.conditions === spec.conditions && e.minDenominator === spec.minDenominator && e.steps === spec.steps && Object.keys(e.table).length === 1 && e.table["32"] === 20);
++  if (!equipment) {
++    equipment = { ...spec, id: equipmentId(state.equipment) };
++    state.equipment.push(equipment);
++  }
++  state.inputs.zoom = 32;
++  selectEquipment(state, equipment.id);
++  return equipment;
++}
+ function manualFlash(i) {
+   return { gn: i.gn, gnUnit: i.gnUnit, gnZoom: i.gnZoom, conditions: i.conditions, minDenominator: i.minDenominator, steps: i.steps };
+ }
+@@ -1008,8 +1026,15 @@ var PhotoView = class extends import_obsidian.ItemView {
+   }
+   equipmentPanel() {
+     const p = this.details("\uB0B4 \uC7A5\uBE44 \uD504\uB9AC\uC14B \xB7 \uC90C\uBCC4 GN \uD45C");
+-    node(p, "p", "\uC81C\uC870\uC0AC \uB0B4\uC7A5 \uC218\uCE58 \uC5C6\uC74C. \uC124\uBA85\uC11C/\uC2E4\uCE21\uC758 ISO100\xB7\uCD5C\uB300 \uCD9C\uB825 GN\uACFC \uC9C0\uC6D0 \uCD9C\uB825\uC744 \uC785\uB825\uD558\uC138\uC694.");
++    node(p, "p", "Q20III \uACF5\uC2DD \uC0AC\uC591\uC744 \uBD88\uB7EC\uC624\uAC70\uB098, \uC124\uBA85\uC11C/\uC2E4\uCE21\uC758 ISO100\xB7\uCD5C\uB300 \uCD9C\uB825 GN\uACFC \uC9C0\uC6D0 \uCD9C\uB825\uC744 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.");
+     const state = this.plugin.state;
++    this.button(p, "FlashQ Q20III \uCD94\uAC00\xB7\uC120\uD0DD", () => {
++      addQ20iii(state);
++      this.changed();
++      this.render();
++      void this.plugin.flush().then(() => new import_obsidian.Notice("Q20III \uC120\uD0DD \xB7 \uACE0\uC815 32mm \uCEE4\uBC84\uB9AC\uC9C0 \xB7 \uC81C\uC870\uC0AC \uACF5\uCE6D GN20m")).catch((e) => this.plugin.reportSaveError(e));
++    });
++    node(p, "p", "Q20III: ISO100 GN20m \xB7 1/1~1/64\uC758 7\uB2E8\uACC4. 32mm\uB294 \uD50C\uB798\uC2DC\uC758 \uACE0\uC815 \uCEE4\uBC84\uB9AC\uC9C0\uC774\uBA70 \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC\uC640 \uBCC4\uAC1C\uC785\uB2C8\uB2E4. \uB514\uD4E8\uC800\xB7\uC824\xB7\uBC14\uC6B4\uC2A4 \uC190\uC2E4\uC740 \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+     const list = node(p, "select");
+     list.setAttribute("aria-label", "\uC800\uC7A5\uB41C \uC7A5\uBE44");
+     const placeholder = node(list, "option", "\uC7A5\uBE44 \uC120\uD0DD");
+@@ -1197,7 +1222,7 @@ var PhotoView = class extends import_obsidian.ItemView {
+       node(p, "p", `\uD504\uB808\uC784 ${fmt(c.camera.width)}\xD7${fmt(c.camera.height)}m \xB7 \uC870\uC0AC \uBC94\uC704 ${fmt(c.flash.width)}\xD7${fmt(c.flash.height)}m`);
+       node(p, "p", i.linked ? c.narrow ? "\uC8FC\uC758: \uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uC624\uD504\uCE74\uBA54\uB77C: \uAC01\uAC01\uC758 \uAC70\uB9AC \uD3C9\uBA74 \uBC94\uC704\uC785\uB2C8\uB2E4. \uC704\uCE58\xB7\uBC29\uD5A5\uC744 \uC785\uB825\uD558\uC9C0 \uC54A\uC544 \uACF5\uAC04 \uC911\uCCA9\uC744 \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+     } catch (e) {
+-      node(this.resultDetails, "p", e instanceof Error ? e.message : String(e), "pfm-error");
++      node(this.resultDetails, "p", `\uD504\uB808\uC784\xB7\uC870\uC0AC \uBC94\uC704 \uBE44\uAD50: ${e instanceof Error ? e.message : String(e)}`, "pfm-error pfm-coverage-results");
+     }
+     if (i.loss > 0) node(this.resultDetails, "p", "\uCD94\uAC00 \uC190\uC2E4\uC744 \uC801\uC6A9\uD55C \uCD94\uC815. GN\uC5D0 \uD3EC\uD568\uB41C \uC190\uC2E4\uC758 \uC911\uBCF5 \uBCF4\uC815\uC5D0 \uC8FC\uC758\uD558\uC138\uC694.");
+     this.restoreDetails();
+diff --git a/src/presets.ts b/src/presets.ts
+index 6834504..d8286a3 100644
+--- a/src/presets.ts
++++ b/src/presets.ts
+@@ -23,6 +23,17 @@ export function applyEquipment(state:Saved):void {
+ }
+ export function equipmentId(equipment:Equipment[]):string {let id=`equipment-${Date.now().toString(36)}`,n=1;while(equipment.some(e=>e.id===id))id=`equipment-${Date.now().toString(36)}-${n++}`;return id;}
+ 
++// Manufacturer nominal specification, not a measured calibration or a zoom table.
++export function addQ20iii(state:Saved):Equipment {
++  const spec:Omit<Equipment,'id'>={name:'LightPix Labs FlashQ Q20III',
++    conditions:'제조사 공칭 GN20m · ISO100·최대 출력 · 고정 32mm 커버리지 (35mm판). 직광·일반 동조 계산용. 디퓨저·젤 손실 미측정, 실측값 아님.',
++    source:'LightPix Labs Q20III 제품 사양·Quick Manual: https://www.lightpixlabs.com/pages/q20iii',
++    table:{'32':20},minDenominator:64,steps:'1,2,4,8,16,32,64'};
++  let equipment=state.equipment.find(e=>e.name===spec.name&&e.source===spec.source&&e.conditions===spec.conditions&&e.minDenominator===spec.minDenominator&&e.steps===spec.steps&&Object.keys(e.table).length===1&&e.table['32']===20);
++  if(!equipment){equipment={...spec,id:equipmentId(state.equipment)};state.equipment.push(equipment);}
++  state.inputs.zoom=32;selectEquipment(state,equipment.id);return equipment;
++}
++
+ export function manualFlash(i:Inputs):ManualFlash {return {gn:i.gn,gnUnit:i.gnUnit,gnZoom:i.gnZoom,conditions:i.conditions,minDenominator:i.minDenominator,steps:i.steps};}
+ export function selectEquipment(state:Saved,id:string):void {
+   if(state.inputs.gnMode==='manual')state.manualFlash=manualFlash(state.inputs);
+diff --git a/src/view.ts b/src/view.ts
+index d0a72a9..00b3c02 100644
+--- a/src/view.ts
++++ b/src/view.ts
+@@ -4,7 +4,7 @@ import {Inputs,sensors,Equipment,emptyDraft} from './model';
+ import {flash,optics,coverage,exposureEV,powerSteps} from './engine';
+ import {fmt,metres,parseNumber,feetToMetres,metresToFeet} from './units';
+ import {diagram,SCENE,sceneDistance} from './diagram';
+-import {equipmentValid,parseTable,selectedEquipment,applyEquipment,equipmentId,selectEquipment} from './presets';
++import {equipmentValid,parseTable,selectedEquipment,applyEquipment,equipmentId,selectEquipment,addQ20iii} from './presets';
+ import {limitations} from './note';
+ export const VIEW='photo-field-mobile';
+ type NumericKey = {[K in keyof Inputs]: Inputs[K] extends number ? K : never}[keyof Inputs];
+@@ -168,8 +168,10 @@ export class PhotoView extends ItemView {
+   }
+   private equipmentPanel():void {
+     const p=this.details('내 장비 프리셋 · 줌별 GN 표');
+-    node(p,'p','제조사 내장 수치 없음. 설명서/실측의 ISO100·최대 출력 GN과 지원 출력을 입력하세요.');
++    node(p,'p','Q20III 공식 사양을 불러오거나, 설명서/실측의 ISO100·최대 출력 GN과 지원 출력을 직접 입력하세요.');
+     const state=this.plugin.state;
++    this.button(p,'FlashQ Q20III 추가·선택',()=>{addQ20iii(state);this.changed();this.render();void this.plugin.flush().then(()=>new Notice('Q20III 선택 · 고정 32mm 커버리지 · 제조사 공칭 GN20m')).catch(e=>this.plugin.reportSaveError(e));});
++    node(p,'p','Q20III: ISO100 GN20m · 1/1~1/64의 7단계. 32mm는 플래시의 고정 커버리지이며 렌즈 초점거리와 별개입니다. 디퓨저·젤·바운스 손실은 포함하지 않습니다.');
+     const list=node(p,'select');list.setAttribute('aria-label','저장된 장비');const placeholder=node(list,'option','장비 선택');placeholder.value='';
+     for(const e of state.equipment){const o=node(list,'option',e.name);o.value=e.id;}list.value=state.inputs.equipmentId;
+     const apply=()=>{if(!list.value){new Notice('장비를 선택하세요.');return;}selectEquipment(state,list.value);this.changed();this.render();};
+@@ -222,7 +224,7 @@ export class PhotoView extends ItemView {
+     try {const c=coverage(i);const p=node(this.resultDetails,'details',undefined,'pfm-coverage-results');node(p,'summary','프레임·조사 범위 비교');
+       node(p,'p',`프레임 ${fmt(c.camera.width)}×${fmt(c.camera.height)}m · 조사 범위 ${fmt(c.flash.width)}×${fmt(c.flash.height)}m`);
+       node(p,'p',i.linked?(c.narrow?'주의: 프레임 가장자리 광량 부족 가능성. 실제 배광은 균일하지 않습니다.':'동일 위치·방향 가정. 실제 배광은 균일하지 않습니다.'):'오프카메라: 각각의 거리 평면 범위입니다. 위치·방향을 입력하지 않아 공간 중첩을 계산하지 않습니다.');
+-    }catch(e){node(this.resultDetails,'p',e instanceof Error?e.message:String(e),'pfm-error');}
++    }catch(e){node(this.resultDetails,'p',`프레임·조사 범위 비교: ${e instanceof Error?e.message:String(e)}`,'pfm-error pfm-coverage-results');}
+     if(i.loss>0)node(this.resultDetails,'p','추가 손실을 적용한 추정. GN에 포함된 손실의 중복 보정에 주의하세요.');
+     this.restoreDetails();diagram(this.picture,i);
+   }
+diff --git a/styles.css b/styles.css
+index cb23ab6..2f3dcb6 100644
+--- a/styles.css
++++ b/styles.css
+@@ -23,15 +23,15 @@
+ .pfm-root .pfm-context{font-size:var(--pfm-label);font-weight:600;color:var(--pfm-muted);margin:var(--pfm-space-1) 0 var(--pfm-space-2);}
+ .pfm-root .pfm-results{display:flex;flex-direction:column;gap:var(--pfm-space-2);}
+ .pfm-root .pfm-diagram{order:0;margin:0;padding:var(--pfm-space-2) 0 0;border-top:1.5px solid var(--pfm-ink);}
+-.pfm-root .pfm-flash-results{order:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);column-gap:var(--pfm-space-3);padding:var(--pfm-space-2) 0;border-top:1.5px solid var(--pfm-ink);border-bottom:1px solid var(--pfm-line);}
++.pfm-root .pfm-flash-results{order:1;display:flex;flex-wrap:wrap;align-items:center;column-gap:var(--pfm-space-3);padding:var(--pfm-space-2) 0;border-top:1.5px solid var(--pfm-ink);border-bottom:1px solid var(--pfm-line);}
+ .pfm-root[data-tab=flash] .pfm-flash-results{order:-1;}
+-.pfm-root .pfm-eyebrow{grid-column:1;grid-row:1;font-size:var(--pfm-label);font-weight:700;margin:0;}
+-.pfm-root .pfm-hero{grid-column:1;grid-row:2;font-size:2.8rem;line-height:1.08;font-weight:800;letter-spacing:-.045em;font-variant-numeric:tabular-nums;white-space:nowrap;}
++.pfm-root .pfm-eyebrow{flex-basis:100%;font-size:var(--pfm-label);font-weight:700;margin:0;}
++.pfm-root .pfm-hero{order:1;flex:0 0 auto;max-width:100%;padding-bottom:var(--pfm-space-1);font-size:2.8rem;line-height:1.08;font-weight:800;letter-spacing:-.045em;font-variant-numeric:tabular-nums;white-space:normal;}
+ .pfm-root .pfm-unit{font-size:.5em;font-weight:600;letter-spacing:0;}
+-.pfm-root .pfm-ev{grid-column:2;grid-row:1/3;align-self:center;font-size:var(--pfm-body);font-weight:700;font-variant-numeric:tabular-nums;margin:0;}
+-.pfm-root .pfm-flash-results>p:not([class]){grid-column:1/-1;font-size:var(--pfm-label);margin:var(--pfm-space-2) 0 0;color:var(--pfm-muted);}
+-.pfm-root .pfm-flash-results>small{grid-column:1/-1;font-size:var(--pfm-label);color:var(--pfm-muted);}
+-.pfm-root .pfm-flash-results>.pfm-error,.pfm-root .pfm-warning{grid-column:1/-1;font-size:var(--pfm-body);padding:var(--pfm-space-2);border-left:3px solid var(--pfm-error);margin:var(--pfm-space-2) 0 0;}
++.pfm-root .pfm-ev{order:2;flex:1 1 9rem;font-size:var(--pfm-body);font-weight:700;font-variant-numeric:tabular-nums;margin:0;}
++.pfm-root .pfm-flash-results>p:not([class]){order:3;flex-basis:100%;font-size:var(--pfm-label);margin:var(--pfm-space-2) 0 0;color:var(--pfm-muted);}
++.pfm-root .pfm-flash-results>small{order:4;flex-basis:100%;font-size:var(--pfm-label);color:var(--pfm-muted);}
++.pfm-root .pfm-flash-results>.pfm-error,.pfm-root .pfm-warning{order:5;flex-basis:100%;font-size:var(--pfm-body);padding:var(--pfm-space-2);border-left:3px solid var(--pfm-error);margin:var(--pfm-space-2) 0 0;}
+ .pfm-root .pfm-warning{border-color:var(--pfm-beam);color:var(--pfm-warning);background:var(--pfm-warning-bg);font-weight:700;}
+ .pfm-root .pfm-dof-results{order:2;}
+ .pfm-root .pfm-dof-results>h2{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+@@ -88,7 +88,7 @@
+ .pfm-root input:not([type=checkbox]),.pfm-root textarea,.pfm-root select{width:100%;max-width:100%;font:inherit;font-size:1rem;font-weight:500;font-variant-numeric:tabular-nums;background:var(--pfm-surface);color:var(--pfm-ink);border:1px solid var(--pfm-control-line);box-shadow:none;padding:8px;}
+ .pfm-root input[type=range]{margin:0;padding:0;border:0;border-radius:0;background:transparent!important;box-shadow:none;touch-action:pan-y;accent-color:var(--pfm-accent);-webkit-appearance:none;appearance:none;cursor:pointer;}
+ .pfm-root input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:0;background:var(--pfm-control-line);}
+-.pfm-root input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-10px;border:2px solid var(--pfm-bg);border-radius:50%;background:var(--pfm-accent);box-shadow:0 0 0 1px var(--pfm-accent);}
++.pfm-root input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-10px;top:0;border:2px solid var(--pfm-bg);border-radius:50%;background:var(--pfm-accent);box-shadow:0 0 0 1px var(--pfm-accent);}
+ .pfm-root input[type=range]::-moz-range-track{height:4px;background:var(--pfm-control-line);}
+ .pfm-root input[type=range]::-moz-range-thumb{width:24px;height:24px;border:2px solid var(--pfm-bg);border-radius:50%;background:var(--pfm-accent);}
+ .pfm-root input[aria-invalid=true]{border:2px solid var(--pfm-error);}
+@@ -104,7 +104,7 @@
+ .pfm-root th,.pfm-root td{text-align:left;padding:var(--pfm-space-2) var(--pfm-space-1);border-bottom:1px solid var(--pfm-line);}
+ .pfm-root .pfm-error{color:var(--pfm-error);font-size:var(--pfm-body);font-weight:650;}
+ .pfm-root[data-tab=flash] .pfm-dof-results,.pfm-root[data-tab=flash] .pfm-dof-details{display:none;}
+-.pfm-root[data-tab=dof] .pfm-flash-results,.pfm-root[data-tab=dof] .pfm-flash-details{display:none;}
++.pfm-root[data-tab=dof] .pfm-flash-results,.pfm-root[data-tab=dof] .pfm-flash-details,.pfm-root[data-tab=dof] .pfm-coverage-results{display:none;}
+ .pfm-root[data-tab=dof] .pfm-quick :is([data-field=denominator],[data-field=iso],.pfm-check,.pfm-flash-distance){display:none;}
+ .pfm-root[data-tab=dof] .pfm-quick [data-field=focal]{order:2;}
+ .pfm-root footer{display:flex;flex-direction:column;gap:var(--pfm-space-2);padding:var(--pfm-space-4) 0;border-top:1.5px solid var(--pfm-ink);margin-top:var(--pfm-space-3);}

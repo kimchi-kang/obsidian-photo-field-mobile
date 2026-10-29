@@ -1,0 +1,33 @@
+[
+  {
+    "archive": "dist/photo-field-mobile-1.2.0-q20iii-candidate.zip",
+    "sha256": "3655fa434e330b3b155a3be6087bf8ecf41a6af298e8ba32e3a2c5a83f37391b",
+    "entries": [
+      "photo-field-mobile/main.js",
+      "photo-field-mobile/manifest.json",
+      "photo-field-mobile/styles.css",
+      "photo-field-mobile/LICENSE.txt",
+      "photo-field-mobile/THIRD_PARTY_NOTICES.md",
+      "photo-field-mobile/vendor/depth-of-field-LICENSE.txt",
+      "photo-field-mobile/CANDIDATE.md"
+    ],
+    "allBytesMatch": true,
+    "userDataExcluded": true,
+    "recovery": false
+  },
+  {
+    "archive": "dist/photo-field-mobile-1.2.0-before-q20iii-recovery.zip",
+    "sha256": "1c36db34548b808a183985f31efd31537927911f002bb47dcfebac082b64f9c5",
+    "entries": [
+      "photo-field-mobile/main.js",
+      "photo-field-mobile/manifest.json",
+      "photo-field-mobile/styles.css",
+      "photo-field-mobile/LICENSE.txt",
+      "photo-field-mobile/THIRD_PARTY_NOTICES.md",
+      "photo-field-mobile/vendor/depth-of-field-LICENSE.txt"
+    ],
+    "allBytesMatch": true,
+    "userDataExcluded": true,
+    "recovery": true
+  }
+]

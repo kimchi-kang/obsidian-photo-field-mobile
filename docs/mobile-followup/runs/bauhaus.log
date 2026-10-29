@@ -1,0 +1,6 @@
+PASS scene leads combined/DOF while flash leads exposure; contextual quick controls stay available
+PASS 360/390 portrait and landscape, both themes and large text have no overflow and >=44px controls
+PASS GN40.5 decimal and mid-string edits preserve focus, cursor order and scroll
+PASS long equipment names, error explanations and warning states wrap without clipping
+PASS light/dark text and primary action token pairs retain at least 4.5:1 contrast
+PASS no uncaught runtime exception in Bauhaus states
