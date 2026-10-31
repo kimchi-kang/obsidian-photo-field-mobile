@@ -1,0 +1,47 @@
+{
+  "title": "사진 촬영 도우미 - photo-field-qa-vault - Obsidian 1.14.5",
+  "fingerprints": {
+    "main.js": "22bead9889a31d93019dd0ae6013380385ffec04cb84d69e33039f390f735a8f",
+    "styles.css": "3bb0a359934065e6cdfa46de40224ec721549958a6de6106220bce2a48e9151d",
+    "manifest.json": "03e81b55aaf6c038cd14257a3c3c925a4ab17cce29bd8245b293243f3175b01f"
+  },
+  "date": "2026-10-31T01:17:13.331Z",
+  "vault": "/private/tmp/photo-field-qa-vault",
+  "host": "actual Obsidian ItemView + app.emulateMobile(true) + CDP mobile metrics",
+  "actualIOS": false,
+  "checks": [
+    {
+      "name": "real isolated Obsidian ItemView and mobile host",
+      "passed": true
+    },
+    {
+      "name": "direct entry: GN, energy, loss, EV signs, step table and unit conversion",
+      "passed": true
+    },
+    {
+      "name": "coverage, actual dimensions and nominal equivalence do not change flash",
+      "passed": true
+    },
+    {
+      "name": "finite target direct controls, harmonic focus, actual step, SVG coordinate, tab and all Markdown",
+      "passed": true
+    },
+    {
+      "name": "infinity intent, impossible aperture, blank and inverted intervals clear old result",
+      "passed": true
+    },
+    {
+      "name": "preset and zoom changes, missing GN, unsupported modes and offcamera independence",
+      "passed": true
+    },
+    {
+      "name": "rounding, extreme finite residual, overflow error and no stale numeric result",
+      "passed": true
+    },
+    {
+      "name": "flush, disable/reload and reentry preserve exact values and infinity flag",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,25 @@
+import {writeFileSync} from 'node:fs';
+import {defaults,Inputs} from '../src/model';
+import {flash,optics,coverage,angle} from '../src/engine';
+import {equivalence,solveZone,includesTarget} from '../src/zone';
+import {fmt} from '../src/units';
+import {flash as beforeFlash,optics as beforeOptics,angle as beforeAngle} from '../docs/calculation-audit/before/engine';
+import {equivalence as beforeEquivalence,includesTarget as beforeIncludes} from '../docs/calculation-audit/before/zone';
+import {fmt as beforeFmt} from '../docs/calculation-audit/before/units';
+const input=(p:Partial<Inputs>={}):Inputs=>({...defaults,...p});
+const rows:{area:string;input:string;expected:number|string;actual:number|string;error:number|string;verdict:string}[]=[];
+const add=(area:string,input:string,expected:number,actual:number)=>{const error=Math.abs(actual-expected);rows.push({area,input,expected,actual,error,verdict:error<=1e-10+Math.abs(expected)*2e-10?'PASS':'FAIL'});};
+for(const [denominator,iso,loss,expected]of [[1,100,0,10],[4,100,0,5],[16,100,0,2.5],[16,400,0,5],[1,100,1,Math.sqrt(50)]])add('플래시 거리 m',`G40, f4, 1/${denominator}, ISO${iso}, L${loss}`,expected,flash(input({denominator,iso,loss})).d);
+const f=flash(input({cameraDistance:6}));add('필요 출력 비율','G40, f4, ISO100, r6m',.36,f.needed);add('역산 조리개','G40, p1/4, ISO100, r6m',20/6,f.requiredAperture);add('권장 분모','필요 p=.36, 1/1~1/256; EV중간 sqrt(.25*.5)<.36',2,f.nearest);add('잔여 EV','p=.5/.36',Math.log2(50/36),f.residual);add('EV','적정 5m, 실제 10m',-2,flash(input({cameraDistance:10})).ev);
+const base=input({focal:50,aperture:4,cocMode:'custom',coc:.03,cameraDistance:5}),o=optics(base),D=base.focal/base.aperture,vs=1/(1/base.focal-1/(base.cameraDistance*1000));
+const near=1/(1/base.focal-(1-base.coc/D)/vs)/1000,far=1/(1/base.focal-(1+base.coc/D)/vs)/1000;
+add('독립 결상 → 근거리 m','50mm f4 CoC .03, s5m',near,o.near);add('독립 결상 → 원거리 m','동일',far,o.far);add('전체 심도 m','동일',far-near,o.total);add('H m','∞ blur=c, 50mm f4 CoC .03',(base.focal+base.focal*D/base.coc)/1000,o.hyperfocal);
+add('수평 화각 °','36×24mm / 50mm',39.597752709049864,o.horizontal);add('수직 화각 °','36×24mm / 50mm',26.991466561591622,o.vertical);add('프레임 폭 m','36mm / 50mm, 5m',3.6,coverage(base).camera.width);add('프레임 높이 m','24mm / 50mm, 5m',2.4,coverage(base).camera.height);add('Airy mm','550nm, f4',.005368,o.airy);
+for(const [sensor,width,height,k]of [['ff',36,24,1],['apsc',23.6,15.6,1.5],['apsc16',22.3,14.9,1.6]]as const){const e=equivalence(input({sensor,width,height,focal:35,aperture:2}));add('환산 mm',sensor,35*k,e.focal);add('심도 대응 f',sensor,2*k,e.aperture);}
+const z=solveZone(input({focal:35,zoneNear:2,zoneFar:5}));add('존 초점 m','FF 35mm, 2~5m',20/7,z.cameraDistance);add('존 선택 f','독립 minimax .0288444mm CoC',7.1,z.aperture);
+const issue=(name:string,fn:()=>unknown)=>{try{return {name,result:fn()};}catch(e){return {name,error:String(e)};}};
+const extreme=input({gn:1e160,cameraDistance:1,aperture:4,denominator:1}),overflow=input({gn:1e308,aperture:1,cameraDistance:1e308,denominator:1,tolerance:5}),eq=input({width:1e-300,height:1e-300,focal:1e100,cropBasis:'dimensions'}),pole=input({focal:89.87400000000001,aperture:14.4,cocMode:'custom',coc:.0146,cameraDistance:38.509470061643846});
+const bugs=[{name:'화각 중간 곱 overflow',before:beforeAngle(1e308,1e308),after:angle(1e308,1e308)},{name:'단계 선택 / 잔여 EV',before:issue('before',()=>({nearest:beforeFlash(extreme).nearest,residual:String(beforeFlash(extreme).residual)})),after:issue('after',()=>({nearest:flash(extreme).nearest,residual:flash(extreme).residual}))},{name:'허용 거리 overflow',before:issue('before',()=>String(beforeFlash(overflow).high)),after:issue('after',()=>flash(overflow).high)},{name:'환산 overflow',before:issue('before',()=>String(beforeEquivalence(eq).focal)),after:issue('after',()=>equivalence(eq).focal)},{name:'고정 오차 존 포함',before:beforeIncludes({near:1.0000000005,far:5},{near:1,far:5}),after:includesTarget({near:1.0000000005,far:5},{near:1,far:5})},{name:'음수 0',before:beforeFmt(-.00001),after:fmt(-.00001)},{name:'H 직전 소거',before:issue('before',()=>beforeOptics(pole).far),after:issue('after',()=>optics(pole).far)}];
+writeFileSync('docs/calculation-audit/representative-results.json',JSON.stringify({rows,bugs},null,2));
+writeFileSync('docs/calculation-audit/representative-table.md','| 영역 | 대표 입력 | 독립 기대값 | 실제값 | 절대 오차 | 판정 |\n| --- | --- | ---: | ---: | ---: | --- |\n'+rows.map(r=>`| ${r.area} | ${r.input} | ${r.expected} | ${r.actual} | ${r.error} | ${r.verdict} |`).join('\n')+'\n');
+if(rows.some(r=>r.verdict!=='PASS'))throw Error('representative evidence mismatch');

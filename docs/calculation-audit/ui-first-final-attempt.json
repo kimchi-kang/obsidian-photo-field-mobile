@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-31T01:06:06.268Z",
+  "vault": "/private/tmp/photo-field-qa-vault",
+  "host": "actual Obsidian ItemView + app.emulateMobile(true) + CDP mobile metrics",
+  "actualIOS": false,
+  "checks": [
+    {
+      "name": "real isolated Obsidian ItemView and mobile host",
+      "passed": true
+    },
+    {
+      "name": "direct entry: GN, energy, loss, EV signs, step table and unit conversion",
+      "passed": true
+    },
+    {
+      "name": "coverage, actual dimensions and nominal equivalence do not change flash",
+      "passed": true
+    },
+    {
+      "name": "finite target direct controls, harmonic focus, actual step, SVG coordinate, tab and all Markdown",
+      "passed": true
+    },
+    {
+      "name": "infinity intent, impossible aperture, blank and inverted intervals clear old result",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /달성 불가/. Input:\n\n'목표 구간 포함'\n"
+    },
+    {
+      "name": "preset and zoom changes, missing GN, unsupported modes and offcamera independence",
+      "passed": true
+    },
+    {
+      "name": "rounding, extreme finite residual, overflow error and no stale numeric result",
+      "passed": true
+    },
+    {
+      "name": "flush, disable/reload and reentry preserve exact values and infinity flag",
+      "passed": false,
+      "error": "TimeoutError: locator.click: Timeout 6000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-zone-apply]')\u001b[22m\n"
+    }
+  ],
+  "errors": []
+}

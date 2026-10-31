@@ -1,0 +1,2 @@
+c1cedb7276c3d029b679d96449c67f62b118bc31aae4d988c5033cad10349a59  dist/photo-field-mobile-1.3.0-calculation-audit-candidate.zip
+a80524e9e3721b533cb9e0c989c8508706035621aad06a968257cb26ca01d302  dist/photo-field-mobile-1.3.0-pre-calculation-audit-recovery.zip

@@ -2,7 +2,7 @@ import {Inputs,Equipment} from './model';
 import {optics,flash,coverage} from './engine';
 import {equivalence,solveZone} from './zone';
 import {fmt,metres} from './units';
-export const limitations='수동 플래시·직접광·일반 동조·중심부 노출의 추정입니다. 실제 배광·반사율·환경광·장비 편차를 포함하지 않습니다. TTL, HSS, 바운스, 소프트박스, 근거리 대형 광원은 이 기본 모델로 확정할 수 없습니다. 손실 보정은 추정이며 GN에 이미 포함된 손실을 중복 적용하지 마세요.';
+export const limitations='수동 플래시·직접광·일반 동조·중심부 노출의 추정입니다. 점광원 역제곱 근사이며 근거리 대형 광원에는 부적절합니다. 실제 배광·반사율·환경광·장비 편차를 포함하지 않습니다. TTL, HSS, 바운스, 소프트박스, 근거리 대형 광원은 이 기본 모델로 확정할 수 없습니다. 손실 보정은 추정이며 GN에 이미 포함된 손실을 중복 적용하지 마세요.';
 export type NoteScope='all'|Inputs['tab'];
 export function validateNote(i:Inputs,scope:NoteScope='all'):void {
   if(scope!=='flash')optics(i);
@@ -19,7 +19,7 @@ export function note(i:Inputs,date=new Date(),context?:{version:string;equipment
   const opticalKeys:ReadonlySet<keyof Inputs>=new Set(['sensor','width','height','focal','aperture','cameraDistance','cocMode','coc','tab','cropBasis']);
   const flashKeys:ReadonlySet<keyof Inputs>=new Set(['gnMode','equipmentId','aperture','iso','linked','cameraDistance','flashDistance','gn','gnUnit','gnZoom','zoom','conditions','denominator','loss','tolerance','minDenominator','steps','mode','tab']);
   for(const key of Object.keys(labels) as (keyof Inputs)[]){if(((scope==='dof'||scope==='zone')&&!opticalKeys.has(key)&&!['zoneFlow','zoneNear','zoneFar','zoneInfinity','apertureMin','apertureMax','apertureSteps'].includes(key))||(scope==='flash'&&!flashKeys.has(key)))continue;lines.push(`| ${labels[key]} | ${String((key==='flashDistance'&&i.linked)||(key==='cameraDistance'&&scope==='flash'&&!i.linked)||(key==='coc'&&i.cocMode==='estimate')||(['horizontal','vertical'].includes(key)&&i.coverage==='approx')?'미사용':i[key]).replace(/\|/g,'\\|').replace(/\n/g,' / ')} |`);}
-  lines.push('\n## 계산 결과\n');
+  lines.push('\n## 계산 결과\n','표시 숫자만 반올림합니다. 포함·출력 경계·노출 판정은 반올림 전 값이므로 같은 표시 숫자라도 판정이 다를 수 있습니다.');
   if(scope!=='dof'&&scope!=='zone')try {const f=flash(i);lines.push(`- 선택 출력 1/${i.denominator}: **${f.powerLabel}**`,`- 적정 노출 예상 거리: ${metres(f.d)}`,`- 플래시–피사체 거리: ${metres(f.r)} · 노출 차이: ${fmt(f.ev)} EV (${f.ev>0?'예상 과다':f.ev<0?'예상 부족':'기준 적정'})`,`- 유효 GN(m): ${fmt(f.gn)}`,`- ±${i.tolerance}EV 거리 구간: ${metres(f.low)} ~ ${metres(f.high)}`,`- 필요한 조리개 f/${fmt(f.requiredAperture)} · 필요 출력 ${fmt(f.needed*100)}% · ${f.status}`,`- 권장 지원 단계 1/${f.nearest} · 해당 단계 예상 거리 ${metres(f.nearestDistance)}, 남는 노출 오차 ${fmt(f.residual)} EV`);
     lines.push('\n### 출력별 거리\n','| 출력 | 적정 노출 예상 거리 |','| --- | --- |',...f.distances.map(x=>`| 1/${x.n} | ${metres(x.d)} |`));
   }catch(e){lines.push(`- 플래시 계산 불가: ${e instanceof Error?e.message:String(e)}`);}
@@ -32,8 +32,8 @@ export function note(i:Inputs,date=new Date(),context?:{version:string;equipment
   if(scope==='all'||scope==='combined')try {const c=coverage(i);lines.push(`- 카메라 프레임 ${fmt(c.camera.width)} × ${fmt(c.camera.height)} m (카메라 거리 평면)`,`- 플래시 조사 범위 ${fmt(c.flash.width)} × ${fmt(c.flash.height)} m (플래시 거리 평면)`,`- 조사각 ${fmt(c.h)}° × ${fmt(c.v)}° · ${i.coverage==='approx'?'풀프레임 커버리지 가정, 제조사 사양 아님':'수동 입력 조사각'}`,`- ${i.linked?(c.narrow?'프레임 가장자리 광량 부족 가능성':'동일 위치·방향 가정의 범위 비교'):'오프카메라: 위치·방향 미입력, 공간 중첩 비교 불가'}`);}catch(e){lines.push(`- 조사 범위 계산 불가: ${e instanceof Error?e.message:String(e)}`);}
   lines.push('\n## 조건과 한계\n',limitations,'빛은 예상 거리에서 끝나지 않습니다. 가까우면 과다 노출될 수 있습니다. CoC=센서 대각/1500은 감상 크기·시력·확대율에 의존하는 경험적 추정입니다. 직선투영 박막렌즈 모델이며 근접 촬영·포커스 브리딩·동공 배율은 반영하지 않습니다.',
     '\n## 공식\n','유효 GN = G√p√(ISO/100) × 2^(−L/2), d = 유효 GN/N, 필요 p = (Nr/G)²(100/ISO)2^L, EV = 2log₂(d/r).',
-    'H=f²/(N·CoC)+f, h=H−f, Dnear=h·s/(h+s−f), Dfar=h·s/(h−s+f); s≥H이면 원거리 ∞. 광학 길이는 mm로 통일 후 m로 표시.',
+    'H=f²/(N·CoC)+f, h=H−f, Dnear=h·s/(h+s−f), Dfar=h·s/(h−s+f); s≥H이면 원거리 ∞. 광학 길이는 mm로 통일 후 m로 표시. s는 박막렌즈 주평면에서 피사체까지의 거리이며 카메라 센서면 거리와 다릅니다. 화각·프레임은 무한대 초점의 직선투영 근사로 근접 촬영의 배율 변화는 미반영합니다.',
     '\n## 출처\n','심도·화각 표현의 기반: [depth-of-field](https://github.com/jherr/depth-of-field), Jack Herrington, Copyright (c) 2026 Jack Herrington, MIT. 참고 SHA c75dd6d40e4a96e96fd38e57657fe4b9737bf776. 모바일용 재구현·수정 및 플래시 확장. 공식·후원 플러그인이 아닙니다.',
-    '[심도 공식](https://dofmaster.com/equations.html) · [GN 기본 관계 Nikon](https://download.nikonimglib.com/archive2/rOYAB007rd7k028ePIg11W7lyc97/SB-500_CH%28En%2904.pdf)');
+    '[렌즈 결상·착란원 MIT](https://people.csail.mit.edu/fredo/comp-photo-book/02-fundamentals-03-lens-image-formation.html) · [화각 Edmund Optics](https://www.edmundoptics.com/knowledge-center/application-notes/imaging/understanding-focal-length-and-field-of-view/) · [Airy 지름 Edmund Optics](https://www.edmundoptics.com/knowledge-center/application-notes/imaging/limitations-on-resolution-and-contrast-the-airy-disk/) · [GN 기본 관계 Nikon](https://download.nikonimglib.com/archive2/rOYAB007rd7k028ePIg11W7lyc97/SB-500_CH%28En%2904.pdf)');
   return lines.join('\n')+'\n';
 }

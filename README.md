@@ -25,7 +25,7 @@ GitHub: https://github.com/kimchi-kang/obsidian-photo-field-mobile
 
 iOS: Files에서 보관함을 찾고 Mac/PC로 `.obsidian/plugins/photo-field-mobile`을 복사한 후 보관함 전체를 동기화하는 방식이 편리하다. 숨김 폴더 접근이 어려우면 데스크톱에서 설치한 뒤 **설정/플러그인 폴더도 동기화하는 수단**을 사용한다. Obsidian Sync에서는 플러그인·설정 동기화 선택을 확인한다. Android: 보관함 폴더에 접근 가능한 파일 관리자 또는 USB로 복사한다. Android의 보관함 접근 권한과 저장 위치는 OS/앱 구성에 따라 다르다. 설치/동기화 이후 계산과 저장에는 인터넷이 필요 없다. Obsidian 자체의 동기화 동작은 플러그인과 별개다.
 
-플러그인은 설치한 보관함 안에서만 작동한다. 검증 결과는 `docs/VALIDATION.md`에 기록한다. 현재 버전 **1.2.0**의 버그 수정 내역은 [CHANGELOG.md](CHANGELOG.md)에 정리했다. 기존 보관함 내용이나 다른 플러그인을 변경하지 않는다.
+플러그인은 설치한 보관함 안에서만 작동한다. 검증 결과는 `docs/VALIDATION.md`에 기록한다. 현재 버전 **1.3.1**의 버그 수정 내역은 [CHANGELOG.md](CHANGELOG.md)에 정리했다. 기존 보관함 내용이나 다른 플러그인을 변경하지 않는다.
 
 ## 30초 사용 예
 
@@ -127,3 +127,7 @@ npm test
 촬영 준비 흐름의 후속 수정은 [검증 보고서](docs/preparation/REPORT.md), [실기 8~10분 확인 절차](docs/preparation/DEVICE-CHECKLIST.md), [실제 장비 비교 기록](docs/preparation/EQUIPMENT-COMPARISON.md)을 참고한다. 이 작업의 빌드는1.2.0 로컬 후보이며 공개 안정판과 구분한다.
 
 현재 로컬 작업에는 [바우하우스 디자인 적용](docs/bauhaus/REPORT.md)이 포함된다. 공개 안정판과 구분되며, 설치 ZIP은 `dist/photo-field-mobile-1.2.0-bauhaus.zip`이다.
+
+## 1.3.1 계산 정확성 검증
+
+[계산 검증 보고서](docs/calculation-audit/REPORT.md)와 [독립 기대값 대조표](docs/calculation-audit/representative-table.md), [배포 안내](docs/releases/1.3.1/RELEASE.md)를 참고하세요. 기존의 로컬 후보 기록은 각 작업 당시 상태입니다.

@@ -104,7 +104,9 @@ function parseNumber(v) {
   return v.trim() === "" ? NaN : Number(v);
 }
 function fmt(v, digits = 2) {
-  return v === Infinity ? "\u221E" : Number.isFinite(v) ? v.toLocaleString("ko-KR", { maximumFractionDigits: digits }) : "\u2014";
+  if (v === Infinity) return "\u221E";
+  if (!Number.isFinite(v)) return "\u2014";
+  return (Math.abs(v) < 0.5 * 10 ** -digits ? 0 : v).toLocaleString("ko-KR", { maximumFractionDigits: digits });
 }
 var metres = (v) => v === Infinity ? "\u221E" : `${fmt(v)} m`;
 
@@ -114,7 +116,10 @@ function positive(...values) {
 }
 function angle(size, focal) {
   positive(size, focal);
-  return 2 * Math.atan(size / (2 * focal)) * 180 / Math.PI;
+  const result = 2 * Math.atan(size / focal / 2) * 180 / Math.PI;
+  positive(result);
+  if (result >= 180) throw Error("\uD654\uAC01\uC774 \uC218\uCE58 \uD45C\uD604 \uD55C\uACC4\uC5D0 \uB3C4\uB2EC\uD588\uC2B5\uB2C8\uB2E4. \uC785\uB825 \uADDC\uBAA8\uB97C \uC904\uC774\uC138\uC694.");
+  return result;
 }
 function footprint(r, h, v) {
   positive(r, h, v);
@@ -134,9 +139,11 @@ function optics(i) {
   positive(h0, H);
   const near = h0 / (h0 + s - f) * (s / 1e3);
   const atInfinity = i.cameraDistance >= H / 1e3;
-  const far = atInfinity ? Infinity : h0 / (h0 - s + f) * (s / 1e3);
+  const far = atInfinity ? Infinity : h0 / 1e3 / (H / 1e3 - i.cameraDistance) * i.cameraDistance;
   positive(near);
   if (!atInfinity) positive(far);
+  const equivalent = f * (Math.hypot(36, 24) / Math.hypot(i.width, i.height)), airy = 2.44 * 55e-5 * i.aperture;
+  positive(equivalent, airy);
   return {
     c,
     hyperfocal: H / 1e3,
@@ -146,8 +153,8 @@ function optics(i) {
     horizontal: angle(i.width, f),
     vertical: angle(i.height, f),
     diagonal: angle(Math.hypot(i.width, i.height), f),
-    equivalent: f * Math.hypot(36, 24) / Math.hypot(i.width, i.height),
-    airy: 2.44 * 55e-5 * i.aperture
+    equivalent,
+    airy
   };
 }
 function effectiveGN(g, p, iso, loss) {
@@ -192,7 +199,11 @@ function flash(i) {
   const gn = effectiveGN(g, 1 / i.denominator, i.iso, i.loss), d = gn / i.aperture;
   positive(i.aperture, d);
   const needed = requiredPower(g, i.aperture, r, i.iso, i.loss);
-  const nearest = steps.reduce((best, v) => Math.abs(Math.log2(1 / v / needed)) < Math.abs(Math.log2(1 / best / needed)) ? v : best, steps[0]);
+  const neededEV = 2 * (Math.log2(i.aperture) + Math.log2(r) - Math.log2(effectiveGN(g, 1, i.iso, i.loss)));
+  const residualFor = (n) => -Math.log2(n) - neededEV;
+  const nearest = steps.reduce((best, v) => Math.abs(residualFor(v)) < Math.abs(residualFor(best)) ? v : best, steps[0]);
+  const low = d / 2 ** (i.tolerance / 2), high = d * 2 ** (i.tolerance / 2), requiredAperture = gn / r;
+  positive(low, high, requiredAperture);
   return {
     gn,
     d,
@@ -203,11 +214,11 @@ function flash(i) {
     nearestDistance: flashDistance(g, 1 / nearest, i.iso, i.aperture, i.loss),
     ev: exposureEV(d, r),
     needed,
-    requiredAperture: gn / r,
+    requiredAperture,
     nearest,
-    residual: Math.log2(1 / nearest / needed),
-    low: d / 2 ** (i.tolerance / 2),
-    high: d * 2 ** (i.tolerance / 2),
+    residual: residualFor(nearest),
+    low,
+    high,
     status: needed > 1 ? "\uCD5C\uB300 \uCD9C\uB825\uC73C\uB85C\uB3C4 \uBD80\uC871" : needed < 1 / i.minDenominator ? "\uCD5C\uC18C \uCD9C\uB825\uBCF4\uB2E4 \uB0AE\uC740 \uCD9C\uB825 \uD544\uC694" : "\uC7A5\uBE44 \uCD9C\uB825 \uBC94\uC704 \uC548",
     steps,
     distances: steps.map((n) => ({ n, d: flashDistance(g, 1 / n, i.iso, i.aperture, i.loss) }))
@@ -438,12 +449,14 @@ function equivalence(i) {
   const nominal = { ff: 1, apsc: 1.5, apsc16: 1.6, mft: 2 };
   const useNominal = i.cropBasis === "nominal" && i.sensor in nominal;
   const crop = useNominal ? nominal[i.sensor] : dimensional;
+  const focal = i.focal * crop, aperture = i.aperture * crop;
+  positive(dimensional, crop, focal, aperture);
   return {
     crop,
     dimensional,
     basis: useNominal ? "\uBA85\uBAA9 \uACC4\uC218" : "\uC2E4\uCE58\uC218 \uB300\uAC01 \uBE44\uC728",
-    focal: i.focal * crop,
-    aperture: i.aperture * crop,
+    focal,
+    aperture,
     differentAspect: Math.abs(i.width / i.height - 1.5) > 1e-3,
     comparable: i.cocMode === "estimate"
   };
@@ -458,7 +471,8 @@ function zoneTarget(i) {
   return { near: i.zoneNear, far: i.zoneInfinity ? Infinity : i.zoneFar };
 }
 function includesTarget(o, t) {
-  return o.near <= t.near + 1e-9 && (t.far === Infinity ? o.far === Infinity : o.far + 1e-9 >= t.far);
+  const le = (a, b) => a <= b || Number.isFinite(a) && Number.isFinite(b) && a - b <= 16 * Number.EPSILON * Math.max(Math.abs(a), Math.abs(b));
+  return le(o.near, t.near) && (t.far === Infinity ? o.far === Infinity : le(t.far, o.far));
 }
 function solveZone(i) {
   const target = zoneTarget(i);
@@ -467,10 +481,13 @@ function solveZone(i) {
   const c = i.cocMode === "estimate" ? Math.hypot(i.width, i.height) / 1500 : i.coc;
   positive(i.width, i.height, c);
   const a = target.near * 1e3, b = target.far * 1e3, f = i.focal;
+  positive(a);
+  if (!i.zoneInfinity) positive(b);
   const focus = target.far === Infinity ? 2 * a : 2 * a / (1 + a / b);
   const h = target.far === Infinity ? 2 * a - f : (2 * a - f * (1 + a / b)) / (1 - a / b);
-  positive(h);
+  positive(h, focus);
   const required = f * f / (c * h);
+  positive(required);
   const raw = i.apertureSteps.split(",").map((v) => v.trim());
   if (raw.some((v) => !v || !Number.isFinite(Number(v)) || Number(v) <= 0)) throw Error("\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4\uB97C \uC591\uC218 f\uAC12\uC73C\uB85C \uC785\uB825\uD558\uC138\uC694.");
   const steps = [...new Set(raw.map(Number))].filter((v) => v >= i.apertureMin && v <= i.apertureMax).sort((a2, b2) => a2 - b2);
@@ -616,7 +633,7 @@ function diagram(host, i) {
 }
 
 // src/note.ts
-var limitations = "\uC218\uB3D9 \uD50C\uB798\uC2DC\xB7\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870\xB7\uC911\uC2EC\uBD80 \uB178\uCD9C\uC758 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC2E4\uC81C \uBC30\uAD11\xB7\uBC18\uC0AC\uC728\xB7\uD658\uACBD\uAD11\xB7\uC7A5\uBE44 \uD3B8\uCC28\uB97C \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. TTL, HSS, \uBC14\uC6B4\uC2A4, \uC18C\uD504\uD2B8\uBC15\uC2A4, \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC740 \uC774 \uAE30\uBCF8 \uBAA8\uB378\uB85C \uD655\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC190\uC2E4 \uBCF4\uC815\uC740 \uCD94\uC815\uC774\uBA70 GN\uC5D0 \uC774\uBBF8 \uD3EC\uD568\uB41C \uC190\uC2E4\uC744 \uC911\uBCF5 \uC801\uC6A9\uD558\uC9C0 \uB9C8\uC138\uC694.";
+var limitations = "\uC218\uB3D9 \uD50C\uB798\uC2DC\xB7\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870\xB7\uC911\uC2EC\uBD80 \uB178\uCD9C\uC758 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC810\uAD11\uC6D0 \uC5ED\uC81C\uACF1 \uADFC\uC0AC\uC774\uBA70 \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC5D0\uB294 \uBD80\uC801\uC808\uD569\uB2C8\uB2E4. \uC2E4\uC81C \uBC30\uAD11\xB7\uBC18\uC0AC\uC728\xB7\uD658\uACBD\uAD11\xB7\uC7A5\uBE44 \uD3B8\uCC28\uB97C \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. TTL, HSS, \uBC14\uC6B4\uC2A4, \uC18C\uD504\uD2B8\uBC15\uC2A4, \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC740 \uC774 \uAE30\uBCF8 \uBAA8\uB378\uB85C \uD655\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC190\uC2E4 \uBCF4\uC815\uC740 \uCD94\uC815\uC774\uBA70 GN\uC5D0 \uC774\uBBF8 \uD3EC\uD568\uB41C \uC190\uC2E4\uC744 \uC911\uBCF5 \uC801\uC6A9\uD558\uC9C0 \uB9C8\uC138\uC694.";
 function validateNote(i, scope = "all") {
   if (scope !== "flash") optics(i);
   if (scope === "zone" && i.zoneFlow === "target") solveZone(i);
@@ -638,7 +655,7 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
     if ((scope === "dof" || scope === "zone") && !opticalKeys.has(key) && !["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity", "apertureMin", "apertureMax", "apertureSteps"].includes(key) || scope === "flash" && !flashKeys.has(key)) continue;
     lines.push(`| ${labels[key]} | ${String(key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode === "estimate" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" ? "\uBBF8\uC0AC\uC6A9" : i[key]).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
   }
-  lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n");
+  lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n", "\uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD569\uB2C8\uB2E4. \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC774\uBBC0\uB85C \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
   if (scope !== "dof" && scope !== "zone") try {
     const f = flash(i);
     lines.push(`- \uC120\uD0DD \uCD9C\uB825 1/${i.denominator}: **${f.powerLabel}**`, `- \uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC: ${metres(f.d)}`, `- \uD50C\uB798\uC2DC\u2013\uD53C\uC0AC\uCCB4 \uAC70\uB9AC: ${metres(f.r)} \xB7 \uB178\uCD9C \uCC28\uC774: ${fmt(f.ev)} EV (${f.ev > 0 ? "\uC608\uC0C1 \uACFC\uB2E4" : f.ev < 0 ? "\uC608\uC0C1 \uBD80\uC871" : "\uAE30\uC900 \uC801\uC815"})`, `- \uC720\uD6A8 GN(m): ${fmt(f.gn)}`, `- \xB1${i.tolerance}EV \uAC70\uB9AC \uAD6C\uAC04: ${metres(f.low)} ~ ${metres(f.high)}`, `- \uD544\uC694\uD55C \uC870\uB9AC\uAC1C f/${fmt(f.requiredAperture)} \xB7 \uD544\uC694 \uCD9C\uB825 ${fmt(f.needed * 100)}% \xB7 ${f.status}`, `- \uAD8C\uC7A5 \uC9C0\uC6D0 \uB2E8\uACC4 1/${f.nearest} \xB7 \uD574\uB2F9 \uB2E8\uACC4 \uC608\uC0C1 \uAC70\uB9AC ${metres(f.nearestDistance)}, \uB0A8\uB294 \uB178\uCD9C \uC624\uCC28 ${fmt(f.residual)} EV`);
@@ -678,10 +695,10 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
     "\uBE5B\uC740 \uC608\uC0C1 \uAC70\uB9AC\uC5D0\uC11C \uB05D\uB098\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uAC00\uAE4C\uC6B0\uBA74 \uACFC\uB2E4 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4. CoC=\uC13C\uC11C \uB300\uAC01/1500\uC740 \uAC10\uC0C1 \uD06C\uAE30\xB7\uC2DC\uB825\xB7\uD655\uB300\uC728\uC5D0 \uC758\uC874\uD558\uB294 \uACBD\uD5D8\uC801 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC9C1\uC120\uD22C\uC601 \uBC15\uB9C9\uB80C\uC988 \uBAA8\uB378\uC774\uBA70 \uADFC\uC811 \uCD2C\uC601\xB7\uD3EC\uCEE4\uC2A4 \uBE0C\uB9AC\uB529\xB7\uB3D9\uACF5 \uBC30\uC728\uC740 \uBC18\uC601\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
     "\n## \uACF5\uC2DD\n",
     "\uC720\uD6A8 GN = G\u221Ap\u221A(ISO/100) \xD7 2^(\u2212L/2), d = \uC720\uD6A8 GN/N, \uD544\uC694 p = (Nr/G)\xB2(100/ISO)2^L, EV = 2log\u2082(d/r).",
-    "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f, Dnear=h\xB7s/(h+s\u2212f), Dfar=h\xB7s/(h\u2212s+f); s\u2265H\uC774\uBA74 \uC6D0\uAC70\uB9AC \u221E. \uAD11\uD559 \uAE38\uC774\uB294 mm\uB85C \uD1B5\uC77C \uD6C4 m\uB85C \uD45C\uC2DC.",
+    "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f, Dnear=h\xB7s/(h+s\u2212f), Dfar=h\xB7s/(h\u2212s+f); s\u2265H\uC774\uBA74 \uC6D0\uAC70\uB9AC \u221E. \uAD11\uD559 \uAE38\uC774\uB294 mm\uB85C \uD1B5\uC77C \uD6C4 m\uB85C \uD45C\uC2DC. s\uB294 \uBC15\uB9C9\uB80C\uC988 \uC8FC\uD3C9\uBA74\uC5D0\uC11C \uD53C\uC0AC\uCCB4\uAE4C\uC9C0\uC758 \uAC70\uB9AC\uC774\uBA70 \uCE74\uBA54\uB77C \uC13C\uC11C\uBA74 \uAC70\uB9AC\uC640 \uB2E4\uB985\uB2C8\uB2E4. \uD654\uAC01\xB7\uD504\uB808\uC784\uC740 \uBB34\uD55C\uB300 \uCD08\uC810\uC758 \uC9C1\uC120\uD22C\uC601 \uADFC\uC0AC\uB85C \uADFC\uC811 \uCD2C\uC601\uC758 \uBC30\uC728 \uBCC0\uD654\uB294 \uBBF8\uBC18\uC601\uD569\uB2C8\uB2E4.",
     "\n## \uCD9C\uCC98\n",
     "\uC2EC\uB3C4\xB7\uD654\uAC01 \uD45C\uD604\uC758 \uAE30\uBC18: [depth-of-field](https://github.com/jherr/depth-of-field), Jack Herrington, Copyright (c) 2026 Jack Herrington, MIT. \uCC38\uACE0 SHA c75dd6d40e4a96e96fd38e57657fe4b9737bf776. \uBAA8\uBC14\uC77C\uC6A9 \uC7AC\uAD6C\uD604\xB7\uC218\uC815 \uBC0F \uD50C\uB798\uC2DC \uD655\uC7A5. \uACF5\uC2DD\xB7\uD6C4\uC6D0 \uD50C\uB7EC\uADF8\uC778\uC774 \uC544\uB2D9\uB2C8\uB2E4.",
-    "[\uC2EC\uB3C4 \uACF5\uC2DD](https://dofmaster.com/equations.html) \xB7 [GN \uAE30\uBCF8 \uAD00\uACC4 Nikon](https://download.nikonimglib.com/archive2/rOYAB007rd7k028ePIg11W7lyc97/SB-500_CH%28En%2904.pdf)"
+    "[\uB80C\uC988 \uACB0\uC0C1\xB7\uCC29\uB780\uC6D0 MIT](https://people.csail.mit.edu/fredo/comp-photo-book/02-fundamentals-03-lens-image-formation.html) \xB7 [\uD654\uAC01 Edmund Optics](https://www.edmundoptics.com/knowledge-center/application-notes/imaging/understanding-focal-length-and-field-of-view/) \xB7 [Airy \uC9C0\uB984 Edmund Optics](https://www.edmundoptics.com/knowledge-center/application-notes/imaging/limitations-on-resolution-and-contrast-the-airy-disk/) \xB7 [GN \uAE30\uBCF8 \uAD00\uACC4 Nikon](https://download.nikonimglib.com/archive2/rOYAB007rd7k028ePIg11W7lyc97/SB-500_CH%28En%2904.pdf)"
   );
   return lines.join("\n") + "\n";
 }
@@ -1091,6 +1108,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     hyper.className = "pfm-wide";
     node(advanced, "p", "\uC720\uD6A8 GN=G\u221Ap\u221A(ISO/100)\xD72^(\u2212L/2), \uC801\uC815 \uAC70\uB9AC=GN/f-number. \uD544\uC694 \uCD9C\uB825=(Nr/G)\xB2(100/ISO)2^L. \uB178\uCD9C \uCC28\uC774=2log\u2082(d/r). \uC591\uC218=\uC608\uC0C1 \uACFC\uB2E4, \uC74C\uC218=\uC608\uC0C1 \uBD80\uC871. \uBE5B\uC774 \uC774 \uAC70\uB9AC\uC5D0\uC11C \uB05D\uB098\uB294 \uAC83\uC740 \uC544\uB2D9\uB2C8\uB2E4.");
     node(advanced, "p", "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f. \uADFC\uAC70\uB9AC=hs/(h+s\u2212f), \uC6D0\uAC70\uB9AC=hs/(h\u2212s+f). s\u2265H\uC774\uBA74 \u221E. \uAD11\uD559\uC740 mm, \uCD9C\uB825\uC740 m. \uC9C1\uC120\uD22C\uC601 \uD654\uAC01=2atan(\uC13C\uC11C \uAE38\uC774/2f). \uC870\uC0AC \uBC94\uC704=2r\xB7tan(\uAC01/2).");
+    node(advanced, "p", "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC\uB294 \uBC15\uB9C9\uB80C\uC988 \uC8FC\uD3C9\uBA74 \uAE30\uC900\uC774\uBA70 \uC13C\uC11C\uBA74 \uAE30\uC900 \uAC70\uB9AC\uC640 \uB2E4\uB985\uB2C8\uB2E4. \uD654\uAC01\xB7\uD504\uB808\uC784\uC740 \uBB34\uD55C\uB300 \uCD08\uC810\uC758 \uC9C1\uC120\uD22C\uC601 \uADFC\uC0AC\uB85C \uADFC\uC811 \uCD2C\uC601 \uBC30\uC728 \uBCC0\uD654\uB294 \uBBF8\uBC18\uC601\uD569\uB2C8\uB2E4.");
     node(advanced, "p", limitations);
     const about = this.details("\uD50C\uB7EC\uADF8\uC778 \uC815\uBCF4\xB7\uC6D0\uBCF8 \uC800\uC791\uAD8C");
     node(about, "p", `\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8 ${this.plugin.manifest.version} \xB7 depth-of-field\uC758 \uC2EC\uB3C4\xB7\uD654\uAC01 \uC2DC\uAC01\uD654\uB97C \uBAA8\uBC14\uC77C Obsidian\uC6A9\uC73C\uB85C \uC218\uC815\xB7\uC7AC\uAD6C\uD604\uD558\uACE0 \uC218\uB3D9 \uD50C\uB798\uC2DC \uACC4\uC0B0\uC744 \uD655\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uC6D0\uC791\uC790\uC758 \uACF5\uC2DD \uB610\uB294 \uD6C4\uC6D0 \uD50C\uB7EC\uADF8\uC778\uC774 \uC544\uB2D9\uB2C8\uB2E4.`);
@@ -1119,6 +1137,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       });
     });
     save.className = "pfm-save";
+    node(footer, "p", "\uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD558\uBA70 \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC785\uB2C8\uB2E4. \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     node(footer, "p", "\uD604\uC7AC \uD0ED: \uC2EC\uB3C4\xB7\uD654\uAC01 \uB610\uB294 \uD50C\uB798\uC2DC \uACB0\uACFC\uB9CC \uC800\uC7A5 \xB7 \uD1B5\uD569/\uC804\uCCB4: \uBAA8\uB4E0 \uACC4\uC0B0 \uC870\uAC74 \uD544\uC694 \xB7 \uC77C\uBC18 Markdown \xB7 \uC0C8 \uB178\uD2B8 \uC0DD\uC131 \xB7 \uC624\uD504\uB77C\uC778");
     this.paint(false);
   }
@@ -1183,7 +1202,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       if (i.zoneFlow === "target") {
         const r = solveZone(i);
         const included = includesTarget(current, r.target);
-        node(this.zoneResult, "strong", included ? "\uBAA9\uD45C \uAD6C\uAC04 \uD3EC\uD568" : r.possible ? "\uC77C\uBD80 \uBD80\uC871 \xB7 \uC81C\uC548 \uC124\uC815\uC744 \uC801\uC6A9\uD558\uC138\uC694" : "\uB2EC\uC131 \uBD88\uAC00 \xB7 \uB80C\uC988 \uC870\uB9AC\uAC1C \uC81C\uD55C", "pfm-zone-status");
+        node(this.zoneResult, "strong", !r.possible ? "\uB2EC\uC131 \uBD88\uAC00 \xB7 \uB80C\uC988 \uC870\uB9AC\uAC1C \uC81C\uD55C" : included ? "\uBAA9\uD45C \uAD6C\uAC04 \uD3EC\uD568" : "\uC77C\uBD80 \uBD80\uC871 \xB7 \uC81C\uC548 \uC124\uC815\uC744 \uC801\uC6A9\uD558\uC138\uC694", "pfm-zone-status");
         node(this.zoneResult, "p", `\uBAA9\uD45C ${metres(r.target.near)} ~ ${metres(r.target.far)} \xB7 \uC774\uB860 \uD544\uC694 f/${fmt(r.required, 3)}`);
         node(this.zoneResult, "p", `${r.possible ? "\uC81C\uC548" : "\uB80C\uC988 \uD55C\uACC4\uC5D0\uC11C \uB300\uC548"}: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(r.aperture)} \u2192 ${metres(r.actual.near)} ~ ${metres(r.actual.far)}`);
         if (r.possible) {

@@ -1,0 +1,8 @@
+PASS real isolated Obsidian ItemView and mobile host
+PASS direct entry: GN, energy, loss, EV signs, step table and unit conversion
+PASS coverage, actual dimensions and nominal equivalence do not change flash
+PASS finite target direct controls, harmonic focus, actual step, SVG coordinate, tab and all Markdown
+PASS infinity intent, impossible aperture, blank and inverted intervals clear old result
+PASS preset and zoom changes, missing GN, unsupported modes and offcamera independence
+PASS rounding, extreme finite residual, overflow error and no stale numeric result
+PASS flush, disable/reload and reentry preserve exact values and infinity flag

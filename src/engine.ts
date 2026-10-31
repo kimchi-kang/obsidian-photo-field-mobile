@@ -5,7 +5,10 @@
 import {Inputs} from './model';
 import {feetToMetres} from './units';
 export function positive(...values:number[]):void {if(values.some(v=>!Number.isFinite(v)||v<=0))throw Error('양의 유한한 수가 필요합니다.');}
-export function angle(size:number,focal:number):number {positive(size,focal);return 2*Math.atan(size/(2*focal))*180/Math.PI;}
+export function angle(size:number,focal:number):number {
+  positive(size,focal);const result=2*Math.atan((size/focal)/2)*180/Math.PI;
+  positive(result);if(result>=180)throw Error('화각이 수치 표현 한계에 도달했습니다. 입력 규모를 줄이세요.');return result;
+}
 export function footprint(r:number,h:number,v:number):{width:number;height:number} {
   positive(r,h,v);if(h>=180||v>=180)throw Error('조사각은 180° 미만이어야 합니다.');
   const width=2*r*Math.tan(h*Math.PI/360),height=2*r*Math.tan(v*Math.PI/360);
@@ -21,11 +24,15 @@ export function optics(i:Inputs) {
   positive(h0,H);
   const near=h0/(h0+s-f)*(s/1000);
   const atInfinity=i.cameraDistance>=H/1000;
-  const far=atInfinity?Infinity:h0/(h0-s+f)*(s/1000);
+  // Subtract in the input's metre domain: H itself is exposed in metres.
+  // This keeps the immediately preceding representable input finite, without an infinity epsilon band.
+  const far=atInfinity?Infinity:(h0/1000)/(H/1000-i.cameraDistance)*i.cameraDistance;
   positive(near);if(!atInfinity)positive(far);
+  const equivalent=f*(Math.hypot(36,24)/Math.hypot(i.width,i.height)),airy=2.44*0.00055*i.aperture;
+  positive(equivalent,airy);
   return {c,hyperfocal:H/1000,near,far,total:far-near,
     horizontal:angle(i.width,f),vertical:angle(i.height,f),diagonal:angle(Math.hypot(i.width,i.height),f),
-    equivalent:f*Math.hypot(36,24)/Math.hypot(i.width,i.height),airy:2.44*0.00055*i.aperture};
+    equivalent,airy};
 }
 export function effectiveGN(g:number,p:number,iso:number,loss:number):number {
   positive(g,p,iso);if(p>1||!Number.isFinite(loss)||loss<0)throw Error('출력은 0 초과 1 이하, 추가 손실은 0 이상이어야 합니다.');
@@ -53,9 +60,15 @@ export function flash(i:Inputs) {
   const r=i.linked?i.cameraDistance:i.flashDistance;
   const gn=effectiveGN(g,1/i.denominator,i.iso,i.loss),d=gn/i.aperture;
   positive(i.aperture,d); const needed=requiredPower(g,i.aperture,r,i.iso,i.loss);
-  const nearest=steps.reduce((best,v)=>Math.abs(Math.log2((1/v)/needed))<Math.abs(Math.log2((1/best)/needed))?v:best,steps[0]);
-  return {gn,d,r,g,supported:steps.includes(i.denominator),powerLabel:steps.includes(i.denominator)?(i.gnMode==='equipment'?'장비 지원 출력':'수동 GN · 입력한 지원 단계'):'이론값·장비 미지원 출력',nearestDistance:flashDistance(g,1/nearest,i.iso,i.aperture,i.loss),ev:exposureEV(d,r),needed,requiredAperture:gn/r,nearest,
-    residual:Math.log2((1/nearest)/needed),low:d/2**(i.tolerance/2),high:d*2**(i.tolerance/2),
+  // log(a/b) can overflow even while both a, b and the EV result are representable.
+  // Compute before squaring the power fraction: subnormal p has fewer significant bits.
+  const neededEV=2*(Math.log2(i.aperture)+Math.log2(r)-Math.log2(effectiveGN(g,1,i.iso,i.loss)));
+  const residualFor=(n:number)=>-Math.log2(n)-neededEV;
+  const nearest=steps.reduce((best,v)=>Math.abs(residualFor(v))<Math.abs(residualFor(best))?v:best,steps[0]);
+  const low=d/2**(i.tolerance/2),high=d*2**(i.tolerance/2),requiredAperture=gn/r;
+  positive(low,high,requiredAperture);
+  return {gn,d,r,g,supported:steps.includes(i.denominator),powerLabel:steps.includes(i.denominator)?(i.gnMode==='equipment'?'장비 지원 출력':'수동 GN · 입력한 지원 단계'):'이론값·장비 미지원 출력',nearestDistance:flashDistance(g,1/nearest,i.iso,i.aperture,i.loss),ev:exposureEV(d,r),needed,requiredAperture,nearest,
+    residual:residualFor(nearest),low,high,
     status:needed>1?'최대 출력으로도 부족':needed<1/i.minDenominator?'최소 출력보다 낮은 출력 필요':'장비 출력 범위 안',steps,
     distances:steps.map(n=>({n,d:flashDistance(g,1/n,i.iso,i.aperture,i.loss)}))};
 }
