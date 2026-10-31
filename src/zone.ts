@@ -7,7 +7,8 @@ export function equivalence(i:Inputs) {
   const nominal:Record<string,number>={ff:1,apsc:1.5,apsc16:1.6,mft:2};
   const useNominal=i.cropBasis==='nominal'&&i.sensor in nominal;
   const crop=useNominal?nominal[i.sensor]:dimensional;
-  return {crop,dimensional,basis:useNominal?'명목 계수':'실치수 대각 비율',focal:i.focal*crop,aperture:i.aperture*crop,
+  const focal=i.focal*crop,aperture=i.aperture*crop;positive(dimensional,crop,focal,aperture);
+  return {crop,dimensional,basis:useNominal?'명목 계수':'실치수 대각 비율',focal,aperture,
     differentAspect:Math.abs(i.width/i.height-1.5)>0.001,
     comparable:i.cocMode==='estimate'};
 }
@@ -18,7 +19,9 @@ export function zoneTarget(i:Inputs) {
   return {near:i.zoneNear,far:i.zoneInfinity?Infinity:i.zoneFar};
 }
 export function includesTarget(o:{near:number;far:number},t:{near:number;far:number}):boolean {
-  return o.near<=t.near+1e-9&&(t.far===Infinity?o.far===Infinity:o.far+1e-9>=t.far);
+  // Relative roundoff budget, not an absolute physical extension of the DOF interval.
+  const le=(a:number,b:number)=>a<=b||(Number.isFinite(a)&&Number.isFinite(b)&&a-b<=16*Number.EPSILON*Math.max(Math.abs(a),Math.abs(b)));
+  return le(o.near,t.near)&&(t.far===Infinity?o.far===Infinity:le(t.far,o.far));
 }
 export function solveZone(i:Inputs) {
   const target=zoneTarget(i);
@@ -27,9 +30,10 @@ export function solveZone(i:Inputs) {
   const c=i.cocMode==='estimate'?Math.hypot(i.width,i.height)/1500:i.coc;
   positive(i.width,i.height,c);
   const a=target.near*1000,b=target.far*1000,f=i.focal;
+  positive(a);if(!i.zoneInfinity)positive(b);
   const focus=target.far===Infinity?2*a:2*a/(1+a/b);
   const h=target.far===Infinity?2*a-f:(2*a-f*(1+a/b))/(1-a/b);
-  positive(h);const required=f*f/(c*h);
+  positive(h,focus);const required=f*f/(c*h);positive(required);
   const raw=i.apertureSteps.split(',').map(v=>v.trim());
   if(raw.some(v=>!v||!Number.isFinite(Number(v))||Number(v)<=0))throw Error('사용 가능한 조리개 단계를 양수 f값으로 입력하세요.');
   const steps=[...new Set(raw.map(Number))].filter(v=>v>=i.apertureMin&&v<=i.apertureMax).sort((a,b)=>a-b);

@@ -1,0 +1,23 @@
+✔ independent flash exposure energy, inverse settings, EV and all supported steps: 600 seeded cases (5.268667ms)
+✔ independent thin-lens rays at DOF boundaries: 800 seeded physical cases (2.672292ms)
+✔ zone minimax independent continuous optimization, step optimality and endpoint rays: 300 seeded targets (5.814042ms)
+✔ mandatory examples, independent frame dimensions, nominal and dimensional crop (0.691083ms)
+✔ hyperfocal adjacent representable distances retain finite vs mathematical infinity (0.093792ms)
+✔ fixed cancellation regression immediately below the exposed hyperfocal boundary (0.047708ms)
+✔ narrow wide close far zone cases and smaller continuous apertures fail independent minimax (0.252375ms)
+✔ extreme finite power requirement still chooses minimum supported output and finite residual (0.060625ms)
+✔ overflowing secondary optical/equivalence outputs reject rather than return false infinity (0.160292ms)
+✔ scale-aware inclusion does not turn sub-nanometre misses into coverage (0.08325ms)
+✔ format never displays signed zero; roundoff does not alter internal judgement (8.41875ms)
+✔ invalid domain separated from random physical cases; infinity intent and values survive JSON (8.333458ms)
+✔ 250 seeded invalid-domain cases stay separate from physical-domain sampling (1.936042ms)
+✔ finite/infinite zone scale and invalid boundaries reject without serialization ambiguity (0.222167ms)
+✔ write independent numerical evidence (0.320667ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.387375

@@ -1,0 +1,102 @@
+✔ independent flash exposure energy, inverse settings, EV and all supported steps: 600 seeded cases (5.041667ms)
+✔ independent thin-lens rays at DOF boundaries: 800 seeded physical cases (2.57ms)
+✔ zone minimax independent continuous optimization, step optimality and endpoint rays: 300 seeded targets (5.2225ms)
+✔ mandatory examples, independent frame dimensions, nominal and dimensional crop (0.715584ms)
+✔ hyperfocal adjacent representable distances retain finite vs mathematical infinity (0.083292ms)
+✖ extreme finite power requirement still chooses minimum supported output and finite residual (1.510083ms)
+✖ overflowing secondary optical/equivalence outputs reject rather than return false infinity (0.153417ms)
+✖ scale-aware inclusion does not turn sub-nanometre misses into coverage (0.086458ms)
+✖ format never displays signed zero; roundoff does not alter internal judgement (8.710542ms)
+✔ invalid domain separated from random physical cases; infinity intent and values survive JSON (8.433917ms)
+✔ write independent numerical evidence (0.379291ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 7
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 201.124834
+
+✖ failing tests:
+
+test at tests/calculation-audit.test.ts:1:5555
+✖ extreme finite power requirement still chooses minimum supported output and finite residual (1.510083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 256
+  
+      at TestContext.<anonymous> (/Users/choikang/Desktop/전공/photo-field-mobile/tests/calculation-audit.test.ts:69:84)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 256,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/calculation-audit.test.ts:1:5803
+✖ overflowing secondary optical/equivalence outputs reject rather than return false infinity (0.153417ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (/Users/choikang/Desktop/전공/photo-field-mobile/tests/calculation-audit.test.ts:72:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/calculation-audit.test.ts:1:6222
+✖ scale-aware inclusion does not turn sub-nanometre misses into coverage (0.086458ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (/Users/choikang/Desktop/전공/photo-field-mobile/tests/calculation-audit.test.ts:77:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/calculation-audit.test.ts:1:6460
+✖ format never displays signed zero; roundoff does not alter internal judgement (8.710542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '-0' !== '0'
+  
+      at TestContext.<anonymous> (/Users/choikang/Desktop/전공/photo-field-mobile/tests/calculation-audit.test.ts:81:41)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '-0',
+    expected: '0',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

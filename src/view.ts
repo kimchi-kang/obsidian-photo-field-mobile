@@ -162,6 +162,7 @@ export class PhotoView extends ItemView {
     const hyper=this.button(advanced,'과초점거리에 초점 맞추기',()=>this.focusHyperfocal());hyper.className='pfm-wide';
     node(advanced,'p','유효 GN=G√p√(ISO/100)×2^(−L/2), 적정 거리=GN/f-number. 필요 출력=(Nr/G)²(100/ISO)2^L. 노출 차이=2log₂(d/r). 양수=예상 과다, 음수=예상 부족. 빛이 이 거리에서 끝나는 것은 아닙니다.');
     node(advanced,'p','H=f²/(N·CoC)+f, h=H−f. 근거리=hs/(h+s−f), 원거리=hs/(h−s+f). s≥H이면 ∞. 광학은 mm, 출력은 m. 직선투영 화각=2atan(센서 길이/2f). 조사 범위=2r·tan(각/2).');
+    node(advanced,'p','초점 맞출 거리는 박막렌즈 주평면 기준이며 센서면 기준 거리와 다릅니다. 화각·프레임은 무한대 초점의 직선투영 근사로 근접 촬영 배율 변화는 미반영합니다.');
     node(advanced,'p',limitations);
     const about=this.details('플러그인 정보·원본 저작권');node(about,'p',`사진 촬영 도우미 ${this.plugin.manifest.version} · depth-of-field의 심도·화각 시각화를 모바일 Obsidian용으로 수정·재구현하고 수동 플래시 계산을 확장했습니다. 원작자의 공식 또는 후원 플러그인이 아닙니다.`);
     const a=node(about,'a','원본: Jack Herrington · depth-of-field');a.href='https://github.com/jherr/depth-of-field';
@@ -169,6 +170,7 @@ export class PhotoView extends ItemView {
     const footer=node(this.root,'footer');this.saveStatus=node(footer,'p',undefined,'pfm-error');this.saveStatus.setAttribute('role','status');this.updateSaveStatus();const retry=this.button(footer,'설정 다시 저장',()=>{void this.plugin.persist().then(()=>this.plugin.flush()).catch(e=>this.plugin.reportSaveError(e));});retry.className='pfm-retry';const tabSave=this.button(footer,'현재 탭 결과 저장',()=>{tabSave.disabled=true;void this.plugin.saveNote(this.plugin.state.inputs.tab).catch(e=>this.plugin.report(e)).finally(()=>{tabSave.disabled=false;});});
     tabSave.className='mod-cta pfm-tab-save';
     const save=this.button(footer,'전체 계산을 노트로 저장',()=>{save.disabled=true;void this.plugin.saveNote().catch(e=>this.plugin.report(e)).finally(()=>{save.disabled=false;});});save.className='pfm-save';
+    node(footer,'p','표시 숫자만 반올림하며 포함·출력 경계·노출 판정은 반올림 전 값입니다. 같은 표시 숫자라도 판정이 다를 수 있습니다.');
     node(footer,'p','현재 탭: 심도·화각 또는 플래시 결과만 저장 · 통합/전체: 모든 계산 조건 필요 · 일반 Markdown · 새 노트 생성 · 오프라인');this.paint(false);
   }
   private zonePanel():void {
@@ -204,7 +206,7 @@ export class PhotoView extends ItemView {
       const current=optics(i);node(this.zoneResult,'p',`${metres(i.cameraDistance)}에 초점을 맞추면 약 ${metres(current.near)} ~ ${metres(current.far)} 범위가 허용 선명도 안에 들어옵니다.`);
       node(this.zoneResult,'p',`전체 심도 ${metres(current.total)} · 과초점거리 ${metres(current.hyperfocal)}`);
       if(i.zoneFlow==='target'){
-        const r=solveZone(i);const included=includesTarget(current,r.target);node(this.zoneResult,'strong',included?'목표 구간 포함':r.possible?'일부 부족 · 제안 설정을 적용하세요':'달성 불가 · 렌즈 조리개 제한','pfm-zone-status');
+        const r=solveZone(i);const included=includesTarget(current,r.target);node(this.zoneResult,'strong',!r.possible?'달성 불가 · 렌즈 조리개 제한':included?'목표 구간 포함':'일부 부족 · 제안 설정을 적용하세요','pfm-zone-status');
         node(this.zoneResult,'p',`목표 ${metres(r.target.near)} ~ ${metres(r.target.far)} · 이론 필요 f/${fmt(r.required,3)}`);
         node(this.zoneResult,'p',`${r.possible?'제안':'렌즈 한계에서 대안'}: 초점 맞출 거리 ${metres(r.cameraDistance)} · 실제 조리개 f/${fmt(r.aperture)} → ${metres(r.actual.near)} ~ ${metres(r.actual.far)}`);
         if(r.possible){const b=node(this.zoneResult,'button','역산 결과를 현재 설정에 적용');b.type='button';b.dataset.zoneApply='true';b.onclick=()=>{this.plugin.update('cameraDistance',r.cameraDistance);this.plugin.update('aperture',r.aperture);this.syncNumeric('cameraDistance');this.syncNumeric('aperture');this.changed();};}
