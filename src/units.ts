@@ -6,4 +6,13 @@ export function fmt(v:number,digits=2):string {
   // Normalize only the displayed value; status decisions always keep the original number.
   return (Math.abs(v)<0.5*10**(-digits)?0:v).toLocaleString('ko-KR',{maximumFractionDigits:digits});
 }
-export const metres = (v:number):string => v===Infinity?'∞':`${fmt(v)} m`;
+export function distanceParts(v:number,digits=2):{value:string;unit:'cm'|'m'|''} {
+  if(v===Infinity)return {value:'∞',unit:''};
+  if(!Number.isFinite(v)||v<0)return {value:'—',unit:''};
+  const unit=v<=1?'cm':'m',scaled=unit==='cm'?v*100:v;
+  const value=scaled>0&&scaled<0.5*10**(-digits)?`<${fmt(10**(-digits),digits)}`:fmt(scaled,digits);
+  return {value,unit};
+}
+export function metres(v:number,digits=2):string {
+  const d=distanceParts(v,digits);return d.unit?`${d.value} ${d.unit}`:d.value;
+}

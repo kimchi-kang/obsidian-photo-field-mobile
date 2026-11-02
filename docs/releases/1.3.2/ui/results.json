@@ -1,0 +1,28 @@
+{
+  "checks": [
+    {
+      "name": "cm input conversion is deferred during editing; both directions and exact 1m preserve physics",
+      "passed": true
+    },
+    {
+      "name": "flash hero, depth, scene axes, tables and frame dimensions all expose units",
+      "passed": true
+    },
+    {
+      "name": "zone target cm edit, application and restore never introduce 100x conversion",
+      "passed": true
+    },
+    {
+      "name": "actual save button emits adaptive results, canonical input values and readable mobile layouts",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "fingerprints": {
+    "main.js": "ca9719a8a10198964fa6b064ba2a9253875334ced2977e7615cd1bdfb3464d55",
+    "styles.css": "3bb0a359934065e6cdfa46de40224ec721549958a6de6106220bce2a48e9151d",
+    "manifest.json": "cc9a5e9d2f7f6dced13dc84155b4303f89fa4d2f9fa4e2c5afb46791719615d5"
+  },
+  "host": "actual Obsidian mobile emulation",
+  "actualIOS": false
+}

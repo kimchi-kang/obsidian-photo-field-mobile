@@ -50,7 +50,7 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   el('circle',{cx:0,cy:177,r:5,class:'pfm-focus-dot'},undefined,person);
   el('text',{x:Math.max(92,Math.min(subject,340)),y:38,'text-anchor':'middle',class:'pfm-subject-label'},`${i.tab==='zone'?'초점':'피사체'} ${i.cameraDistance>i.diagramMax?'→ 그림 밖':out(i.cameraDistance)}`);
   el('line',{x1:SCENE.start,x2:SCENE.end,y1:192,y2:192,class:'pfm-distance-axis'});
-  for(let n=0;n<=4;n++){const d=i.diagramMax*n/4;el('line',{x1:x(d),x2:x(d),y1:189,y2:195,class:'pfm-distance-axis'});el('text',{x:x(d),y:208,'text-anchor':n===4?'end':'middle',class:'pfm-axis-label'},`${fmt(d,1)}m`);}
+  for(let n=0;n<=4;n++){const d=i.diagramMax*n/4;el('line',{x1:x(d),x2:x(d),y1:189,y2:195,class:'pfm-distance-axis'});el('text',{x:x(d),y:208,'text-anchor':n===4?'end':'middle',class:'pfm-axis-label'},metres(d,1));}
   if(showFlash)try{
     const f=flash(i);const y=228;
     el('rect',{x:SCENE.start,y,width:x(f.low)-SCENE.start,height:12,class:'pfm-over-zone'});

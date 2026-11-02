@@ -108,7 +108,17 @@ function fmt(v, digits = 2) {
   if (!Number.isFinite(v)) return "\u2014";
   return (Math.abs(v) < 0.5 * 10 ** -digits ? 0 : v).toLocaleString("ko-KR", { maximumFractionDigits: digits });
 }
-var metres = (v) => v === Infinity ? "\u221E" : `${fmt(v)} m`;
+function distanceParts(v, digits = 2) {
+  if (v === Infinity) return { value: "\u221E", unit: "" };
+  if (!Number.isFinite(v) || v < 0) return { value: "\u2014", unit: "" };
+  const unit = v <= 1 ? "cm" : "m", scaled = unit === "cm" ? v * 100 : v;
+  const value = scaled > 0 && scaled < 0.5 * 10 ** -digits ? `<${fmt(10 ** -digits, digits)}` : fmt(scaled, digits);
+  return { value, unit };
+}
+function metres(v, digits = 2) {
+  const d = distanceParts(v, digits);
+  return d.unit ? `${d.value} ${d.unit}` : d.value;
+}
 
 // src/engine.ts
 function positive(...values) {
@@ -580,7 +590,7 @@ function diagram(host, i) {
   for (let n = 0; n <= 4; n++) {
     const d = i.diagramMax * n / 4;
     el("line", { x1: x(d), x2: x(d), y1: 189, y2: 195, class: "pfm-distance-axis" });
-    el("text", { x: x(d), y: 208, "text-anchor": n === 4 ? "end" : "middle", class: "pfm-axis-label" }, `${fmt(d, 1)}m`);
+    el("text", { x: x(d), y: 208, "text-anchor": n === 4 ? "end" : "middle", class: "pfm-axis-label" }, metres(d, 1));
   }
   if (showFlash) try {
     const f = flash(i);
@@ -655,7 +665,7 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
     if ((scope === "dof" || scope === "zone") && !opticalKeys.has(key) && !["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity", "apertureMin", "apertureMax", "apertureSteps"].includes(key) || scope === "flash" && !flashKeys.has(key)) continue;
     lines.push(`| ${labels[key]} | ${String(key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode === "estimate" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" ? "\uBBF8\uC0AC\uC6A9" : i[key]).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
   }
-  lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n", "\uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD569\uB2C8\uB2E4. \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC774\uBBC0\uB85C \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+  lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n", "\uAC70\uB9AC \uACB0\uACFC\uB294 1m \uC774\uD558\uC5D0\uC11C cm\uB85C \uC790\uB3D9 \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uC704 \uC785\uB825\uD45C\uC640 \uB0B4\uBD80 \uC800\uC7A5\uC758 \uAC70\uB9AC\uB294 \uC7AC\uD604\uC744 \uC704\uD574 m\uB97C \uC720\uC9C0\uD569\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD569\uB2C8\uB2E4. \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC774\uBBC0\uB85C \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
   if (scope !== "dof" && scope !== "zone") try {
     const f = flash(i);
     lines.push(`- \uC120\uD0DD \uCD9C\uB825 1/${i.denominator}: **${f.powerLabel}**`, `- \uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC: ${metres(f.d)}`, `- \uD50C\uB798\uC2DC\u2013\uD53C\uC0AC\uCCB4 \uAC70\uB9AC: ${metres(f.r)} \xB7 \uB178\uCD9C \uCC28\uC774: ${fmt(f.ev)} EV (${f.ev > 0 ? "\uC608\uC0C1 \uACFC\uB2E4" : f.ev < 0 ? "\uC608\uC0C1 \uBD80\uC871" : "\uAE30\uC900 \uC801\uC815"})`, `- \uC720\uD6A8 GN(m): ${fmt(f.gn)}`, `- \xB1${i.tolerance}EV \uAC70\uB9AC \uAD6C\uAC04: ${metres(f.low)} ~ ${metres(f.high)}`, `- \uD544\uC694\uD55C \uC870\uB9AC\uAC1C f/${fmt(f.requiredAperture)} \xB7 \uD544\uC694 \uCD9C\uB825 ${fmt(f.needed * 100)}% \xB7 ${f.status}`, `- \uAD8C\uC7A5 \uC9C0\uC6D0 \uB2E8\uACC4 1/${f.nearest} \xB7 \uD574\uB2F9 \uB2E8\uACC4 \uC608\uC0C1 \uAC70\uB9AC ${metres(f.nearestDistance)}, \uB0A8\uB294 \uB178\uCD9C \uC624\uCC28 ${fmt(f.residual)} EV`);
@@ -685,7 +695,7 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
   }
   if (scope === "all" || scope === "combined") try {
     const c = coverage(i);
-    lines.push(`- \uCE74\uBA54\uB77C \uD504\uB808\uC784 ${fmt(c.camera.width)} \xD7 ${fmt(c.camera.height)} m (\uCE74\uBA54\uB77C \uAC70\uB9AC \uD3C9\uBA74)`, `- \uD50C\uB798\uC2DC \uC870\uC0AC \uBC94\uC704 ${fmt(c.flash.width)} \xD7 ${fmt(c.flash.height)} m (\uD50C\uB798\uC2DC \uAC70\uB9AC \uD3C9\uBA74)`, `- \uC870\uC0AC\uAC01 ${fmt(c.h)}\xB0 \xD7 ${fmt(c.v)}\xB0 \xB7 ${i.coverage === "approx" ? "\uD480\uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815, \uC81C\uC870\uC0AC \uC0AC\uC591 \uC544\uB2D8" : "\uC218\uB3D9 \uC785\uB825 \uC870\uC0AC\uAC01"}`, `- ${i.linked ? c.narrow ? "\uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131" : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815\uC758 \uBC94\uC704 \uBE44\uAD50" : "\uC624\uD504\uCE74\uBA54\uB77C: \uC704\uCE58\xB7\uBC29\uD5A5 \uBBF8\uC785\uB825, \uACF5\uAC04 \uC911\uCCA9 \uBE44\uAD50 \uBD88\uAC00"}`);
+    lines.push(`- \uCE74\uBA54\uB77C \uD504\uB808\uC784 ${metres(c.camera.width)} \xD7 ${metres(c.camera.height)} (\uCE74\uBA54\uB77C \uAC70\uB9AC \uD3C9\uBA74)`, `- \uD50C\uB798\uC2DC \uC870\uC0AC \uBC94\uC704 ${metres(c.flash.width)} \xD7 ${metres(c.flash.height)} (\uD50C\uB798\uC2DC \uAC70\uB9AC \uD3C9\uBA74)`, `- \uC870\uC0AC\uAC01 ${fmt(c.h)}\xB0 \xD7 ${fmt(c.v)}\xB0 \xB7 ${i.coverage === "approx" ? "\uD480\uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815, \uC81C\uC870\uC0AC \uC0AC\uC591 \uC544\uB2D8" : "\uC218\uB3D9 \uC785\uB825 \uC870\uC0AC\uAC01"}`, `- ${i.linked ? c.narrow ? "\uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131" : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815\uC758 \uBC94\uC704 \uBE44\uAD50" : "\uC624\uD504\uCE74\uBA54\uB77C: \uC704\uCE58\xB7\uBC29\uD5A5 \uBBF8\uC785\uB825, \uACF5\uAC04 \uC911\uCCA9 \uBE44\uAD50 \uBD88\uAC00"}`);
   } catch (e) {
     lines.push(`- \uC870\uC0AC \uBC94\uC704 \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -835,7 +845,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     const wrap = node(parent, "label", void 0, "pfm-field");
     wrap.dataset.field = key;
     const compact = { cameraDistance: "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC (m)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C (f/)", focal: "\uCD08\uC810\uAC70\uB9AC (mm)" };
-    node(wrap, "span", compact[key] ?? label);
+    const caption = node(wrap, "span", compact[key] ?? label);
     const input = node(wrap, "input");
     input.type = "number";
     input.inputMode = "decimal";
@@ -843,6 +853,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     input.value = Number.isFinite(this.plugin.state.inputs[key]) ? String(this.plugin.state.inputs[key]) : "";
     input.dataset.key = key;
     input.setAttribute("aria-label", label);
+    const isDistance = ["cameraDistance", "flashDistance", "zoneNear", "zoneFar", "diagramMax"].includes(key);
+    let scale = 1;
     let range;
     if (options) {
       wrap.classList.add("pfm-range-field");
@@ -858,18 +870,34 @@ var PhotoView = class extends import_obsidian.ItemView {
       range.dataset.range = key;
       const r = range;
       this.listen(r, "input", () => {
-        input.value = r.value;
-        this.rangeProgress(r);
-        input.setAttribute("aria-invalid", "false");
         this.plugin.update(key, Number(r.value));
+        sync();
+        input.setAttribute("aria-invalid", "false");
         this.changed();
       });
     }
     if (key === "flashDistance") wrap.classList.add("pfm-flash-distance");
     if (key === "denominator") wrap.classList.add("pfm-custom-power");
-    this.numeric.set(key, { input, range });
+    const sync = () => {
+      const value = this.plugin.state.inputs[key];
+      if (isDistance && Number.isFinite(value) && value >= 0) scale = value <= 1 ? 100 : 1;
+      const unit = scale === 100 ? "cm" : "m";
+      if (isDistance) {
+        caption.textContent = (compact[key] ?? label).replace("(m)", `(${unit})`);
+        input.setAttribute("aria-label", label.replace("(m)", `(${unit})`));
+        input.dataset.displayUnit = unit;
+        if (options) input.min = String(options.min * scale);
+      }
+      input.value = Number.isFinite(value) ? String(scale === 100 ? Number((value * scale).toPrecision(15)) : value) : "";
+      if (range) {
+        range.value = String(value);
+        this.rangeProgress(range);
+      }
+    };
+    this.numeric.set(key, { input, range, sync });
+    sync();
     this.listen(input, "input", () => {
-      const v = parseNumber(input.value);
+      const v = parseNumber(input.value) / scale;
       this.plugin.update(key, v);
       if (key === "denominator") this.syncPower();
       if (range && Number.isFinite(v)) {
@@ -879,6 +907,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       input.setAttribute("aria-invalid", String(!Number.isFinite(v) || v < 0 || v === 0 && key !== "loss"));
       this.changed();
     });
+    if (isDistance) this.listen(input, "blur", sync);
   }
   select(parent, label, key, values, after) {
     const l = node(parent, "label", void 0, "pfm-field");
@@ -962,15 +991,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.power.value = Number.isFinite(value) ? String(value) : "";
   }
   syncNumeric(key) {
-    const pair = this.numeric.get(key);
-    if (pair) {
-      const value = this.plugin.state.inputs[key];
-      pair.input.value = typeof value === "number" && !Number.isFinite(value) ? "" : String(value);
-      if (pair.range) {
-        pair.range.value = pair.input.value;
-        this.rangeProgress(pair.range);
-      }
-    }
+    this.numeric.get(key)?.sync();
     if (key === "denominator") this.syncPower();
   }
   render() {
@@ -1137,7 +1158,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       });
     });
     save.className = "pfm-save";
-    node(footer, "p", "\uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD558\uBA70 \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC785\uB2C8\uB2E4. \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    node(footer, "p", "1m \uC774\uD558 \uAC70\uB9AC\uB294 cm\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uAC70\uB9AC \uC785\uB825\uC740 \uC785\uB825\uCE78\uC758 \uB2E8\uC704\uB97C \uB530\uB974\uBA70 \uD3B8\uC9D1\uC744 \uB9C8\uCE58\uBA74 \uB2E8\uC704\uAC00 \uC790\uB3D9 \uC804\uD658\uB429\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD558\uBA70 \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC785\uB2C8\uB2E4. \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     node(footer, "p", "\uD604\uC7AC \uD0ED: \uC2EC\uB3C4\xB7\uD654\uAC01 \uB610\uB294 \uD50C\uB798\uC2DC \uACB0\uACFC\uB9CC \uC800\uC7A5 \xB7 \uD1B5\uD569/\uC804\uCCB4: \uBAA8\uB4E0 \uACC4\uC0B0 \uC870\uAC74 \uD544\uC694 \xB7 \uC77C\uBC18 Markdown \xB7 \uC0C8 \uB178\uD2B8 \uC0DD\uC131 \xB7 \uC624\uD504\uB77C\uC778");
     this.paint(false);
   }
@@ -1365,9 +1386,10 @@ var PhotoView = class extends import_obsidian.ItemView {
       if (!f.supported) node(flashPanel, "p", f.powerLabel, "pfm-warning");
       node(flashPanel, "p", "\uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC", "pfm-eyebrow");
       const hero = node(flashPanel, "div", void 0, "pfm-hero");
-      node(hero, "span", fmt(f.d), "pfm-value");
+      const display = distanceParts(f.d);
+      node(hero, "span", display.value, "pfm-value");
       hero.append(document.createTextNode(" "));
-      node(hero, "span", "m", "pfm-unit");
+      node(hero, "span", display.unit, "pfm-unit");
       node(flashPanel, "p", `1/${i.denominator} \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} \xB7 GN ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300)`);
       if (i.conditions.includes("\uC5F0\uC2B5\uC6A9 \uAC00\uC0C1 GN")) node(flashPanel, "small", "\uC5F0\uC2B5\uC6A9 GN \xB7 \uC2E4\uC81C \uC7A5\uBE44 \uC0AC\uC591 \uC544\uB2D8", "pfm-model-note");
       const label = f.ev > i.tolerance ? "\uC608\uC0C1 \uACFC\uB2E4 \uB178\uCD9C" : f.ev < -i.tolerance ? "\uC608\uC0C1 \uBD80\uC871 \uB178\uCD9C" : "\uD5C8\uC6A9 \uBC94\uC704 \uB0B4";
@@ -1417,7 +1439,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       const c = coverage(i);
       const p = node(this.resultDetails, "details", void 0, "pfm-coverage-results");
       node(p, "summary", "\uD504\uB808\uC784\xB7\uC870\uC0AC \uBC94\uC704 \uBE44\uAD50");
-      node(p, "p", `\uD504\uB808\uC784 ${fmt(c.camera.width)}\xD7${fmt(c.camera.height)}m \xB7 \uC870\uC0AC \uBC94\uC704 ${fmt(c.flash.width)}\xD7${fmt(c.flash.height)}m`);
+      node(p, "p", `\uD504\uB808\uC784 ${metres(c.camera.width)} \xD7 ${metres(c.camera.height)} \xB7 \uC870\uC0AC \uBC94\uC704 ${metres(c.flash.width)} \xD7 ${metres(c.flash.height)}`);
       node(p, "p", i.linked ? c.narrow ? "\uC8FC\uC758: \uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uC624\uD504\uCE74\uBA54\uB77C: \uAC01\uAC01\uC758 \uAC70\uB9AC \uD3C9\uBA74 \uBC94\uC704\uC785\uB2C8\uB2E4. \uC704\uCE58\xB7\uBC29\uD5A5\uC744 \uC785\uB825\uD558\uC9C0 \uC54A\uC544 \uACF5\uAC04 \uC911\uCCA9\uC744 \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     } catch (e) {
       node(this.resultDetails, "p", `\uD504\uB808\uC784\xB7\uC870\uC0AC \uBC94\uC704 \uBE44\uAD50: ${e instanceof Error ? e.message : String(e)}`, "pfm-error pfm-coverage-results");

@@ -1,0 +1,28 @@
+PASS cm input conversion is deferred during editing; both directions and exact 1m preserve physics
+FAIL flash hero, depth, scene axes, tables and frame dimensions all expose units AssertionError [ERR_ASSERTION]: The input did not match the regular expression /20 cm.*40 cm.*60 cm.*80 cm/. Input:
+
+'     '
+
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/distance-mobile.mjs:31:289
+    at async check (file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/distance-mobile.mjs:18:35)
+    at async file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/distance-mobile.mjs:28:2
+PASS zone target cm edit, application and restore never introduce 100x conversion
+PASS actual save button emits adaptive results, canonical input values and readable mobile layouts
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(checks.length===4&&checks.every(c=>c.passed))
+
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/distance-mobile.mjs:50:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.0.0
