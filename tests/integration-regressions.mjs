@@ -1,0 +1,5 @@
+// Run the current regression contracts without overwriting prior evidence.
+import {readFile,writeFile,unlink,mkdir} from 'node:fs/promises';import {spawnSync} from 'node:child_process';import {fileURLToPath} from 'node:url';
+const out='docs/releases/1.4.0/integration-audit/regressions';await mkdir(out,{recursive:true});let failed=false;
+for(const name of ['field-mobile','field-extended','field-legacy']){const file=new URL(`.integration-${name}.mjs`,import.meta.url);let s=await readFile(new URL(`${name}.mjs`,import.meta.url),'utf8');s=s.replaceAll('docs/releases/1.4.0/ui',`${out}/ui`).replaceAll('docs/releases/1.4.0/extended',`${out}/extended`).replaceAll('docs/releases/1.4.0/legacy',`${out}/legacy`);try{await writeFile(file,s);const r=spawnSync(process.execPath,[fileURLToPath(file)],{encoding:'utf8'});const log=(r.stdout??'')+(r.stderr??'');await writeFile(`${out}/${name}.log`,log);process.stdout.write(log);if(r.status!==0)failed=true;}finally{await unlink(file);}}
+if(failed)process.exitCode=1;

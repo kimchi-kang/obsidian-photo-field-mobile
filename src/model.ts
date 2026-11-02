@@ -13,7 +13,7 @@ export interface Equipment {id:string; name: string; conditions: string; source:
 export interface EquipmentDraft {id:string;name:string;conditions:string;source:string;table:string;unit:'m'|'ft';minDenominator:string;steps:string}
 export const emptyDraft=():EquipmentDraft=>({id:'',name:'',conditions:'',source:'',table:'',unit:'m',minDenominator:'256',steps:'1,2,4,8,16,32,64,128,256'});
 export type ManualFlash=Pick<Inputs,'gn'|'gnUnit'|'gnZoom'|'conditions'|'minDenominator'|'steps'>;
-export interface Saved {version: 2; inputs: Inputs; equipment: Equipment[]; manualFlash?:ManualFlash; draft?:EquipmentDraft; deletedEquipment?:{equipment:Equipment;index:number}; migrationBackup?:unknown}
+export interface Saved {field?:import('./field').FieldData; version: 2; inputs: Inputs; equipment: Equipment[]; manualFlash?:ManualFlash; draft?:EquipmentDraft; deletedEquipment?:{equipment:Equipment;index:number}; migrationBackup?:unknown}
 export const defaults: Inputs = {
   gnMode:'manual',equipmentId:'',sensor:'ff',width:36,height:24,focal:50,aperture:4,iso:100,cameraDistance:5,linked:true,flashDistance:5,
   cocMode:'estimate',coc:0.029,gn:40,gnUnit:'m',gnZoom:50,zoom:50,

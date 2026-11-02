@@ -1,6 +1,14 @@
+import type {Shot} from './field';
 import {Equipment,Inputs,Saved,ManualFlash} from './model';
 import {positive,powerSteps} from './engine';
 import {feetToMetres} from './units';
+export function signature(e:Equipment):string{return JSON.stringify([e.conditions,e.source,e.minDenominator,e.steps,Object.entries(e.table).sort(([a],[b])=>Number(a)-Number(b))]);}
+export function issue(s:Saved,shot:Shot):string {
+ if(shot.values.gnMode!=='equipment')return '';
+ const e=s.equipment.find(e=>e.id===shot.values.equipmentId);
+ return !e?'참조 장비 삭제됨 · 내 장비에서 삭제 복구 또는 장비를 선택하고 즐겨찾기를 갱신하세요.':signature(e)!==shot.equipmentSignature?'참조 장비 사양 변경됨 · 현재 사양을 확인하고 즐겨찾기를 갱신하세요.':'';
+}
+
 export function parseTable(text:string,unit:'m'|'ft'):Record<string,number> {
   const table:Record<string,number>={};
   for(const row of text.trim().split('\n')) {const parts=row.split(',').map(v=>Number(v.trim()));
@@ -18,7 +26,9 @@ export function equipmentValid(p:Omit<Equipment,'id'>):boolean {
 export function selectedEquipment(state:Saved):Equipment|undefined {return state.inputs.gnMode==='equipment'?state.equipment.find(e=>e.id===state.inputs.equipmentId):undefined;}
 export function applyEquipment(state:Saved):void {
   const i=state.inputs;if(i.gnMode!=='equipment')return;
-  const e=selectedEquipment(state);if(!e){i.gn=0;i.gnZoom=0;i.conditions='선택 장비를 찾을 수 없습니다. 장비 선택 또는 수동 모드가 필요합니다.';return;}
+  const e=selectedEquipment(state);
+  const active=state.field?.shots.find(s=>s.id===state.field?.activeShotId);const problem=active&&active.values.equipmentId===i.equipmentId?issue(state,active):'';if(problem){i.gn=0;i.gnZoom=0;i.conditions=problem;i.steps=e?.steps??'';if(e)i.minDenominator=e.minDenominator;return;}
+  if(!e){i.steps='';i.gn=0;i.gnZoom=0;i.conditions='선택 장비를 찾을 수 없습니다. 장비 선택 또는 수동 모드가 필요합니다.';return;}
   const g=e.table[String(i.zoom)];Object.assign(i,{gn:g??0,gnUnit:'m',gnZoom:g===undefined?0:i.zoom,conditions:`${e.conditions} · 출처: ${e.source}`,minDenominator:e.minDenominator,steps:e.steps});
 }
 export function equipmentId(equipment:Equipment[]):string {let id=`equipment-${Date.now().toString(36)}`,n=1;while(equipment.some(e=>e.id===id))id=`equipment-${Date.now().toString(36)}-${n++}`;return id;}
@@ -36,6 +46,7 @@ export function addQ20iii(state:Saved):Equipment {
 
 export function manualFlash(i:Inputs):ManualFlash {return {gn:i.gn,gnUnit:i.gnUnit,gnZoom:i.gnZoom,conditions:i.conditions,minDenominator:i.minDenominator,steps:i.steps};}
 export function selectEquipment(state:Saved,id:string):void {
+  if(state.field)delete state.field.activeShotId;
   if(state.inputs.gnMode==='manual')state.manualFlash=manualFlash(state.inputs);
   Object.assign(state.inputs,{equipmentId:id,gnMode:'equipment'});applyEquipment(state);
 }

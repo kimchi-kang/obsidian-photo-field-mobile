@@ -1,0 +1,55 @@
+{
+  "checks": [
+    {
+      "name": "distance-inclusive favorite, rename and renewal preserve explicit scope",
+      "passed": true
+    },
+    {
+      "name": "distance add edit reorder overflow and delete use stable metre values",
+      "passed": true
+    },
+    {
+      "name": "zone infinity editing rename deletion recovery and restart preserve target",
+      "passed": true
+    },
+    {
+      "name": "equipment change blocks favorite, renewal explicitly resolves, deletion never substitutes stale GN",
+      "passed": true
+    },
+    {
+      "name": "power boundaries and missing GN retain honest selection controls in simple mode",
+      "passed": true
+    },
+    {
+      "name": "storage failure visible in simple mode and retry saves merged latest state",
+      "passed": true
+    },
+    {
+      "name": "legacy migration preserves existing draft, equipment and zone goal through plugin reload",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "fingerprints": {
+    "main.js": "3cbf6470bc4c9d52d20e0bf8142749b597fa2ecc193f55d7f6c1db3857bdf4cb",
+    "manifest.json": "235b7678e7215f730569587ab2cb49a4832c81d97518aa6518c6f0d5cf36adc4",
+    "styles.css": "8281eb1cdcf5d401cd32a453bf9291ac89de93db99f10d62370e5e9cda6b5190"
+  },
+  "host": "macOS Obsidian dedicated vault/profile, app.emulateMobile(true), CDP mobile viewport and touch",
+  "actualIOS": false,
+  "actualAndroid": false,
+  "flows": [
+    {
+      "name": "shooting favorite → distance → EV → apply recommendation",
+      "actions": 3,
+      "settingsVisits": 0,
+      "keyboard": 0
+    },
+    {
+      "name": "zone favorite → inspect result → apply settings",
+      "actions": 2,
+      "settingsVisits": 0,
+      "keyboard": 0
+    }
+  ]
+}

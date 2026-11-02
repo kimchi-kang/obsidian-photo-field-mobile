@@ -1,0 +1,15 @@
+{
+  "samples": [
+    143,
+    143,
+    143,
+    143,
+    143,
+    143
+  ],
+  "counts": {
+    "persist": 1,
+    "writes": 2,
+    "pending": false
+  }
+}

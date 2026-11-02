@@ -135,3 +135,15 @@ npm test
 ## 1.3.4 현장 사용성 개선
 
 권장 출력 적용·취소, 상세 설정에서 결과 복귀, 존 목표 역산 흐름과 환산·저장 문구를 개선했습니다. [변경 안내](docs/releases/1.3.4/RELEASE.md)와 [전후 검증 보고서](docs/releases/1.3.4/REPORT.md)를 참고하세요.
+
+## 1.4.0 현장 편의 기능 · 로컬 설치 후보
+
+촬영 즐겨찾기 → 내 거리 → EV·권장 출력 → 즉시 출력/실제 조리개 조절을 연결했습니다. 존 목표 즐겨찾기는 현재 장비 조건으로 다시 역산하며 명시적으로 적용합니다. 간편/상세 화면은 같은 계산 상태를 사용합니다. [사용 예·변경 안내](docs/releases/1.4.0/RELEASE.md), [검증·캡처](docs/releases/1.4.0/REPORT.md), [데이터 보존·복구](docs/releases/1.4.0/MIGRATION.md). 설치 후보 ZIP: `dist/photo-field-mobile-1.4.0-candidate.zip`. 이번 변경은 실사용 설치·공개 배포하지 않았습니다.
+
+### 1.4.0 통합 검증 후 최신 후보
+
+새 기능·버전 상승 없이 출력 조절과 존 목표 흐름의 스크롤·변경 내역 표기를 다듬었습니다. 현재 소스의 설치 후보는 `dist/photo-field-mobile-1.4.0-integration-candidate.zip`입니다. [흐름별 조작 수·수정 전후 화면·남은 제약](docs/releases/1.4.0/integration-audit/REPORT.md). 기존 첫 구현 후보와 검증 자료는 보존했습니다. 실사용 설치·공개 배포는 하지 않았습니다.
+
+## 1.4.0 승인 후 설치·배포
+
+통합 검증 후보의 실사용 설치와 공개 배포가 승인되었습니다. 실사용 설치에서 v1.4.0 실행과 기존 data.json의 바이트 단위 보존을 확인했습니다. [설치·배포 기록](docs/releases/1.4.0/DEPLOYMENT.md), [최신 설치·복구 안내](docs/releases/1.4.0/INSTALL-RELEASE.md). 앞의 후보 기록은 각 검증 당시 상태입니다.

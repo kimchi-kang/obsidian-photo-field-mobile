@@ -1,0 +1,8 @@
+PASS UI save shooting favorite without distance and apply using touch
+PASS simple shooting flow favorite → distance → EV → recommendation, 3 actions
+PASS off-camera distance touches only flash distance and power follows irregular list
+PASS shooting apply undo expires only when overlapping field changes; deletion undo distinct
+PASS zone favorite applies target only and uses explicit recalculated settings, 2 actions
+PASS simple and detailed use identical calculation values; decimal cursor and centimetres boundary
+PASS long names and mobile matrix: 360/390 portrait + landscape, both themes and large text
+PASS save and plugin relaunch restores favorites, order and simple mode

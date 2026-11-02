@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "normalAppQuitAndRelaunch": true,
+  "testVault": "/private/tmp/photo-field-qa-vault",
+  "testProfile": "/private/tmp/photo-field-qa-profile",
+  "inputs": true,
+  "favoritesAndOrder": true,
+  "shootingFavoriteCount": 3,
+  "zoneFavoriteCount": 2,
+  "simpleMode": true,
+  "equipment": true,
+  "draft": true,
+  "infinity": true,
+  "fingerprints": {
+    "main.js": "b9c405ea87dc7fff4fe2d9032c5761ebd5dbcba61ace0944bd8846d7f06ff1e2",
+    "manifest.json": "235b7678e7215f730569587ab2cb49a4832c81d97518aa6518c6f0d5cf36adc4",
+    "styles.css": "8eff3c7a796da40c6690f409203dd7bb643b9a4c776f21ed0b852b313719bb2f"
+  },
+  "actualIOS": false,
+  "actualAndroid": false
+}

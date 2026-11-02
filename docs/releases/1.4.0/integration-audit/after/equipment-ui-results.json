@@ -1,0 +1,13 @@
+{
+  "checks": [
+    {
+      "name": "actual equipment editor → save changed table → old favorite blocks GN",
+      "passed": true
+    },
+    {
+      "name": "actual delete → restore → explicit favorite renewal resolves and irregular theoretical steps work",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

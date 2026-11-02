@@ -1,0 +1,11 @@
+PASS 01 favorite → distance → EV → recommended output
+PASS 02 consecutive weaker / stronger and result stay together
+PASS 03 switch favorite → inspect changes → undo
+PASS 04 off-camera distance changes flash only
+PASS 05 zone goal → recompute → explicit apply
+PASS 06 new lens / sensor recomputes same goal
+PASS 07 simple/detail switching keeps identical inputs and results
+PASS 08 close/reenter preserves settings without listener or save amplification
+PASS 09 deleted / modified equipment never substitutes stale GN
+PASS 10 safe undo after later edits preserves latest values
+PASS 11 viewport/theme/font integrated matrix and target sizes

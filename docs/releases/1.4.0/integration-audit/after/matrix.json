@@ -1,0 +1,866 @@
+[
+  {
+    "w": 360,
+    "h": 800,
+    "theme": "light",
+    "large": false,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 333.5,
+        "scrolledToReach": true,
+        "scrollBefore": 333.5,
+        "scrollAfter": 333.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 333.5,
+        "scrollAfter": 333.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -333.5,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 360,
+    "h": 800,
+    "theme": "light",
+    "large": true,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 506.5,
+        "scrolledToReach": true,
+        "scrollBefore": 506.5,
+        "scrollAfter": 506.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 506.5,
+        "scrollAfter": 506.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 506.5,
+        "scrollAfter": 506.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -506.5,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 436,
+        "scrolledToReach": true,
+        "scrollBefore": 436,
+        "scrollAfter": 436,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 360,
+    "h": 800,
+    "theme": "dark",
+    "large": false,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 333.5,
+        "scrolledToReach": true,
+        "scrollBefore": 333.5,
+        "scrollAfter": 333.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 333.5,
+        "scrollAfter": 333.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -333.5,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 360,
+    "h": 800,
+    "theme": "dark",
+    "large": true,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 506.5,
+        "scrolledToReach": true,
+        "scrollBefore": 506.5,
+        "scrollAfter": 506.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 506.5,
+        "scrollAfter": 506.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 506.5,
+        "scrollAfter": 506.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -506.5,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 436,
+        "scrolledToReach": true,
+        "scrollBefore": 436,
+        "scrollAfter": 436,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 390,
+    "h": 844,
+    "theme": "light",
+    "large": false,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 390,
+    "h": 844,
+    "theme": "light",
+    "large": true,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 439.5,
+        "scrolledToReach": true,
+        "scrollBefore": 439.5,
+        "scrollAfter": 439.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 439.5,
+        "scrollAfter": 439.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 439.5,
+        "scrollAfter": 439.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -439.5,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 388,
+        "scrolledToReach": true,
+        "scrollBefore": 388,
+        "scrollAfter": 388,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 390,
+    "h": 844,
+    "theme": "dark",
+    "large": false,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 390,
+    "h": 844,
+    "theme": "dark",
+    "large": true,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 439.5,
+        "scrolledToReach": true,
+        "scrollBefore": 439.5,
+        "scrollAfter": 439.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 439.5,
+        "scrollAfter": 439.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 439.5,
+        "scrollAfter": 439.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -439.5,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 388,
+        "scrolledToReach": true,
+        "scrollBefore": 388,
+        "scrollAfter": 388,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 844,
+    "h": 390,
+    "theme": "light",
+    "large": false,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 188,
+        "scrolledToReach": true,
+        "scrollBefore": 188,
+        "scrollAfter": 188,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 259.5,
+        "scrolledToReach": true,
+        "scrollBefore": 447.5,
+        "scrollAfter": 447.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 447.5,
+        "scrollAfter": 447.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 447.5,
+        "scrollAfter": 447.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -447.5,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 119.5,
+        "scrolledToReach": true,
+        "scrollBefore": 119.5,
+        "scrollAfter": 119.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 269.5,
+        "scrolledToReach": true,
+        "scrollBefore": 389,
+        "scrollAfter": 389,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 844,
+    "h": 390,
+    "theme": "light",
+    "large": true,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 126.5,
+        "scrolledToReach": true,
+        "scrollBefore": 126.5,
+        "scrollAfter": 126.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 126.5,
+        "scrollAfter": 126.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 411.5,
+        "scrolledToReach": true,
+        "scrollBefore": 538,
+        "scrollAfter": 538,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 538,
+        "scrollAfter": 538,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 538,
+        "scrollAfter": 538,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -538,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 140.5,
+        "scrolledToReach": true,
+        "scrollBefore": 140.5,
+        "scrollAfter": 140.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 317.5,
+        "scrolledToReach": true,
+        "scrollBefore": 458,
+        "scrollAfter": 458,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 844,
+    "h": 390,
+    "theme": "dark",
+    "large": false,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 188,
+        "scrolledToReach": true,
+        "scrollBefore": 188,
+        "scrollAfter": 188,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 259.5,
+        "scrolledToReach": true,
+        "scrollBefore": 447.5,
+        "scrollAfter": 447.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 447.5,
+        "scrollAfter": 447.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 447.5,
+        "scrollAfter": 447.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -447.5,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 119.5,
+        "scrolledToReach": true,
+        "scrollBefore": 119.5,
+        "scrollAfter": 119.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 269.5,
+        "scrolledToReach": true,
+        "scrollBefore": 389,
+        "scrollAfter": 389,
+        "automaticJump": 0
+      }
+    ]
+  },
+  {
+    "w": 844,
+    "h": 390,
+    "theme": "dark",
+    "large": true,
+    "events": [
+      {
+        "label": "즐겨찾기",
+        "scrollToReach": 126.5,
+        "scrolledToReach": true,
+        "scrollBefore": 126.5,
+        "scrollAfter": 126.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "3m",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 126.5,
+        "scrollAfter": 126.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "권장 출력",
+        "scrollToReach": 411.5,
+        "scrolledToReach": true,
+        "scrollBefore": 538,
+        "scrollAfter": 538,
+        "automaticJump": 0
+      },
+      {
+        "label": "약하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 538,
+        "scrollAfter": 538,
+        "automaticJump": 0
+      },
+      {
+        "label": "강하게",
+        "scrollToReach": 0,
+        "scrolledToReach": false,
+        "scrollBefore": 538,
+        "scrollAfter": 538,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 포커싱",
+        "scrollToReach": -538,
+        "scrolledToReach": true,
+        "scrollBefore": 0,
+        "scrollAfter": 0,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 목표",
+        "scrollToReach": 140.5,
+        "scrolledToReach": true,
+        "scrollBefore": 140.5,
+        "scrollAfter": 140.5,
+        "automaticJump": 0
+      },
+      {
+        "label": "존 적용",
+        "scrollToReach": 317.5,
+        "scrolledToReach": true,
+        "scrollBefore": 458,
+        "scrollAfter": 458,
+        "automaticJump": 0
+      }
+    ]
+  }
+]
