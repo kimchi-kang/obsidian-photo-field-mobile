@@ -2,7 +2,7 @@ import {ItemView,WorkspaceLeaf,Notice} from 'obsidian';
 import type PhotoPlugin from './main';
 import {Inputs,sensors,Equipment,emptyDraft} from './model';
 import {flash,optics,coverage,exposureEV,powerSteps} from './engine';
-import {fmt,metres,parseNumber,feetToMetres,metresToFeet} from './units';
+import {fmt,metres,distanceParts,parseNumber,feetToMetres,metresToFeet} from './units';
 import {diagram,SCENE,sceneDistance} from './diagram';
 import {equipmentValid,parseTable,selectedEquipment,applyEquipment,equipmentId,selectEquipment,addQ20iii} from './presets';
 import {equivalence,solveZone,includesTarget} from './zone';
@@ -17,7 +17,7 @@ export class PhotoView extends ItemView {
   private readonly aborters:AbortController[]=[];
   private gnDisplayUnit:'m'|'ft'='m';private power?:HTMLSelectElement;private saveStatus?:HTMLElement;private context!:HTMLElement;
   private detailState=new Map<string,boolean>();
-  private numeric=new Map<NumericKey,{input:HTMLInputElement;range?:HTMLInputElement}>();
+  private numeric=new Map<NumericKey,{input:HTMLInputElement;range?:HTMLInputElement;sync:()=>void}>();
   constructor(leaf:WorkspaceLeaf,private plugin:PhotoPlugin){super(leaf);}
   getViewType():string{return VIEW;}
   getDisplayText():string{return '사진 촬영 도우미';}
@@ -63,16 +63,28 @@ export class PhotoView extends ItemView {
     range.style.setProperty('--pfm-range-progress',`${percent}%`);
   }
   private number(parent:HTMLElement,label:string,key:NumericKey,options?:{min:number;max:number;step:number}):void {
-    const wrap=node(parent,'label',undefined,'pfm-field');wrap.dataset.field=key;const compact:Partial<Record<NumericKey,string>>={cameraDistance:'초점 맞출 거리 (m)',aperture:'실제 조리개 (f/)',focal:'초점거리 (mm)'};node(wrap,'span',compact[key]??label);
+    const wrap=node(parent,'label',undefined,'pfm-field');wrap.dataset.field=key;const compact:Partial<Record<NumericKey,string>>={cameraDistance:'초점 맞출 거리 (m)',aperture:'실제 조리개 (f/)',focal:'초점거리 (mm)'};const caption=node(wrap,'span',compact[key]??label);
     const input=node(wrap,'input');input.type='number';input.inputMode='decimal';input.step='any';input.value=Number.isFinite(this.plugin.state.inputs[key])?String(this.plugin.state.inputs[key]):'';input.dataset.key=key;input.setAttribute('aria-label',label);
+    const isDistance=['cameraDistance','flashDistance','zoneNear','zoneFar','diagramMax'].includes(key);
+    let scale=1;
     let range:HTMLInputElement|undefined;
     if(options){wrap.classList.add('pfm-range-field');input.min=String(options.min);range=node(wrap,'input');range.type='range';range.min=String(options.min);range.max=String(options.max);range.step=String(options.step);range.value=input.value;this.rangeProgress(range);range.setAttribute('aria-label',`${label} 빠른 조절`);range.dataset.range=key;
-      const r=range;this.listen(r,'input',()=>{input.value=r.value;this.rangeProgress(r);input.setAttribute('aria-invalid','false');this.plugin.update(key,Number(r.value));this.changed();});
+      const r=range;this.listen(r,'input',()=>{this.plugin.update(key,Number(r.value));sync();input.setAttribute('aria-invalid','false');this.changed();});
     }
     if(key==='flashDistance')wrap.classList.add('pfm-flash-distance');
     if(key==='denominator')wrap.classList.add('pfm-custom-power');
-    this.numeric.set(key,{input,range});
-    this.listen(input,'input',()=>{const v=parseNumber(input.value);this.plugin.update(key,v);if(key==='denominator')this.syncPower();if(range&&Number.isFinite(v)){range.value=String(v);this.rangeProgress(range);}input.setAttribute('aria-invalid',String(!Number.isFinite(v)||v<0||(v===0&&key!=='loss')));this.changed();});
+    const sync=()=>{
+      const value=this.plugin.state.inputs[key];
+      if(isDistance&&Number.isFinite(value)&&value>=0)scale=value<=1?100:1;
+      const unit=scale===100?'cm':'m';
+      if(isDistance){caption.textContent=(compact[key]??label).replace('(m)',`(${unit})`);input.setAttribute('aria-label',label.replace('(m)',`(${unit})`));input.dataset.displayUnit=unit;if(options)input.min=String(options.min*scale);}
+      input.value=Number.isFinite(value)?String(scale===100?Number((value*scale).toPrecision(15)):value):'';
+      if(range){range.value=String(value);this.rangeProgress(range);}
+    };
+    this.numeric.set(key,{input,range,sync});sync();
+    this.listen(input,'input',()=>{const v=parseNumber(input.value)/scale;this.plugin.update(key,v);if(key==='denominator')this.syncPower();if(range&&Number.isFinite(v)){range.value=String(v);this.rangeProgress(range);}input.setAttribute('aria-invalid',String(!Number.isFinite(v)||v<0||(v===0&&key!=='loss')));this.changed();});
+    // Keep the unit fixed while typing; normalize only after editing to avoid a 100× jump.
+    if(isDistance)this.listen(input,'blur',sync);
   }
   private select<K extends keyof Inputs>(parent:HTMLElement,label:string,key:K,values:Record<string,string>,after?:()=>void):HTMLSelectElement {
     const l=node(parent,'label',undefined,'pfm-field');l.dataset.field=key;node(l,'span',label);const s=node(l,'select');s.setAttribute('aria-label',label);s.dataset.key=key;
@@ -103,7 +115,7 @@ export class PhotoView extends ItemView {
     if(Number.isFinite(value)&&!steps.includes(value)){const option=node(this.power,'option',`이론값·장비 미지원 출력 1/${value}`);option.value=String(value);option.dataset.custom='true';}
     this.power.value=Number.isFinite(value)?String(value):'';
   }
-  private syncNumeric(key:NumericKey):void {const pair=this.numeric.get(key);if(pair){const value=this.plugin.state.inputs[key];pair.input.value=typeof value==='number'&&!Number.isFinite(value)?'':String(value);if(pair.range){pair.range.value=pair.input.value;this.rangeProgress(pair.range);}}if(key==='denominator')this.syncPower();}
+  private syncNumeric(key:NumericKey):void {this.numeric.get(key)?.sync();if(key==='denominator')this.syncPower();}
   render():void {
     this.rememberDetails();this.clean();this.contentEl.replaceChildren();this.contentEl.addClass('pfm-container');
     this.root=node(this.contentEl,'div',undefined,'pfm-root');const i=this.plugin.state.inputs;
@@ -170,7 +182,7 @@ export class PhotoView extends ItemView {
     const footer=node(this.root,'footer');this.saveStatus=node(footer,'p',undefined,'pfm-error');this.saveStatus.setAttribute('role','status');this.updateSaveStatus();const retry=this.button(footer,'설정 다시 저장',()=>{void this.plugin.persist().then(()=>this.plugin.flush()).catch(e=>this.plugin.reportSaveError(e));});retry.className='pfm-retry';const tabSave=this.button(footer,'현재 탭 결과 저장',()=>{tabSave.disabled=true;void this.plugin.saveNote(this.plugin.state.inputs.tab).catch(e=>this.plugin.report(e)).finally(()=>{tabSave.disabled=false;});});
     tabSave.className='mod-cta pfm-tab-save';
     const save=this.button(footer,'전체 계산을 노트로 저장',()=>{save.disabled=true;void this.plugin.saveNote().catch(e=>this.plugin.report(e)).finally(()=>{save.disabled=false;});});save.className='pfm-save';
-    node(footer,'p','표시 숫자만 반올림하며 포함·출력 경계·노출 판정은 반올림 전 값입니다. 같은 표시 숫자라도 판정이 다를 수 있습니다.');
+    node(footer,'p','1m 이하 거리는 cm로 표시합니다. 거리 입력은 입력칸의 단위를 따르며 편집을 마치면 단위가 자동 전환됩니다. 표시 숫자만 반올림하며 포함·출력 경계·노출 판정은 반올림 전 값입니다. 같은 표시 숫자라도 판정이 다를 수 있습니다.');
     node(footer,'p','현재 탭: 심도·화각 또는 플래시 결과만 저장 · 통합/전체: 모든 계산 조건 필요 · 일반 Markdown · 새 노트 생성 · 오프라인');this.paint(false);
   }
   private zonePanel():void {
@@ -247,7 +259,7 @@ export class PhotoView extends ItemView {
     const i=this.plugin.state.inputs;this.context.textContent=`${i.linked?'온카메라 · 거리 연동':'오프카메라 · 거리 분리'} / ${i.gnMode==='equipment'?'장비 GN':'수동 GN'} / ${i.mode==='manual'?'직접광 · 일반 동조':'GN 모델 미지원 조건'}`;this.syncPower();for(const key of ['gn','gnZoom','minDenominator'] as const)if(document.activeElement!==this.numeric.get(key)?.input)this.syncNumeric(key);const mode=this.root.querySelector<HTMLSelectElement>('select[data-key=gnMode]');if(mode)mode.value=i.gnMode;this.gnDisplayUnit=i.gnUnit;const unit=this.root.querySelector<HTMLSelectElement>('select[data-key=gnUnit]');if(unit)unit.value=i.gnUnit;for(const key of ['conditions','steps']as const){const field=this.root.querySelector<HTMLInputElement>(`input[data-key=${key}]`);if(field&&document.activeElement!==field)field.value=i[key];}this.results.replaceChildren();this.resultDetails.replaceChildren();this.root.dataset.tab=i.tab;this.root.dataset.linked=String(i.linked);
     const flashPanel=node(this.results,'div',undefined,'pfm-flash-results');const equipment=selectedEquipment(this.plugin.state);
     if(i.gnMode==='equipment')node(flashPanel,'small',equipment?`${equipment.name} · 사용 가능 줌 ${Object.keys(equipment.table).join(', ')}mm`:'선택 장비 없음 · 장비를 선택하거나 수동 GN으로 전환하세요.');
-    try {const f=flash(i);if(!f.supported)node(flashPanel,'p',f.powerLabel,'pfm-warning');node(flashPanel,'p','적정 노출 예상 거리','pfm-eyebrow');const hero=node(flashPanel,'div',undefined,'pfm-hero');node(hero,'span',fmt(f.d),'pfm-value');hero.append(document.createTextNode(' '));node(hero,'span','m','pfm-unit');
+    try {const f=flash(i);if(!f.supported)node(flashPanel,'p',f.powerLabel,'pfm-warning');node(flashPanel,'p','적정 노출 예상 거리','pfm-eyebrow');const hero=node(flashPanel,'div',undefined,'pfm-hero');const display=distanceParts(f.d);node(hero,'span',display.value,'pfm-value');hero.append(document.createTextNode(' '));node(hero,'span',display.unit,'pfm-unit');
       node(flashPanel,'p',`1/${i.denominator} · f/${fmt(i.aperture)} · ISO ${fmt(i.iso,0)} · GN ${fmt(f.g)}m (${fmt(i.zoom)}mm·ISO100 최대)`);
       if(i.conditions.includes('연습용 가상 GN'))node(flashPanel,'small','연습용 GN · 실제 장비 사양 아님','pfm-model-note');
       const label=f.ev>i.tolerance?'예상 과다 노출':f.ev< -i.tolerance?'예상 부족 노출':'허용 범위 내';
@@ -270,7 +282,7 @@ export class PhotoView extends ItemView {
       node(od,'p',`회절 근사: 파장 550nm, Airy 지름 ${fmt(o.airy,5)}mm (${fmt(o.airy/o.c)}×CoC). ${o.airy>o.c?'CoC보다 커질 수 있음.':'CoC 이하.'} 절대 선명도 판정이 아닙니다.`);
     }catch(e){node(dof,'p',e instanceof Error?e.message:String(e),'pfm-error');}
     try {const c=coverage(i);const p=node(this.resultDetails,'details',undefined,'pfm-coverage-results');node(p,'summary','프레임·조사 범위 비교');
-      node(p,'p',`프레임 ${fmt(c.camera.width)}×${fmt(c.camera.height)}m · 조사 범위 ${fmt(c.flash.width)}×${fmt(c.flash.height)}m`);
+      node(p,'p',`프레임 ${metres(c.camera.width)} × ${metres(c.camera.height)} · 조사 범위 ${metres(c.flash.width)} × ${metres(c.flash.height)}`);
       node(p,'p',i.linked?(c.narrow?'주의: 프레임 가장자리 광량 부족 가능성. 실제 배광은 균일하지 않습니다.':'동일 위치·방향 가정. 실제 배광은 균일하지 않습니다.'):'오프카메라: 각각의 거리 평면 범위입니다. 위치·방향을 입력하지 않아 공간 중첩을 계산하지 않습니다.');
     }catch(e){node(this.resultDetails,'p',`프레임·조사 범위 비교: ${e instanceof Error?e.message:String(e)}`,'pfm-error pfm-coverage-results');}
     if(i.loss>0)node(this.resultDetails,'p','추가 손실을 적용한 추정. GN에 포함된 손실의 중복 보정에 주의하세요.');
