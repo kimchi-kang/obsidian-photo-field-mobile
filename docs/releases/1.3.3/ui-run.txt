@@ -1,0 +1,5 @@
+PASS quick value selections, cm steps, standard aperture/ISO values and sensor edits share the normal input path
+PASS automatic CoC and approximate coverage hide unused fields while custom settings preserve their values
+PASS advanced power remains available, disabled distance controls cannot alter linked or infinite values
+PASS equipment access, all tabs, touch target sizes and small/large layouts remain usable
+PASS settings survive plugin reload exactly and full Markdown still saves through the actual button

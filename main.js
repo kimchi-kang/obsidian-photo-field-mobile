@@ -715,6 +715,7 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
 
 // src/view.ts
 var VIEW = "photo-field-mobile";
+var nextControlId = 0;
 function node(parent, tag, text, cls) {
   const e = document.createElement(tag);
   if (text !== void 0) e.textContent = text;
@@ -842,10 +843,11 @@ var PhotoView = class extends import_obsidian.ItemView {
     range.style.setProperty("--pfm-range-progress", `${percent}%`);
   }
   number(parent, label, key, options) {
-    const wrap = node(parent, "label", void 0, "pfm-field");
+    const wrap = node(parent, "div", void 0, "pfm-field");
     wrap.dataset.field = key;
     const compact = { cameraDistance: "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC (m)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C (f/)", focal: "\uCD08\uC810\uAC70\uB9AC (mm)" };
-    const caption = node(wrap, "span", compact[key] ?? label);
+    const caption = node(wrap, "label", compact[key] ?? label);
+    const entry = node(wrap, "div", void 0, "pfm-number-entry");
     const input = node(wrap, "input");
     input.type = "number";
     input.inputMode = "decimal";
@@ -853,6 +855,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     input.value = Number.isFinite(this.plugin.state.inputs[key]) ? String(this.plugin.state.inputs[key]) : "";
     input.dataset.key = key;
     input.setAttribute("aria-label", label);
+    input.id = `pfm-control-${++nextControlId}`;
+    caption.htmlFor = input.id;
     const isDistance = ["cameraDistance", "flashDistance", "zoneNear", "zoneFar", "diagramMax"].includes(key);
     let scale = 1;
     let range;
@@ -894,7 +898,66 @@ var PhotoView = class extends import_obsidian.ItemView {
         this.rangeProgress(range);
       }
     };
-    this.numeric.set(key, { input, range, sync });
+    const apply = (value) => {
+      if (input.disabled) return;
+      this.plugin.update(key, value);
+      sync();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    const choices = { aperture: [0.7, 1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32], apertureMin: [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32], apertureMax: [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32], iso: [50, 100, 200, 400, 800, 1600, 3200, 6400], focal: [14, 24, 28, 35, 50, 85, 135, 200], cameraDistance: [0.3, 0.5, 1, 2, 3, 5, 10], flashDistance: [0.3, 0.5, 1, 2, 3, 5, 10], zoneNear: [0.3, 0.5, 1, 2, 3, 5], zoneFar: [1, 2, 3, 5, 10, 20], loss: [0, 0.5, 1, 2, 3], tolerance: [0.3, 0.5, 1, 2], diagramMax: [1, 3, 5, 10, 15, 30] };
+    const candidate = (direction) => {
+      const value = this.plugin.state.inputs[key];
+      if (input.disabled || !Number.isFinite(value)) return;
+      let steps = choices[key];
+      if (key === "denominator") try {
+        steps = powerSteps(this.plugin.state.inputs.steps, this.plugin.state.inputs.minDenominator);
+      } catch {
+        return;
+      }
+      if (steps && !isDistance && key !== "loss" && key !== "tolerance") {
+        const next = direction > 0 ? steps.find((n) => n > value) : [...steps].reverse().find((n) => n < value);
+        return next;
+      }
+      const increment = isDistance ? value < 2 ? 0.01 : value < 10 ? 0.1 : 1 : key === "coc" ? 1e-3 : ["width", "height", "loss", "tolerance", "apertureMin", "apertureMax"].includes(key) ? 0.1 : 1;
+      const minimum = key === "loss" ? 0 : ["cameraDistance", "zoneNear"].includes(key) ? this.plugin.state.inputs.focal / 1e3 + 1e-3 : isDistance ? 0.01 : key === "coc" ? 1e-3 : increment;
+      const result = Math.min(key === "tolerance" ? 5 : Infinity, Math.max(minimum, Number((value + direction * increment).toPrecision(15))));
+      if ((key === "horizontal" || key === "vertical") && result >= 180) return;
+      return (result - value) * direction > 0 ? result : void 0;
+    };
+    const adjust = (direction) => {
+      const value = candidate(direction);
+      if (value !== void 0) apply(value);
+    };
+    const minus = this.button(entry, "\u2212", () => adjust(-1));
+    minus.dataset.step = "down";
+    minus.setAttribute("aria-label", `${label} \uC904\uC774\uAE30`);
+    entry.append(input);
+    const plus = this.button(entry, "+", () => adjust(1));
+    plus.dataset.step = "up";
+    plus.setAttribute("aria-label", `${label} \uB298\uB9AC\uAE30`);
+    let picker;
+    if (choices[key]) {
+      picker = node(wrap, "select", void 0, "pfm-value-picker");
+      picker.dataset.preset = key;
+      picker.setAttribute("aria-label", `${label} \uC790\uC8FC \uC4F0\uB294 \uAC12`);
+      const placeholder = node(picker, "option", "\uC790\uC8FC \uC4F0\uB294 \uAC12 \uC120\uD0DD\u2026");
+      placeholder.value = "";
+      for (const value of choices[key]) {
+        const option = node(picker, "option", isDistance ? metres(value) : key === "aperture" ? `f/${value}` : key === "focal" ? `${value} mm` : String(value));
+        option.value = String(value);
+      }
+      const control = picker;
+      this.listen(control, "change", () => {
+        if (control.value !== "") apply(Number(control.value));
+        control.value = "";
+      });
+    }
+    const updateControls = () => {
+      minus.disabled = candidate(-1) === void 0;
+      plus.disabled = candidate(1) === void 0;
+      if (picker) picker.disabled = input.disabled;
+    };
+    this.numeric.set(key, { input, range, sync, updateControls });
     sync();
     this.listen(input, "input", () => {
       const v = parseNumber(input.value) / scale;
@@ -936,8 +999,9 @@ var PhotoView = class extends import_obsidian.ItemView {
     t.value = value;
     return t;
   }
-  details(label) {
+  details(label, id) {
     const d = node(this.root, "details");
+    if (id) d.dataset.pfmSettings = id;
     node(d, "summary", label);
     return node(d, "div", void 0, "pfm-settings");
   }
@@ -1024,6 +1088,19 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.flushOnEnd();
     const quick = node(this.root, "section", void 0, "pfm-quick");
     node(quick, "h2", "\uBE60\uB978 \uC870\uC808");
+    const shortcuts = node(quick, "nav", void 0, "pfm-settings-shortcuts");
+    shortcuts.setAttribute("aria-label", "\uC0C1\uC138 \uC124\uC815 \uBC14\uB85C\uAC00\uAE30");
+    for (const [target, text] of [["camera", "\uCE74\uBA54\uB77C \uC124\uC815"], ["flash", "\uD50C\uB798\uC2DC \uC124\uC815"], ["equipment", "\uB0B4 \uC7A5\uBE44"]]) {
+      const b = this.button(shortcuts, text, () => {
+        const section = this.root.querySelector(`[data-pfm-settings=${target}]`);
+        if (section) {
+          section.open = true;
+          section.scrollIntoView({ block: "start" });
+          section.querySelector("summary")?.focus();
+        }
+      });
+      b.dataset.settingsJump = target;
+    }
     this.number(quick, "\uCE74\uBA54\uB77C \u2192 \uD53C\uC0AC\uCCB4 \uAC70\uB9AC (m)", "cameraDistance", { min: 0.1, max: 30, step: 0.1 });
     this.number(quick, "\uC870\uB9AC\uAC1C f-number", "aperture", { min: 0.7, max: 32, step: 0.1 });
     const power = this.select(quick, "\uCD9C\uB825 \uC120\uD0DD", "denominator", {}, () => {
@@ -1054,7 +1131,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.equivalent = node(quick, "div", void 0, "pfm-equivalence");
     this.zonePanel();
     this.resultDetails = node(this.root, "section", void 0, "pfm-result-details");
-    const camera = this.details("\uCE74\uBA54\uB77C\xB7\uB80C\uC988\xB7CoC");
+    const camera = this.details("\uCE74\uBA54\uB77C\xB7\uB80C\uC988\xB7CoC", "camera");
+    node(camera, "p", "\uC13C\uC11C\uB294 \uD504\uB9AC\uC14B\uC73C\uB85C \uAC04\uB2E8\uD788 \uC120\uD0DD\uD558\uC138\uC694. \uCE58\uC218\uB97C \uC9C1\uC811 \uC218\uC815\uD558\uBA74 \uC0AC\uC6A9\uC790 \uC13C\uC11C\uB85C \uC804\uD658\uB429\uB2C8\uB2E4.");
     this.select(quick, "\uC13C\uC11C \uD504\uB9AC\uC14B", "sensor", { ...Object.fromEntries(Object.entries(sensors).map(([k, v]) => [k, v.name])), custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815" }, () => {
       const preset = sensors[this.plugin.state.inputs.sensor];
       if (preset) {
@@ -1082,7 +1160,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.select(camera, "CoC \uBC29\uC2DD", "cocMode", { estimate: "\uC13C\uC11C \uB300\uAC01 \xF71500 \uCD94\uC815", custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 mm" });
     this.number(camera, "\uC0AC\uC6A9\uC790 CoC (mm)", "coc");
     node(camera, "p", "CoC\uB294 \uAC10\uC0C1 \uD06C\uAE30\xB7\uC2DC\uB825\xB7\uD655\uB300\uC728\uC5D0 \uB530\uB978 \uD5C8\uC6A9 \uCC29\uB780\uC6D0\uC785\uB2C8\uB2E4. \uB300\uAC01/1500\uC740 \uACBD\uD5D8\uC801 \uAE30\uBCF8\uAC12\uC774\uBA70 \uD53D\uC140 \uB2E8\uC704 \uC120\uBA85\uB3C4\uB97C \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. APS-C \uD06C\uAE30\uB294 \uC81C\uC870\uC0AC\uB9C8\uB2E4 \uB2E4\uB985\uB2C8\uB2E4.");
-    const fl = this.details("\uD50C\uB798\uC2DC\xB7GN \uC870\uAC74\xB7\uC870\uC0AC\uAC01");
+    const fl = this.details("\uD50C\uB798\uC2DC\xB7GN \uC870\uAC74\xB7\uC870\uC0AC\uAC01", "flash");
+    node(fl, "h3", "\uBC1C\uAD11 \uC870\uAC74");
     this.select(fl, "\uBC1C\uAD11 \uC870\uAC74", "mode", { manual: "\uC218\uB3D9 \xB7 \uC9C1\uC811\uAD11 \xB7 \uC77C\uBC18 \uB3D9\uC870", ttl: "TTL (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", hss: "HSS (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", bounce: "\uBC14\uC6B4\uC2A4 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", modifier: "\uC18C\uD504\uD2B8\uBC15\uC2A4 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", near: "\uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)" });
     this.select(fl, "GN \uC785\uB825 \uBAA8\uB4DC", "gnMode", { manual: "\uC218\uB3D9 GN", equipment: "\uC120\uD0DD \uC7A5\uBE44 \uD45C" }, () => {
       applyEquipment(this.plugin.state);
@@ -1090,6 +1169,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       this.syncNumeric("gnZoom");
     });
     this.number(fl, "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C (mm)", "zoom");
+    node(fl, "h3", "\uAC00\uC774\uB4DC \uB118\uBC84 \uAE30\uC900");
     this.number(fl, "ISO100 \xB7 \uCD5C\uB300 \uCD9C\uB825 GN", "gn");
     this.gnDisplayUnit = i.gnUnit;
     this.select(fl, "GN \uB2E8\uC704", "gnUnit", { m: "m \uAE30\uC900", ft: "ft \uAE30\uC900" }, () => {
@@ -1110,19 +1190,25 @@ var PhotoView = class extends import_obsidian.ItemView {
     });
     this.number(fl, "\uCD94\uAC00 \uAD11\uB7C9 \uC190\uC2E4 L (stop, \uAE30\uBCF8 0)", "loss");
     node(fl, "p", "GN\uC5D0 \uC774\uBBF8 \uD3EC\uD568\uB41C \uC190\uC2E4\uC744 \uC911\uBCF5 \uC801\uC6A9\uD558\uC9C0 \uB9C8\uC138\uC694. \uC190\uC2E4 \uBCF4\uC815\uC740 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC90C \uBCC0\uACBD \uC2DC \uD574\uB2F9 \uC90C\uC758 GN \uC790\uB8CC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-    this.number(fl, "\uC7A5\uBE44 \uCD5C\uC18C \uCD9C\uB825 1/n \xB7 n", "minDenominator");
-    const steps = this.text(fl, "\uC7A5\uBE44 \uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8 (\uC27C\uD45C \uAD6C\uBD84)", i.steps);
+    const powerSettings = node(fl, "details", void 0, "pfm-power-settings");
+    node(powerSettings, "summary", "\uCD9C\uB825 \uB2E8\uACC4 \uC9C1\uC811 \uC124\uC815");
+    const powerFields = node(powerSettings, "div", void 0, "pfm-settings");
+    const customPower = quick.querySelector(".pfm-custom-power");
+    if (customPower) powerFields.append(customPower);
+    this.number(powerFields, "\uC7A5\uBE44 \uCD5C\uC18C \uCD9C\uB825 1/n \xB7 n", "minDenominator");
+    const steps = this.text(powerFields, "\uC7A5\uBE44 \uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8 (\uC27C\uD45C \uAD6C\uBD84)", i.steps);
     steps.dataset.key = "steps";
     this.listen(steps, "input", () => {
       this.plugin.update("steps", steps.value);
       this.changed();
     });
+    node(fl, "h3", "\uC870\uC0AC \uBC94\uC704");
     this.select(fl, "\uC870\uC0AC\uAC01 \uC785\uB825 \uBC29\uC2DD", "coverage", { approx: "\uD480\uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815 (\uADFC\uC0AC)", angles: "\uC218\uD3C9\xB7\uC218\uC9C1 \uC870\uC0AC\uAC01 \uC9C1\uC811 \uC785\uB825" });
     this.number(fl, "\uC218\uD3C9 \uC870\uC0AC\uAC01 (\xB0)", "horizontal");
     this.number(fl, "\uC218\uC9C1 \uC870\uC0AC\uAC01 (\xB0)", "vertical");
     node(fl, "p", "\uC90C mm \uADFC\uC0AC \uBAA8\uB4DC\uB294 36\xD724mm \uC9C1\uC120\uD22C\uC601 \uD654\uAC01\uC744 \uAC00\uC815\uD569\uB2C8\uB2E4. \uC81C\uC870\uC0AC \uAE30\uC900 \uD3EC\uB9F7\uC744 \uD655\uC778\uD55C \uC2E4\uCE21 \uC870\uC0AC\uAC01\uC774 \uC788\uC73C\uBA74 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.");
     this.equipmentPanel();
-    const advanced = this.details("\uD5C8\uC6A9 \uBC94\uC704\xB7\uADF8\uB9BC \uBC94\uC704\xB7\uACC4\uC0B0 \uADFC\uAC70");
+    const advanced = this.details("\uD5C8\uC6A9 \uBC94\uC704\xB7\uADF8\uB9BC \uBC94\uC704\xB7\uACC4\uC0B0 \uADFC\uAC70", "advanced");
     this.number(advanced, "\uC801\uC815 \uB178\uCD9C \uD5C8\uC6A9 \uBC94\uC704 \xB1EV", "tolerance");
     this.number(advanced, "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC (m)", "diagramMax");
     const hyper = this.button(advanced, "\uACFC\uCD08\uC810\uAC70\uB9AC\uC5D0 \uCD08\uC810 \uB9DE\uCD94\uAE30", () => this.focusHyperfocal());
@@ -1244,7 +1330,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     }
   }
   equipmentPanel() {
-    const p = this.details("\uB0B4 \uC7A5\uBE44 \uD504\uB9AC\uC14B \xB7 \uC90C\uBCC4 GN \uD45C");
+    const p = this.details("\uB0B4 \uC7A5\uBE44 \uD504\uB9AC\uC14B \xB7 \uC90C\uBCC4 GN \uD45C", "equipment");
     node(p, "p", "Q20III \uACF5\uC2DD \uC0AC\uC591\uC744 \uBD88\uB7EC\uC624\uAC70\uB098, \uC124\uBA85\uC11C/\uC2E4\uCE21\uC758 ISO100\xB7\uCD5C\uB300 \uCD9C\uB825 GN\uACFC \uC9C0\uC6D0 \uCD9C\uB825\uC744 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.");
     const state = this.plugin.state;
     this.button(p, "FlashQ Q20III \uCD94\uAC00\xB7\uC120\uD0DD", () => {
@@ -1361,6 +1447,13 @@ var PhotoView = class extends import_obsidian.ItemView {
   }
   paint(remember = true) {
     if (remember) this.rememberDetails();
+    const inputs = this.plugin.state.inputs;
+    this.root.dataset.cocMode = inputs.cocMode;
+    this.root.dataset.coverage = inputs.coverage;
+    for (const key of ["coc", "horizontal", "vertical"]) {
+      const pair = this.numeric.get(key);
+      if (pair) pair.input.disabled = key === "coc" ? inputs.cocMode === "estimate" : inputs.coverage === "approx";
+    }
     const i = this.plugin.state.inputs;
     this.context.textContent = `${i.linked ? "\uC628\uCE74\uBA54\uB77C \xB7 \uAC70\uB9AC \uC5F0\uB3D9" : "\uC624\uD504\uCE74\uBA54\uB77C \xB7 \uAC70\uB9AC \uBD84\uB9AC"} / ${i.gnMode === "equipment" ? "\uC7A5\uBE44 GN" : "\uC218\uB3D9 GN"} / ${i.mode === "manual" ? "\uC9C1\uC811\uAD11 \xB7 \uC77C\uBC18 \uB3D9\uC870" : "GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0 \uC870\uAC74"}`;
     this.syncPower();
@@ -1447,6 +1540,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (i.loss > 0) node(this.resultDetails, "p", "\uCD94\uAC00 \uC190\uC2E4\uC744 \uC801\uC6A9\uD55C \uCD94\uC815. GN\uC5D0 \uD3EC\uD568\uB41C \uC190\uC2E4\uC758 \uC911\uBCF5 \uBCF4\uC815\uC5D0 \uC8FC\uC758\uD558\uC138\uC694.");
     this.paintEquivalence();
     this.paintZone();
+    for (const pair of this.numeric.values()) pair.updateControls();
     this.restoreDetails();
     diagram(this.picture, i);
   }

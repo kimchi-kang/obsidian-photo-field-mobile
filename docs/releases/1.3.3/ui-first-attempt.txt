@@ -1,0 +1,33 @@
+PASS quick value selections, cm steps, standard aperture/ISO values and sensor edits share the normal input path
+PASS automatic CoC and approximate coverage hide unused fields while custom settings preserve their values
+FAIL advanced power remains available, disabled distance controls cannot alter linked or infinite values locator.click: Error: strict mode violation: locator('details').filter({ has: locator('summary').filter({ hasText: '출력 단계 직접 설정' }) }).first().locator('summary') resolved to 2 elements:
+    1) <summary>플래시·GN 조건·조사각</summary> aka getByText('플래시·GN 조건·조사각')
+    2) <summary>출력 단계 직접 설정</summary> aka getByText('출력 단계 직접 설정')
+
+Call log:
+[2m  - waiting for locator('details').filter({ has: locator('summary').filter({ hasText: '출력 단계 직접 설정' }) }).first().locator('summary')[22m
+
+    at open (/Users/choikang/Desktop/전공/photo-field-mobile/tests/settings-mobile.mjs:12:271)
+    at /Users/choikang/Desktop/전공/photo-field-mobile/tests/settings-mobile.mjs:26:84
+    at async check (/Users/choikang/Desktop/전공/photo-field-mobile/tests/settings-mobile.mjs:13:35)
+    at async file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/settings-mobile.mjs:25:2
+PASS equipment access, all tabs, touch target sizes and small/large layouts remain usable
+PASS settings survive plugin reload exactly and full Markdown still saves through the actual button
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(checks.length===5&&checks.every(c=>c.passed))
+
+    at file:///Users/choikang/Desktop/%E1%84%8C%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A9%E1%86%BC/photo-field-mobile/tests/settings-mobile.mjs:44:21 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.0.0
