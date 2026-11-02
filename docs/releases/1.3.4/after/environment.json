@@ -1,0 +1,12 @@
+{
+  "vault": "/private/tmp/photo-field-qa-vault",
+  "actualIOS": false,
+  "actualAndroid": false,
+  "host": "macOS Obsidian app.emulateMobile(true), CDP mobile metrics and touch",
+  "errors": [],
+  "fingerprints": {
+    "main.js": "4203078e138ed44b2f8b1e13a5b52d16123e7f301f62b2e0ff8bc8c06c24ec40",
+    "styles.css": "5b6769d843ff4c7d29400509814fc158f1ccab6524a7497628016bb2df273d97",
+    "manifest.json": "e3c4000f966493874d96d11624ca80e2e74dfdc414cd11d4d4ae5e1478cf11bc"
+  }
+}

@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {mkdir,readFile,writeFile,copyFile} from 'node:fs/promises';import {createHash} from 'node:crypto';
-const baseline=process.env.BASELINE==='1',out=`docs/releases/1.3.3/${baseline?'before':'ui'}`,vault='/private/tmp/photo-field-qa-vault';await mkdir(out,{recursive:true});
+const baseline=process.env.BASELINE==='1',out=process.env.QA_OUT??`docs/releases/1.3.3/${baseline?'before':'ui'}`,vault='/private/tmp/photo-field-qa-vault';await mkdir(out,{recursive:true});
 const browser=await chromium.connectOverCDP('http://127.0.0.1:9338');let page,original;const checks=[],errors=[];
 try{
  for(const c of browser.contexts())for(const p of c.pages())if(p.url().includes('obsidian.md')&&await p.evaluate(()=>app.vault.adapter.basePath)===vault)page=p;

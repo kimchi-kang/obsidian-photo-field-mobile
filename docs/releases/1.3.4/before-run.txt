@@ -1,0 +1,7 @@
+PASS 01 open and inspect conditions
+PASS 02 change distance and find recommendation
+PASS 03 apply recommendation
+PASS 04 settings and return
+PASS 05 zone target apply
+PASS 06 APS-C equivalence
+PASS 07 save current result

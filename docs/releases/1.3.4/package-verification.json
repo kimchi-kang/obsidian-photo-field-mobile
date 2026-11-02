@@ -1,0 +1,24 @@
+{
+  "photo-field-mobile-1.3.4-candidate.zip": {
+    "sha256": "86e639b23536b430dcdbf9f9a1805f6122be0b4e22d8579d2bf9368ab6a3e911",
+    "files": {
+      "main.js": "4203078e138ed44b2f8b1e13a5b52d16123e7f301f62b2e0ff8bc8c06c24ec40",
+      "manifest.json": "e3c4000f966493874d96d11624ca80e2e74dfdc414cd11d4d4ae5e1478cf11bc",
+      "styles.css": "5b6769d843ff4c7d29400509814fc158f1ccab6524a7497628016bb2df273d97",
+      "LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+      "THIRD_PARTY_NOTICES.md": "c4b91b59d4ed41507df5b4abb618f9a979930a80f0816b161744a2ae16b9a641",
+      "vendor/depth-of-field-LICENSE.txt": "d9ded95dec98e5d03c794d743d9b5aad33cf0f1988c44e252f3a8af6906c9b9d"
+    }
+  },
+  "photo-field-mobile-1.3.3-rollback.zip": {
+    "sha256": "116077f2196455550f661d76d283d3722140276bccf48e40b6080caeed6092e2",
+    "files": {
+      "main.js": "b3d766ae2c8592fe53c6b1e5468de6df2ad15cd0c3add198a638816b98609cf4",
+      "manifest.json": "58b26e33a3956e351b0e15d4c6570a8a0b03be712c51d75f81a946eaabeb2650",
+      "styles.css": "9a34fbb354435f5774c8af4e92e20ae3c0ccfdd74247887cd8bd3d11c3f3f663",
+      "LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+      "THIRD_PARTY_NOTICES.md": "c4b91b59d4ed41507df5b4abb618f9a979930a80f0816b161744a2ae16b9a641",
+      "vendor/depth-of-field-LICENSE.txt": "d9ded95dec98e5d03c794d743d9b5aad33cf0f1988c44e252f3a8af6906c9b9d"
+    }
+  }
+}
