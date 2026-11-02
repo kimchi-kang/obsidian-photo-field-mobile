@@ -1,4 +1,3 @@
 
 > photo-field-mobile@1.4.0 build
 > tsc --noEmit && node build.mjs
-

@@ -147,3 +147,5 @@ npm test
 ## 1.4.0 승인 후 설치·배포
 
 통합 검증 후보의 실사용 설치와 공개 배포가 승인되었습니다. 실사용 설치에서 v1.4.0 실행과 기존 data.json의 바이트 단위 보존을 확인했습니다. [설치·배포 기록](docs/releases/1.4.0/DEPLOYMENT.md), [최신 설치·복구 안내](docs/releases/1.4.0/INSTALL-RELEASE.md). 앞의 후보 기록은 각 검증 당시 상태입니다.
+
+공개 배포 완료: [1.4.0 릴리스](https://github.com/kimchi-kang/obsidian-photo-field-mobile/releases/tag/1.4.0). BRAT latest는 1.4.0입니다.

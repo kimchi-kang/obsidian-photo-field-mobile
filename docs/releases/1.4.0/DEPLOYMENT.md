@@ -19,3 +19,11 @@
 - 이전부터 존재한 1.3.4 배포 후 기록과 BRAT 복구 자료·사용자 테스트 수정은 이번 구현 커밋에 섞지 않습니다.
 
 릴리스 첨부 파일과 원격 태그 검증 결과는 publication.json에 기록합니다.
+
+## 공개 완료
+
+- 공개 릴리스: https://github.com/kimchi-kang/obsidian-photo-field-mobile/releases/tag/1.4.0
+- 태그 커밋: `f13baef8f032ee62387ea26ff9fcdbc0be019a4c`.
+- GitHub Latest 1.4.0, draft=false, prerelease=false를 확인했습니다. BRAT latest로 업데이트할 수 있습니다.
+- 첨부 8개를 다시 내려받아 로컬 배포 파일과 일치함을 확인했습니다. 공개 manifest.json은 인증 없이도 다운로드해 동일성을 확인했습니다.
+- 실행 파일은 승인된 통합 후보·실사용 설치본·검증본과 동일합니다. 이전 1.3.4 릴리스와 비공개 전체 백업을 보존했습니다.
