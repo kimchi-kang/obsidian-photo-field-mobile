@@ -18,8 +18,11 @@
     "photo-field-mobile-1.3.4.zip": "0ccd4c1698ad91f8df0db0cfe7fbb758dccb9d393ecf07fd7bfd543afadd2dab"
   },
   "productionVersionObserved": "1.4.0",
-  "productionDataUnchanged": true,
   "backupCreated": true,
   "privateDataPublished": false,
-  "unauthenticatedPublicManifestVerified": true
+  "unauthenticatedPublicManifestVerified": true,
+  "productionDataIdenticalImmediatelyAfterInstall": true,
+  "productionExistingDataPreserved": true,
+  "productionAdditiveMigrationApplied": true,
+  "productionMigrationBackupMatchesPreInstallData": true
 }
