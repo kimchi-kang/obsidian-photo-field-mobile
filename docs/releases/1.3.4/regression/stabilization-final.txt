@@ -1,0 +1,14 @@
+PASS v1 device migration preserves fields and assigns stable IDs
+PASS unsupported output is visibly theoretical and device changes do not silently replace it
+PASS device zoom selects exact GN; missing zoom blocks old GN and lists alternatives
+PASS selected device and manual override each restore without ambiguity
+PASS draft survives secondary render and reload; editing keeps ID and updates selected device
+PASS deletion is recoverable after reload with device identity intact
+PASS 120 continuous edits persist only latest state including valid-then-blank and fast reentry
+PASS failed settings save is visible and retry preserves latest value
+PASS touch drag ending and immediate view close/reentry retain last value
+PASS save commands and button may run repeatedly without failed or overwritten notes
+PASS note I/O failure rejects visibly and next request recovers
+PASS 12 concurrent notes with identical timestamps and missing folder never overwrite
+PASS inactive blanks save but active errors and HSS reject before creating a note
+PASS saved theoretical note contains device, source, zoom, version and matching recommendation

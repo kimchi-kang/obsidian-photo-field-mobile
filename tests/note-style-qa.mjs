@@ -1,6 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
+const out=process.env.QA_OUT??'docs/mobile-host-qa';
 const browser=await chromium.connectOverCDP('http://127.0.0.1:9338');let page;
 try{
  for(const c of browser.contexts())for(const p of c.pages())if(p.url().startsWith('app://obsidian.md/index.html')&&await p.evaluate(()=>app.vault.adapter.basePath)==='/private/tmp/photo-field-qa-vault')page=p;
@@ -20,8 +21,8 @@ try{
   const enabled=read();try{sheet.disabled=true;return {enabled,disabled:read()};}finally{sheet.disabled=false;}
  });
  assert.deepEqual(result.comparison.enabled,result.comparison.disabled);
- await page.screenshot({path:'docs/mobile-host-qa/screenshots/ordinary-note.png',scale:'css',animations:'disabled'});
- await writeFile('docs/mobile-host-qa/note-style-result.json',JSON.stringify({passed:true,host:'macOS Obsidian mobile emulation',...result},null,2)+'\n');
+ await page.screenshot({path:`${out}/screenshots/ordinary-note.png`,scale:'css',animations:'disabled'});
+ await writeFile(`${out}/note-style-result.json`,JSON.stringify({passed:true,host:'macOS Obsidian mobile emulation',...result},null,2)+'\n');
  console.log('PASS ordinary note and host toolbar computed styles unchanged when plugin CSS is enabled/disabled');
 }finally{
  if(page)await page.evaluate(()=>app.plugins.plugins['photo-field-mobile'].open());

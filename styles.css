@@ -143,3 +143,16 @@
 .pfm-root .pfm-equivalence-caveat{font-weight:700;border-top:1px dashed var(--pfm-control-line);padding-top:4px;}
 
 .pfm-root .pfm-version{margin:0 0 4px;text-align:right;font-size:var(--pfm-label);font-weight:650;color:var(--pfm-muted);}
+/* Field actions stay in normal document flow, including short keyboard viewports. */
+.pfm-root .pfm-output-action{order:6;flex-basis:100%;border-top:1px solid var(--pfm-line);margin-top:8px;}
+.pfm-root .pfm-output-action button{margin:4px 8px 4px 0;}
+.pfm-root .pfm-output-action p{font-weight:650;}
+.pfm-root [data-results-return]{width:100%;margin-top:12px;}
+.pfm-root .pfm-zone-limits{width:100%;}
+.pfm-root[data-zone-flow=current] .pfm-zone-limits{display:none;}
+.pfm-root[data-tab=flash] .pfm-equivalence{display:none;}
+.pfm-root footer [data-open-note]{order:3;}
+.pfm-root [hidden]{display:none!important;}
+.pfm-root button:disabled{cursor:default;}
+.pfm-root button.pfm-tab-save,.pfm-root button.pfm-tab-save:hover{background:var(--pfm-accent);color:var(--pfm-accent-ink);border-color:var(--pfm-accent);}
+.pfm-root .pfm-flash-results>.pfm-error-action{order:6;margin:8px 8px 0 0;}

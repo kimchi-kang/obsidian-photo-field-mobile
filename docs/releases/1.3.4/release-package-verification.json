@@ -1,0 +1,15 @@
+{
+  "version": "1.3.4",
+  "assets": {
+    "main.js": "4203078e138ed44b2f8b1e13a5b52d16123e7f301f62b2e0ff8bc8c06c24ec40",
+    "manifest.json": "e3c4000f966493874d96d11624ca80e2e74dfdc414cd11d4d4ae5e1478cf11bc",
+    "styles.css": "5b6769d843ff4c7d29400509814fc158f1ccab6524a7497628016bb2df273d97",
+    "LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+    "THIRD_PARTY_NOTICES.md": "c4b91b59d4ed41507df5b4abb618f9a979930a80f0816b161744a2ae16b9a641",
+    "photo-field-mobile-1.3.4.zip": "0ccd4c1698ad91f8df0db0cfe7fbb758dccb9d393ecf07fd7bfd543afadd2dab",
+    "photo-field-mobile-1.3.3-rollback.zip": "116077f2196455550f661d76d283d3722140276bccf48e40b6080caeed6092e2"
+  },
+  "testedFilesMatch": true,
+  "dataExcluded": true,
+  "zipVerified": true
+}

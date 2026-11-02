@@ -1,0 +1,30 @@
+[
+  {
+    "name": "01 open and inspect conditions",
+    "passed": true
+  },
+  {
+    "name": "02 change distance and find recommendation",
+    "passed": true
+  },
+  {
+    "name": "03 apply recommendation",
+    "passed": true
+  },
+  {
+    "name": "04 settings and return",
+    "passed": true
+  },
+  {
+    "name": "05 zone target apply",
+    "passed": true
+  },
+  {
+    "name": "06 APS-C equivalence",
+    "passed": true
+  },
+  {
+    "name": "07 save current result",
+    "passed": true
+  }
+]

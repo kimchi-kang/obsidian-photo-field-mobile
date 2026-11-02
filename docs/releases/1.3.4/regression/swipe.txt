@@ -1,0 +1,6 @@
+PASS unguarded control reproduces sidebar opening
+PASS both horizontal directions and edge starts keep sidebars closed
+PASS native vertical touch scrolling remains functional
+PASS range dragging changes aperture without opening sidebars
+PASS closing cleans attribute and reentry restores scoped guard
+PASS ordinary notes still retain standard sidebar gestures

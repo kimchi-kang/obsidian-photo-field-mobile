@@ -999,11 +999,36 @@ var PhotoView = class extends import_obsidian.ItemView {
     t.value = value;
     return t;
   }
+  jumpSettings(target) {
+    const section = this.root.querySelector(`[data-pfm-settings=${target}]`);
+    if (section) {
+      section.open = true;
+      section.scrollIntoView({ block: "start" });
+      section.querySelector("summary")?.focus({ preventScroll: true });
+    }
+  }
+  returnToResults() {
+    this.root.querySelector(".pfm-tabs [aria-pressed=true]")?.focus({ preventScroll: true });
+    this.contentEl.scrollTop = 0;
+  }
   details(label, id) {
     const d = node(this.root, "details");
     if (id) d.dataset.pfmSettings = id;
     node(d, "summary", label);
-    return node(d, "div", void 0, "pfm-settings");
+    const body = node(d, "div", void 0, "pfm-settings");
+    if (id) {
+      const b = this.button(body, "\uACB0\uACFC\uB85C \uB3CC\uC544\uAC00\uAE30", () => this.returnToResults());
+      b.dataset.resultsReturn = "true";
+    }
+    return body;
+  }
+  async saveResult(scope) {
+    this.lastNote = await this.plugin.saveNote(scope);
+    const open = this.root.querySelector("[data-open-note]");
+    if (open) {
+      open.hidden = false;
+      open.textContent = "\uC800\uC7A5\uD55C \uB178\uD2B8 \uC5F4\uAE30";
+    }
   }
   rememberDetails() {
     if (!this.root) return;
@@ -1092,12 +1117,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     shortcuts.setAttribute("aria-label", "\uC0C1\uC138 \uC124\uC815 \uBC14\uB85C\uAC00\uAE30");
     for (const [target, text] of [["camera", "\uCE74\uBA54\uB77C \uC124\uC815"], ["flash", "\uD50C\uB798\uC2DC \uC124\uC815"], ["equipment", "\uB0B4 \uC7A5\uBE44"]]) {
       const b = this.button(shortcuts, text, () => {
-        const section = this.root.querySelector(`[data-pfm-settings=${target}]`);
-        if (section) {
-          section.open = true;
-          section.scrollIntoView({ block: "start" });
-          section.querySelector("summary")?.focus();
-        }
+        this.jumpSettings(target);
       });
       b.dataset.settingsJump = target;
     }
@@ -1130,6 +1150,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     });
     this.equivalent = node(quick, "div", void 0, "pfm-equivalence");
     this.zonePanel();
+    const zone = this.root.querySelector(".pfm-zone-panel");
+    if (zone) quick.before(zone);
     this.resultDetails = node(this.root, "section", void 0, "pfm-result-details");
     const camera = this.details("\uCE74\uBA54\uB77C\xB7\uB80C\uC988\xB7CoC", "camera");
     node(camera, "p", "\uC13C\uC11C\uB294 \uD504\uB9AC\uC14B\uC73C\uB85C \uAC04\uB2E8\uD788 \uC120\uD0DD\uD558\uC138\uC694. \uCE58\uC218\uB97C \uC9C1\uC811 \uC218\uC815\uD558\uBA74 \uC0AC\uC6A9\uC790 \uC13C\uC11C\uB85C \uC804\uD658\uB429\uB2C8\uB2E4.");
@@ -1222,6 +1244,10 @@ var PhotoView = class extends import_obsidian.ItemView {
     const a = node(about, "a", "\uC6D0\uBCF8: Jack Herrington \xB7 depth-of-field");
     a.href = "https://github.com/jherr/depth-of-field";
     node(about, "p", "Copyright (c) 2026 Jack Herrington \xB7 MIT. \uCC38\uACE0 SHA c75dd6d40e4a96e96fd38e57657fe4b9737bf776. MIT \uC804\uBB38: main.js \uB0B4 \uACE0\uC9C0 \uBC0F \uBC30\uD3EC ZIP\uC758 vendor/depth-of-field-LICENSE.txt. \uC7AC\uC0AC\uC6A9 \uB0B4\uC5ED: GitHub\uC758 THIRD_PARTY_NOTICES.md.");
+    for (const section of this.root.querySelectorAll("[data-pfm-settings] > .pfm-settings")) {
+      const back = section.querySelector("[data-results-return]");
+      if (back) section.append(back);
+    }
     const footer = node(this.root, "footer");
     this.saveStatus = node(footer, "p", void 0, "pfm-error");
     this.saveStatus.setAttribute("role", "status");
@@ -1232,18 +1258,23 @@ var PhotoView = class extends import_obsidian.ItemView {
     retry.className = "pfm-retry";
     const tabSave = this.button(footer, "\uD604\uC7AC \uD0ED \uACB0\uACFC \uC800\uC7A5", () => {
       tabSave.disabled = true;
-      void this.plugin.saveNote(this.plugin.state.inputs.tab).catch((e) => this.plugin.report(e)).finally(() => {
+      void this.saveResult(this.plugin.state.inputs.tab).catch((e) => this.plugin.report(e)).finally(() => {
         tabSave.disabled = false;
       });
     });
-    tabSave.className = "mod-cta pfm-tab-save";
+    tabSave.className = "pfm-tab-save";
     const save = this.button(footer, "\uC804\uCCB4 \uACC4\uC0B0\uC744 \uB178\uD2B8\uB85C \uC800\uC7A5", () => {
       save.disabled = true;
-      void this.plugin.saveNote().catch((e) => this.plugin.report(e)).finally(() => {
+      void this.saveResult("all").catch((e) => this.plugin.report(e)).finally(() => {
         save.disabled = false;
       });
     });
     save.className = "pfm-save";
+    const openNote = this.button(footer, "\uC800\uC7A5\uD55C \uB178\uD2B8 \uC5F4\uAE30", () => {
+      if (this.lastNote) void this.app.workspace.openLinkText(this.lastNote, "", true).catch((e) => this.plugin.report(e));
+    });
+    openNote.dataset.openNote = "true";
+    openNote.hidden = !this.lastNote;
     node(footer, "p", "1m \uC774\uD558 \uAC70\uB9AC\uB294 cm\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uAC70\uB9AC \uC785\uB825\uC740 \uC785\uB825\uCE78\uC758 \uB2E8\uC704\uB97C \uB530\uB974\uBA70 \uD3B8\uC9D1\uC744 \uB9C8\uCE58\uBA74 \uB2E8\uC704\uAC00 \uC790\uB3D9 \uC804\uD658\uB429\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD558\uBA70 \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC785\uB2C8\uB2E4. \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     node(footer, "p", "\uD604\uC7AC \uD0ED: \uC2EC\uB3C4\xB7\uD654\uAC01 \uB610\uB294 \uD50C\uB798\uC2DC \uACB0\uACFC\uB9CC \uC800\uC7A5 \xB7 \uD1B5\uD569/\uC804\uCCB4: \uBAA8\uB4E0 \uACC4\uC0B0 \uC870\uAC74 \uD544\uC694 \xB7 \uC77C\uBC18 Markdown \xB7 \uC0C8 \uB178\uD2B8 \uC0DD\uC131 \xB7 \uC624\uD504\uB77C\uC778");
     this.paint(false);
@@ -1251,7 +1282,7 @@ var PhotoView = class extends import_obsidian.ItemView {
   zonePanel() {
     const section = node(this.root, "section", void 0, "pfm-zone-panel");
     node(section, "h2", "\uC874 \uD3EC\uCEE4\uC2F1");
-    this.select(section, "\uC874 \uD3EC\uCEE4\uC2F1 \uD750\uB984", "zoneFlow", { current: "\uD604\uC7AC \uC124\uC815\uC73C\uB85C \uD655\uC778", target: "\uC6D0\uD558\uB294 \uCD2C\uC601 \uAD6C\uAC04\uC73C\uB85C \uC5ED\uC0B0" });
+    this.select(section, "\uC874 \uD3EC\uCEE4\uC2F1 \uD750\uB984", "zoneFlow", { current: "\uC9C0\uAE08 \uC124\uC815\uC73C\uB85C \uC5B4\uB514\uAE4C\uC9C0 \uC120\uBA85\uD55C\uAC00?", target: "\uC5B4\uB514\uBD80\uD130 \uC5B4\uB514\uAE4C\uC9C0 \uB2F4\uACE0 \uC2F6\uC740\uAC00?" });
     const target = node(section, "div", void 0, "pfm-zone-target");
     this.number(target, "\uBAA9\uD45C \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uAC70\uB9AC (m)", "zoneNear");
     this.number(target, "\uBAA9\uD45C \uAC00\uC7A5 \uBA3C \uAC70\uB9AC (m)", "zoneFar");
@@ -1265,9 +1296,13 @@ var PhotoView = class extends import_obsidian.ItemView {
       this.plugin.update("zoneInfinity", infinity.checked);
       this.changed();
     });
-    this.number(target, "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12 (\uD558\uD55C)", "apertureMin");
-    this.number(target, "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12 (\uC0C1\uD55C)", "apertureMax");
-    const steps = this.text(target, "\uC2E4\uC81C \uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4 (\uC27C\uD45C \uAD6C\uBD84)", this.plugin.state.inputs.apertureSteps);
+    const limits = node(target, "details", void 0, "pfm-zone-limits");
+    limits.dataset.zoneLimits = "true";
+    node(limits, "summary", "\uB80C\uC988 \uC870\uB9AC\uAC1C \uD55C\uACC4\xB7\uC0AC\uC6A9 \uAC00\uB2A5 \uB2E8\uACC4");
+    const lens = node(limits, "div");
+    this.number(lens, "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12 (\uD558\uD55C)", "apertureMin");
+    this.number(lens, "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12 (\uC0C1\uD55C)", "apertureMax");
+    const steps = this.text(lens, "\uC2E4\uC81C \uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4 (\uC27C\uD45C \uAD6C\uBD84)", this.plugin.state.inputs.apertureSteps);
     steps.dataset.key = "apertureSteps";
     this.listen(steps, "input", () => {
       this.plugin.update("apertureSteps", steps.value);
@@ -1275,6 +1310,10 @@ var PhotoView = class extends import_obsidian.ItemView {
     });
     this.zoneResult = node(section, "div", void 0, "pfm-zone-result");
     this.zoneResult.setAttribute("aria-live", "polite");
+    target.after(this.zoneResult);
+    this.zoneResult.after(limits);
+    const coc = this.button(lens, "CoC \uC124\uC815\uC73C\uB85C \uC774\uB3D9", () => this.jumpSettings("camera"));
+    coc.dataset.zoneCoc = "true";
     node(section, "p", "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC(m)\uB294 \uB80C\uC988\uC758 \uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)\uC640 \uB2E4\uB985\uB2C8\uB2E4. CoC \uAE30\uC900\uC758 \uD5C8\uC6A9 \uBC94\uC704\uC774\uBA70 \uC808\uB300\uC801\uC778 \uC120\uBA85\xB7\uD750\uB9BC \uACBD\uACC4\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uC774 \uB3C4\uAD6C\uB294 \uCD2C\uC601 \uCC38\uACE0\uC6A9 \uACC4\uC0B0\uC774\uBA70 \uCE74\uBA54\uB77C\xB7\uB80C\uC988\uB97C \uC81C\uC5B4\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
   }
   paintEquivalence() {
@@ -1282,12 +1321,13 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.equivalent.replaceChildren();
     try {
       const e = equivalence(i);
-      node(this.equivalent, "p", `${sensors[i.sensor]?.name ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 ${e.basis} ${fmt(e.crop, 3)}\xD7 \xB7 \uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)}`);
-      node(this.equivalent, "p", `\uD480\uD504\uB808\uC784 \uD654\uAC01 \uD658\uC0B0 ${fmt(e.focal, 2)}mm \xB7 \uC2EC\uB3C4 \uB300\uC751 \uC57D f/${fmt(e.aperture, 2)}`);
-      node(this.equivalent, "small", `\uC2E4\uC81C \uC13C\uC11C ${fmt(i.width)}\xD7${fmt(i.height)}mm \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7. \uD654\uAC01\xB7\uC2E4\uC81C \uC2EC\uB3C4\uB294 \uC774 \uCE58\uC218\uB85C \uACC4\uC0B0\uD569\uB2C8\uB2E4. ${e.differentAspect ? "\uD654\uBA74\uBE44\uAC00 \uB2E4\uB974\uBBC0\uB85C \uB300\uAC01 \uAE30\uC900 \uD658\uC0B0\uC785\uB2C8\uB2E4. " : ""}\uC2E4\uC81C \uC870\uB9AC\uAC1C\uC640 \uB178\uCD9C\uC740 f/${fmt(i.aperture)}\uC774\uBA70 ISO\xB7\uD50C\uB798\uC2DC \uCD9C\uB825\uC740 \uBC14\uB00C\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`);
+      node(this.equivalent, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)} \u2192 \uD480\uD504\uB808\uC784 \uD654\uAC01 ${fmt(e.focal, 2)}mm / \uC2EC\uB3C4 \uC57D f/${fmt(e.aperture, 2)}`);
+      node(this.equivalent, "p", `\uB178\uCD9C\xB7\uD50C\uB798\uC2DC \uACC4\uC0B0\uC740 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(i.aperture)} \uC0AC\uC6A9`);
+      const detailText = `\uC2E4\uC81C \uC13C\uC11C ${fmt(i.width)}\xD7${fmt(i.height)}mm \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7. \uD654\uAC01\xB7\uC2E4\uC81C \uC2EC\uB3C4\uB294 \uC774 \uCE58\uC218\uB85C \uACC4\uC0B0\uD569\uB2C8\uB2E4. ${e.differentAspect ? "\uD654\uBA74\uBE44\uAC00 \uB2E4\uB974\uBBC0\uB85C \uB300\uAC01 \uAE30\uC900 \uD658\uC0B0\uC785\uB2C8\uB2E4. " : ""}\uC2E4\uC81C \uC870\uB9AC\uAC1C\uC640 \uB178\uCD9C\uC740 f/${fmt(i.aperture)}\uC774\uBA70 ISO\xB7\uD50C\uB798\uC2DC \uCD9C\uB825\uC740 \uBC14\uB00C\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`;
       if (i.cocMode === "custom") node(this.equivalent, "p", "\uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC \xB7 \uC2EC\uB3C4 \uB300\uC751\uAC12\uC740 \uC815\uD655\uD55C \uC77C\uCE58\uAC00 \uC544\uB2D9\uB2C8\uB2E4.", "pfm-equivalence-caveat");
       const details = node(this.equivalent, "details");
       node(details, "summary", "\uC2EC\uB3C4 \uB300\uC751 \uC870\uAC74\xB7\uD654\uAC01");
+      node(details, "small", `${sensors[i.sensor]?.name ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 ${e.basis} ${fmt(e.crop, 3)}\xD7. ${detailText}`);
       node(details, "p", "\uAC19\uC740 \uCD2C\uC601 \uC704\uCE58\xB7\uAD6C\uB3C4\uC640 \uBE44\uAD50 \uAC00\uB2A5\uD55C \uAC10\uC0C1 \uC870\uAC74\uC5D0\uC11C\uC758 \uADFC\uC0AC\uC785\uB2C8\uB2E4. \uADFC\uC811 \uCD2C\uC601\xB7\uD3EC\uCEE4\uC2A4 \uBE0C\uB9AC\uB529\xB7\uC11C\uB85C \uB2E4\uB978 \uD654\uBA74\uBE44\uC5D0\uC11C\uB294 \uC644\uC804 \uC77C\uCE58\uB97C \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
       node(details, "p", i.cocMode === "custom" ? "\uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC: \uBE44\uAD50 \uAC10\uC0C1 \uC870\uAC74\uC774 \uB2EC\uB77C \uAE30\uBCF8 \uC2EC\uB3C4 \uD658\uC0B0\uC744 \uC815\uD655\uD55C \uC77C\uCE58\uB85C \uBCFC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." : "\uAE30\uBCF8 CoC\uB294 \uC13C\uC11C \uB300\uAC01/1500. \uBE44\uAD50\uD560 \uD480\uD504\uB808\uC784 CoC\uB3C4 \uAC19\uC740 \uAC10\uC0C1 \uAE30\uC900\uC73C\uB85C \uB300\uC751\uD574\uC57C \uD569\uB2C8\uB2E4. \uBA85\uBAA9 \uACC4\uC218\uC640 \uC2E4\uCE58\uC218 \uACC4\uC218 \uCC28\uC774\uAC00 \uC788\uC5B4 \uC815\uD655\uD55C \uC2EC\uB3C4 \uC77C\uCE58\uB97C \uB73B\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
       const o = optics(i);
@@ -1304,8 +1344,10 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.zoneResult.replaceChildren();
     try {
       const current = optics(i);
-      node(this.zoneResult, "p", `${metres(i.cameraDistance)}\uC5D0 \uCD08\uC810\uC744 \uB9DE\uCD94\uBA74 \uC57D ${metres(current.near)} ~ ${metres(current.far)} \uBC94\uC704\uAC00 \uD5C8\uC6A9 \uC120\uBA85\uB3C4 \uC548\uC5D0 \uB4E4\uC5B4\uC635\uB2C8\uB2E4.`);
-      node(this.zoneResult, "p", `\uC804\uCCB4 \uC2EC\uB3C4 ${metres(current.total)} \xB7 \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(current.hyperfocal)}`);
+      if (i.zoneFlow === "current") {
+        node(this.zoneResult, "p", `${metres(i.cameraDistance)}\uC5D0 \uCD08\uC810\uC744 \uB9DE\uCD94\uBA74 \uC57D ${metres(current.near)} ~ ${metres(current.far)} \uBC94\uC704\uAC00 \uD5C8\uC6A9 \uC120\uBA85\uB3C4 \uC548\uC5D0 \uB4E4\uC5B4\uC635\uB2C8\uB2E4.`);
+        node(this.zoneResult, "p", `\uC804\uCCB4 \uC2EC\uB3C4 ${metres(current.total)} \xB7 \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(current.hyperfocal)}`);
+      }
       if (i.zoneFlow === "target") {
         const r = solveZone(i);
         const included = includesTarget(current, r.target);
@@ -1313,6 +1355,7 @@ var PhotoView = class extends import_obsidian.ItemView {
         node(this.zoneResult, "p", `\uBAA9\uD45C ${metres(r.target.near)} ~ ${metres(r.target.far)} \xB7 \uC774\uB860 \uD544\uC694 f/${fmt(r.required, 3)}`);
         node(this.zoneResult, "p", `${r.possible ? "\uC81C\uC548" : "\uB80C\uC988 \uD55C\uACC4\uC5D0\uC11C \uB300\uC548"}: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(r.aperture)} \u2192 ${metres(r.actual.near)} ~ ${metres(r.actual.far)}`);
         if (r.possible) {
+          node(this.zoneResult, "p", `\uC801\uC6A9 \uC804 \uD655\uC778: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(i.cameraDistance)} \u2192 ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(i.aperture)} \u2192 f/${fmt(r.aperture)}`);
           const b = node(this.zoneResult, "button", "\uC5ED\uC0B0 \uACB0\uACFC\uB97C \uD604\uC7AC \uC124\uC815\uC5D0 \uC801\uC6A9");
           b.type = "button";
           b.dataset.zoneApply = "true";
@@ -1322,8 +1365,22 @@ var PhotoView = class extends import_obsidian.ItemView {
             this.syncNumeric("cameraDistance");
             this.syncNumeric("aperture");
             this.changed();
+            this.root.querySelector("[data-zone-apply]")?.focus({ preventScroll: true });
           };
-        } else node(this.zoneResult, "p", "\uC9C0\uC6D0\uD558\uB294 \uC870\uB9AC\uAC1C \uB2E8\uACC4\uB85C \uBAA9\uD45C \uC804\uCCB4\uB97C \uD3EC\uD568\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uBAA9\uD45C \uADFC\uAC70\uB9AC\uB97C \uB354 \uBA40\uB9AC \uD558\uAC70\uB098 \uC6D0\uAC70\uB9AC\uB97C \uC904\uC774\uAC70\uB098 \uC2E4\uC81C \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC(mm)\uB97C \uC9E7\uAC8C \uD574 \uB2E4\uC2DC \uACC4\uC0B0\uD558\uC138\uC694. \uC704 \uB300\uC548\uC740 \uC804\uCCB4 \uD3EC\uD568\uC744 \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.", "pfm-error");
+        } else {
+          const edit = node(this.zoneResult, "button", "\uB80C\uC988 \uC870\uB9AC\uAC1C \uD55C\uACC4 \uD655\uC778");
+          edit.type = "button";
+          edit.dataset.zoneLimitsJump = "true";
+          edit.onclick = () => {
+            const limits = this.root.querySelector("[data-zone-limits]");
+            if (limits) {
+              limits.open = true;
+              limits.scrollIntoView({ block: "start" });
+              limits.querySelector("summary")?.focus({ preventScroll: true });
+            }
+          };
+          node(this.zoneResult, "p", "\uC9C0\uC6D0\uD558\uB294 \uC870\uB9AC\uAC1C \uB2E8\uACC4\uB85C \uBAA9\uD45C \uC804\uCCB4\uB97C \uD3EC\uD568\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uBAA9\uD45C \uADFC\uAC70\uB9AC\uB97C \uB354 \uBA40\uB9AC \uD558\uAC70\uB098 \uC6D0\uAC70\uB9AC\uB97C \uC904\uC774\uAC70\uB098 \uC2E4\uC81C \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC(mm)\uB97C \uC9E7\uAC8C \uD574 \uB2E4\uC2DC \uACC4\uC0B0\uD558\uC138\uC694. \uC704 \uB300\uC548\uC740 \uC804\uCCB4 \uD3EC\uD568\uC744 \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.", "pfm-error");
+        }
       }
     } catch (e) {
       node(this.zoneResult, "p", e instanceof Error ? e.message : String(e), "pfm-error");
@@ -1455,7 +1512,11 @@ var PhotoView = class extends import_obsidian.ItemView {
       if (pair) pair.input.disabled = key === "coc" ? inputs.cocMode === "estimate" : inputs.coverage === "approx";
     }
     const i = this.plugin.state.inputs;
-    this.context.textContent = `${i.linked ? "\uC628\uCE74\uBA54\uB77C \xB7 \uAC70\uB9AC \uC5F0\uB3D9" : "\uC624\uD504\uCE74\uBA54\uB77C \xB7 \uAC70\uB9AC \uBD84\uB9AC"} / ${i.gnMode === "equipment" ? "\uC7A5\uBE44 GN" : "\uC218\uB3D9 GN"} / ${i.mode === "manual" ? "\uC9C1\uC811\uAD11 \xB7 \uC77C\uBC18 \uB3D9\uC870" : "GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0 \uC870\uAC74"}`;
+    const selected = selectedEquipment(this.plugin.state);
+    this.context.textContent = `${sensors[i.sensor]?.name.split(" (")[0] ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 \uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)}${i.tab === "zone" ? "" : ` \xB7 ISO ${fmt(i.iso, 0)}`}${i.tab === "flash" || i.tab === "combined" ? ` / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"} \xB7 ${i.mode === "manual" ? "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870" : "GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : ""}`;
+    const tabSave = this.root.querySelector(".pfm-tab-save");
+    if (tabSave) tabSave.textContent = `${{ flash: "\uD50C\uB798\uC2DC", dof: "\uC2EC\uB3C4\xB7\uD654\uAC01", combined: "\uD1B5\uD569", zone: "\uC874 \uD3EC\uCEE4\uC2F1" }[i.tab]} \uACB0\uACFC \uC800\uC7A5`;
+    if (this.outputUndo && this.outputUndo.applied !== i.denominator) this.outputUndo = void 0;
     this.syncPower();
     for (const key of ["gn", "gnZoom", "minDenominator"]) if (document.activeElement !== this.numeric.get(key)?.input) this.syncNumeric(key);
     const mode = this.root.querySelector("select[data-key=gnMode]");
@@ -1487,19 +1548,53 @@ var PhotoView = class extends import_obsidian.ItemView {
       if (i.conditions.includes("\uC5F0\uC2B5\uC6A9 \uAC00\uC0C1 GN")) node(flashPanel, "small", "\uC5F0\uC2B5\uC6A9 GN \xB7 \uC2E4\uC81C \uC7A5\uBE44 \uC0AC\uC591 \uC544\uB2D8", "pfm-model-note");
       const label = f.ev > i.tolerance ? "\uC608\uC0C1 \uACFC\uB2E4 \uB178\uCD9C" : f.ev < -i.tolerance ? "\uC608\uC0C1 \uBD80\uC871 \uB178\uCD9C" : "\uD5C8\uC6A9 \uBC94\uC704 \uB0B4";
       node(flashPanel, "p", `${metres(f.r)}\uC5D0\uC11C ${f.ev > 0 ? "+" : ""}${fmt(f.ev)} EV \xB7 ${label}`, "pfm-ev");
+      const action = node(flashPanel, "div", void 0, "pfm-output-action");
+      node(action, "p", `\uAD8C\uC7A5 \uC9C0\uC6D0 \uCD9C\uB825 1/${f.nearest} \xB7 \uC801\uC6A9 \uD6C4 \uB0A8\uB294 \uC624\uCC28 ${f.residual > 0 ? "+" : ""}${fmt(f.residual)} EV${f.status === "\uC7A5\uBE44 \uCD9C\uB825 \uBC94\uC704 \uC548" ? "" : ` \xB7 ${f.status}`}`);
+      const apply = node(action, "button", i.denominator === f.nearest ? "\uAD8C\uC7A5 \uCD9C\uB825\uACFC \uAC19\uC74C" : `\uAD8C\uC7A5 \uCD9C\uB825 1/${f.nearest} \uC801\uC6A9`);
+      apply.type = "button";
+      apply.dataset.flashApply = "true";
+      apply.disabled = i.denominator === f.nearest;
+      apply.onclick = () => {
+        this.outputUndo = { before: i.denominator, applied: f.nearest };
+        this.plugin.update("denominator", f.nearest);
+        this.syncNumeric("denominator");
+        this.changed();
+        this.root.querySelector("[data-flash-undo]")?.focus({ preventScroll: true });
+      };
+      if (this.outputUndo) {
+        const before = this.outputUndo.before;
+        const undo = node(action, "button", `\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \xB7 1/${before}\uB85C`);
+        undo.type = "button";
+        undo.dataset.flashUndo = "true";
+        undo.onclick = () => {
+          this.outputUndo = void 0;
+          this.plugin.update("denominator", before);
+          this.syncNumeric("denominator");
+          this.changed();
+          this.root.querySelector("[data-flash-apply]")?.focus({ preventScroll: true });
+        };
+      }
       const d = node(this.resultDetails, "details", void 0, "pfm-flash-details");
       node(d, "summary", "\uD544\uC694 \uCD9C\uB825\xB7\uC870\uB9AC\uAC1C\xB7\uAC70\uB9AC\uBCC4 \uD45C");
       node(d, "p", `${f.powerLabel} \xB7 ${i.gnMode === "equipment" ? "\uC7A5\uBE44 \uD45C" : "\uC218\uB3D9 GN"}`);
       node(d, "p", i.conditions);
       node(d, "p", `\xB1${fmt(i.tolerance)}EV: ${metres(f.low)} ~ ${metres(f.high)}. \uAC00\uAE4C\uC6B0\uBA74 \uACFC\uB2E4 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.`);
       node(d, "p", `\uD544\uC694 \uC870\uB9AC\uAC1C f/${fmt(f.requiredAperture)} \xB7 \uD544\uC694 \uCD9C\uB825 ${fmt(f.needed * 100)}% \xB7 ${f.status}`);
-      node(d, "p", `\uAD8C\uC7A5 \uC9C0\uC6D0 \uB2E8\uACC4 1/${f.nearest} \xB7 \uC608\uC0C1 ${metres(f.nearestDistance)} \u2192 \uB0A8\uB294 \uC624\uCC28 ${f.residual > 0 ? "+" : ""}${fmt(f.residual)} EV`);
       this.table(d, ["\uCD9C\uB825", "\uC608\uC0C1 \uAC70\uB9AC"], f.distances.map((x) => [`1/${x.n}`, metres(x.d)]));
       this.table(d, ["\uD50C\uB798\uC2DC \uAC70\uB9AC", "\uB178\uCD9C \uCC28\uC774"], [0.5, 0.70710678, 1, 1.41421356, 2].map((v) => [metres(f.d * v), `${fmt(exposureEV(f.d, f.d * v))} EV \xB7 ${v < 1 ? "\uACFC\uB2E4" : v > 1 ? "\uBD80\uC871" : "\uAE30\uC900 \uC801\uC815"}`]));
     } catch (e) {
       node(flashPanel, "p", "\uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC", "pfm-eyebrow");
       node(flashPanel, "div", "\u2014", "pfm-hero");
-      node(flashPanel, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+      node(flashPanel, "p", !Number.isFinite(i.gn) || i.gn <= 0 ? "GN\uC774 \uBE44\uC5C8\uAC70\uB098 0 \uC774\uD558\uC785\uB2C8\uB2E4. \uD50C\uB798\uC2DC \uC870\uAC74\uC5D0\uC11C ISO100 \uCD5C\uB300 \uCD9C\uB825 GN\uC744 \uC785\uB825\uD558\uC138\uC694." : e instanceof Error ? e.message : String(e), "pfm-error");
+      const disabled = node(flashPanel, "button", "\uAD8C\uC7A5 \uCD9C\uB825 \uC801\uC6A9 \uBD88\uAC00");
+      disabled.type = "button";
+      disabled.disabled = true;
+      disabled.dataset.flashApply = "true";
+      disabled.className = "pfm-error-action";
+      const fix = node(flashPanel, "button", "\uD50C\uB798\uC2DC \uC870\uAC74 \uD655\uC778");
+      fix.type = "button";
+      fix.className = "pfm-error-action";
+      fix.onclick = () => this.jumpSettings("flash");
     }
     if (i.tab === "flash") this.results.append(this.picture);
     else this.results.prepend(this.picture);

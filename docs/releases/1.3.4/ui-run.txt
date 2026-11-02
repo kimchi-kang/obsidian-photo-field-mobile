@@ -1,0 +1,11 @@
+PASS 01 open and inspect conditions
+PASS 02 change distance and find recommendation
+PASS 03 apply recommendation
+PASS 04 settings and return
+PASS 05 zone target apply
+PASS 06 APS-C equivalence
+PASS 07 save current result
+PASS 08 focus, units, scroll and settings expansion
+PASS 09 all tabs, theme, font and viewport matrix
+PASS 10 limits, invalid GN, theoretical output and long equipment
+PASS 11 full save, explicit open, reload restore

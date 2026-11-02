@@ -131,3 +131,7 @@ npm test
 ## 1.3.1 계산 정확성 검증
 
 [계산 검증 보고서](docs/calculation-audit/REPORT.md)와 [독립 기대값 대조표](docs/calculation-audit/representative-table.md), [배포 안내](docs/releases/1.3.1/RELEASE.md)를 참고하세요. 기존의 로컬 후보 기록은 각 작업 당시 상태입니다.
+
+## 1.3.4 현장 사용성 개선
+
+권장 출력 적용·취소, 상세 설정에서 결과 복귀, 존 목표 역산 흐름과 환산·저장 문구를 개선했습니다. [변경 안내](docs/releases/1.3.4/RELEASE.md)와 [전후 검증 보고서](docs/releases/1.3.4/REPORT.md)를 참고하세요.

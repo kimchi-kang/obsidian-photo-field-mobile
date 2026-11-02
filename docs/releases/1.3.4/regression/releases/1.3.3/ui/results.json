@@ -1,0 +1,32 @@
+{
+  "checks": [
+    {
+      "name": "quick value selections, cm steps, standard aperture/ISO values and sensor edits share the normal input path",
+      "passed": true
+    },
+    {
+      "name": "automatic CoC and approximate coverage hide unused fields while custom settings preserve their values",
+      "passed": true
+    },
+    {
+      "name": "advanced power remains available, disabled distance controls cannot alter linked or infinite values",
+      "passed": true
+    },
+    {
+      "name": "equipment access, all tabs, touch target sizes and small/large layouts remain usable",
+      "passed": true
+    },
+    {
+      "name": "settings survive plugin reload exactly and full Markdown still saves through the actual button",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "fingerprints": {
+    "main.js": "17e1fcc795eb27156df2491bb24a2ae7179671038fe87cf4a7e12be7ac48e480",
+    "styles.css": "8a80615bb222bb0cda5c9a74892ecbec0a3796c65d855e46779d362ea609cf35",
+    "manifest.json": "e3c4000f966493874d96d11624ca80e2e74dfdc414cd11d4d4ae5e1478cf11bc"
+  },
+  "actualIOS": false,
+  "baseline": false
+}
