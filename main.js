@@ -28,8 +28,8 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name2 in all)
+    __defProp(target, name2, { get: all[name2], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -242,6 +242,14 @@ function coverage(i) {
 }
 
 // src/presets.ts
+function signature(e) {
+  return JSON.stringify([e.conditions, e.source, e.minDenominator, e.steps, Object.entries(e.table).sort(([a], [b]) => Number(a) - Number(b))]);
+}
+function issue(s, shot) {
+  if (shot.values.gnMode !== "equipment") return "";
+  const e = s.equipment.find((e2) => e2.id === shot.values.equipmentId);
+  return !e ? "\uCC38\uC870 \uC7A5\uBE44 \uC0AD\uC81C\uB428 \xB7 \uB0B4 \uC7A5\uBE44\uC5D0\uC11C \uC0AD\uC81C \uBCF5\uAD6C \uB610\uB294 \uC7A5\uBE44\uB97C \uC120\uD0DD\uD558\uACE0 \uC990\uACA8\uCC3E\uAE30\uB97C \uAC31\uC2E0\uD558\uC138\uC694." : signature(e) !== shot.equipmentSignature ? "\uCC38\uC870 \uC7A5\uBE44 \uC0AC\uC591 \uBCC0\uACBD\uB428 \xB7 \uD604\uC7AC \uC0AC\uC591\uC744 \uD655\uC778\uD558\uACE0 \uC990\uACA8\uCC3E\uAE30\uB97C \uAC31\uC2E0\uD558\uC138\uC694." : "";
+}
 function parseTable(text, unit) {
   const table = {};
   for (const row of text.trim().split("\n")) {
@@ -272,7 +280,18 @@ function applyEquipment(state) {
   const i = state.inputs;
   if (i.gnMode !== "equipment") return;
   const e = selectedEquipment(state);
+  const active = state.field?.shots.find((s) => s.id === state.field?.activeShotId);
+  const problem = active && active.values.equipmentId === i.equipmentId ? issue(state, active) : "";
+  if (problem) {
+    i.gn = 0;
+    i.gnZoom = 0;
+    i.conditions = problem;
+    i.steps = e?.steps ?? "";
+    if (e) i.minDenominator = e.minDenominator;
+    return;
+  }
   if (!e) {
+    i.steps = "";
     i.gn = 0;
     i.gnZoom = 0;
     i.conditions = "\uC120\uD0DD \uC7A5\uBE44\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC7A5\uBE44 \uC120\uD0DD \uB610\uB294 \uC218\uB3D9 \uBAA8\uB4DC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.";
@@ -282,9 +301,9 @@ function applyEquipment(state) {
   Object.assign(i, { gn: g ?? 0, gnUnit: "m", gnZoom: g === void 0 ? 0 : i.zoom, conditions: `${e.conditions} \xB7 \uCD9C\uCC98: ${e.source}`, minDenominator: e.minDenominator, steps: e.steps });
 }
 function equipmentId(equipment) {
-  let id = `equipment-${Date.now().toString(36)}`, n = 1;
-  while (equipment.some((e) => e.id === id)) id = `equipment-${Date.now().toString(36)}-${n++}`;
-  return id;
+  let id2 = `equipment-${Date.now().toString(36)}`, n = 1;
+  while (equipment.some((e) => e.id === id2)) id2 = `equipment-${Date.now().toString(36)}-${n++}`;
+  return id2;
 }
 function addQ20iii(state) {
   const spec = {
@@ -307,9 +326,10 @@ function addQ20iii(state) {
 function manualFlash(i) {
   return { gn: i.gn, gnUnit: i.gnUnit, gnZoom: i.gnZoom, conditions: i.conditions, minDenominator: i.minDenominator, steps: i.steps };
 }
-function selectEquipment(state, id) {
+function selectEquipment(state, id2) {
+  if (state.field) delete state.field.activeShotId;
   if (state.inputs.gnMode === "manual") state.manualFlash = manualFlash(state.inputs);
-  Object.assign(state.inputs, { equipmentId: id, gnMode: "equipment" });
+  Object.assign(state.inputs, { equipmentId: id2, gnMode: "equipment" });
   applyEquipment(state);
 }
 function setGnMode(state, mode) {
@@ -324,13 +344,117 @@ function setGnMode(state, mode) {
   }
 }
 
+// src/field.ts
+var shootingKeys = ["sensor", "width", "height", "focal", "aperture", "iso", "gnMode", "equipmentId", "gn", "gnUnit", "gnZoom", "zoom", "conditions", "denominator", "linked", "cocMode", "coc", "coverage", "horizontal", "vertical", "loss", "tolerance", "minDenominator", "steps", "mode"];
+var freshField = () => ({ version: 1, simple: false, shots: [], zones: [], distances: [1, 1.5, 2, 3, 5].map((metres2, n) => ({ id: `distance-${n + 1}`, metres: metres2 })) });
+function field(s) {
+  return s.field ?? (s.field = freshField());
+}
+function id() {
+  return crypto.randomUUID();
+}
+function name(value) {
+  const n = value.trim();
+  if (!n || n.length > 100) throw Error("\uC774\uB984\uC740 1~100\uC790\uB85C \uC785\uB825\uD558\uC138\uC694.");
+  return n;
+}
+function capture(s, label, distances, existingId = id()) {
+  const values = {};
+  for (const k of shootingKeys) Object.assign(values, { [k]: s.inputs[k] });
+  if (distances) Object.assign(values, { cameraDistance: s.inputs.cameraDistance, flashDistance: s.inputs.linked ? s.inputs.cameraDistance : s.inputs.flashDistance });
+  for (const v of Object.values(values)) if (typeof v === "number" && !Number.isFinite(v)) throw Error("\uBE48\uCE78 \uB610\uB294 \uC798\uBABB\uB41C \uC22B\uC790\uAC00 \uC788\uC2B5\uB2C8\uB2E4. \uC785\uB825\uC744 \uC644\uB8CC\uD558\uC138\uC694.");
+  const e = s.equipment.find((e2) => e2.id === values.equipmentId);
+  if (values.gnMode === "equipment" && e) {
+    const normalized = { ...s, inputs: { ...s.inputs }, field: void 0 };
+    applyEquipment(normalized);
+    for (const k of shootingKeys) Object.assign(values, { [k]: normalized.inputs[k] });
+  }
+  if (values.gnMode === "equipment" && !e) throw Error("\uC7A5\uBE44\uB97C \uBA3C\uC800 \uBCF5\uAD6C\uD558\uAC70\uB098 \uC218\uB3D9 GN\uC744 \uC120\uD0DD\uD558\uC138\uC694.");
+  return { id: existingId, name: name(label), values, ...values.gnMode === "equipment" && e ? { equipmentSignature: signature(e) } : {} };
+}
+function patch(i, values) {
+  const before = {}, after = {};
+  for (const k of Object.keys(values)) if (!Object.is(i[k], values[k])) {
+    Object.assign(before, { [k]: i[k] });
+    Object.assign(after, { [k]: values[k] });
+  }
+  Object.assign(i, after);
+  return { before, after };
+}
+function applyShot(s, shot) {
+  if (s.inputs.gnMode === "manual" && shot.values.gnMode === "equipment") s.manualFlash = manualFlash(s.inputs);
+  field(s).activeShotId = shot.id;
+  const values = { ...shot.values };
+  const before = { ...s.inputs };
+  Object.assign(s.inputs, values);
+  if (s.inputs.linked) s.inputs.flashDistance = s.inputs.cameraDistance;
+  applyEquipment(s);
+  const after = { ...s.inputs };
+  Object.assign(s.inputs, before);
+  return patch(s.inputs, after);
+}
+function canUndo(i, p) {
+  return Object.entries(p.after).every(([k, v]) => Object.is(i[k], v));
+}
+function undo(i, p) {
+  if (!canUndo(i, p)) return false;
+  Object.assign(i, p.before);
+  return true;
+}
+function distanceKey(i) {
+  return (i.tab === "flash" || i.tab === "combined") && !i.linked ? "flashDistance" : "cameraDistance";
+}
+function validDistance(value, others = []) {
+  if (!Number.isFinite(value) || value <= 0 || value > 1e6 || others.some((n) => Math.abs(n - value) < 1e-9)) throw Error("\uAC70\uB9AC\uB294 \uC911\uBCF5 \uC5C6\uC774 0 \uCD08\uACFC 1,000,000m \uC774\uD558\uB85C \uC785\uB825\uD558\uC138\uC694.");
+  return value;
+}
+function nextPower(i, direction) {
+  try {
+    const list = powerSteps(i.steps, i.minDenominator);
+    return direction === "weaker" ? list.find((n) => n > i.denominator) : [...list].reverse().find((n) => n < i.denominator);
+  } catch {
+    return void 0;
+  }
+}
+function restoreField(raw) {
+  const f = freshField();
+  if (!raw || typeof raw !== "object") return f;
+  const d = raw;
+  if (typeof d.version === "number" && d.version > 1) throw Error("\uB354 \uC0C8 \uD604\uC7A5 \uC124\uC815 \uC2A4\uD0A4\uB9C8\uC785\uB2C8\uB2E4. \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uB3C4\uB85D \uB85C\uB4DC\uB97C \uC911\uB2E8\uD569\uB2C8\uB2E4.");
+  if (typeof d.activeShotId === "string") f.activeShotId = d.activeShotId;
+  f.simple = d.simple === true;
+  const used = /* @__PURE__ */ new Set();
+  const identity = (x) => {
+    if (!x || typeof x.id !== "string" || !x.id || used.has(x.id)) return false;
+    used.add(x.id);
+    return true;
+  };
+  if (Array.isArray(d.distances)) {
+    f.distances = [];
+    for (const x of d.distances) if (identity(x) && typeof x.metres === "number" && Number.isFinite(x.metres) && x.metres > 0 && x.metres <= 1e6 && !f.distances.some((y) => y.metres === x.metres)) f.distances.push({ id: x.id, metres: x.metres });
+  }
+  if (Array.isArray(d.zones)) {
+    for (const x of d.zones) if (identity(x) && typeof x.name === "string" && x.name.trim() && x.name.length <= 100 && Number.isFinite(x.near) && x.near > 0 && Number.isFinite(x.far) && x.far > 0 && typeof x.infinity === "boolean" && (x.infinity || x.far > x.near)) f.zones.push({ id: x.id, name: x.name, near: x.near, far: x.far, infinity: x.infinity });
+  }
+  if (Array.isArray(d.shots)) for (const x of d.shots) {
+    if (!identity(x) || typeof x.name !== "string" || !x.name.trim() || x.name.length > 100 || !x.values || typeof x.values !== "object") continue;
+    const v = x.values;
+    const good = shootingKeys.every((k) => typeof v[k] === typeof defaults[k] && (typeof v[k] !== "number" || Number.isFinite(v[k]))) && ["manual", "equipment"].includes(v.gnMode) && ["m", "ft"].includes(v.gnUnit) && ["approx", "angles"].includes(v.coverage) && ["estimate", "custom"].includes(v.cocMode) && ["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(v.mode) && ["cameraDistance", "flashDistance"].every((k) => !(k in v) || Number.isFinite(v[k]) && Number(v[k]) > 0);
+    if (!good) continue;
+    const values = {};
+    for (const k of [...shootingKeys, "cameraDistance", "flashDistance"]) if (k in v) Object.assign(values, { [k]: v[k] });
+    f.shots.push({ id: x.id, name: x.name, values, ...typeof x.equipmentSignature === "string" ? { equipmentSignature: x.equipmentSignature } : {} });
+  }
+  return f;
+}
+
 // src/storage.ts
 function restore(data) {
-  const result = { version: 2, inputs: { ...defaults }, equipment: [] };
+  const result = { version: 2, inputs: { ...defaults }, equipment: [], field: restoreField(void 0) };
   if (!data || typeof data !== "object") return result;
   const d = data;
   if (typeof d.version === "number" && d.version > 2) throw Error("\uC774 \uB370\uC774\uD130\uB294 \uB354 \uC0C8 \uD50C\uB7EC\uADF8\uC778 \uBC84\uC804\uC5D0\uC11C \uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uB3C4\uB85D \uB85C\uB4DC\uB97C \uC911\uB2E8\uD569\uB2C8\uB2E4.");
-  if (d.version !== 2) result.migrationBackup = JSON.parse(JSON.stringify(data));
+  if (d.version !== 2 || !d.field) result.migrationBackup = JSON.parse(JSON.stringify(data));
   else if (d.migrationBackup) result.migrationBackup = d.migrationBackup;
   if (d.inputs && typeof d.inputs === "object") {
     for (const key of Object.keys(defaults)) {
@@ -355,10 +479,10 @@ function restore(data) {
   if (!["manual", "equipment"].includes(i.gnMode)) i.gnMode = "manual";
   const used = /* @__PURE__ */ new Set();
   result.equipment = result.equipment.map((e, n) => {
-    let id = typeof e.id === "string" && e.id ? e.id : `legacy-${n + 1}`;
-    while (used.has(id)) id += "-copy";
-    used.add(id);
-    return { ...e, table: { ...e.table }, id };
+    let id2 = typeof e.id === "string" && e.id ? e.id : `legacy-${n + 1}`;
+    while (used.has(id2)) id2 += "-copy";
+    used.add(id2);
+    return { ...e, table: { ...e.table }, id: id2 };
   });
   if (d.draft && typeof d.draft === "object") {
     const draft = emptyDraft();
@@ -375,6 +499,7 @@ function restore(data) {
     }
     result.manualFlash = manualFlash(m);
   }
+  result.field = restoreField(d.field);
   applyEquipment(result);
   return result;
 }
@@ -541,15 +666,15 @@ function diagram(host, i) {
     parent.append(n);
     return n;
   }
-  const id = `pfm-scene-${++nextId}`, defs = el("defs", {}), clip = el("clipPath", { id: id + "-clip" }, void 0, defs);
+  const id2 = `pfm-scene-${++nextId}`, defs = el("defs", {}), clip = el("clipPath", { id: id2 + "-clip" }, void 0, defs);
   el("rect", { x: SCENE.start, y: 24, width: SCENE.end - SCENE.start, height: 140 }, void 0, clip);
-  const pattern = el("pattern", { id: id + "-hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse" }, void 0, defs);
+  const pattern = el("pattern", { id: id2 + "-hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse" }, void 0, defs);
   el("path", { d: "M0 7 L7 0", stroke: "var(--text-accent)", "stroke-width": 1.2 }, void 0, pattern);
   const x = (d) => SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(d / i.diagramMax, 1));
   const out = (d) => `${d > i.diagramMax && Number.isFinite(d) ? "\u2192 " : ""}${metres(d)}`;
   const cone = (degrees, cl) => {
     const half = (SCENE.end - SCENE.start) * Math.tan(degrees * Math.PI / 360);
-    el("path", { d: `M${SCENE.start} 92 L${SCENE.end} ${92 - half} L${SCENE.end} ${92 + half} Z`, class: cl, "clip-path": `url(#${id}-clip)` });
+    el("path", { d: `M${SCENE.start} 92 L${SCENE.end} ${92 - half} L${SCENE.end} ${92 + half} Z`, class: cl, "clip-path": `url(#${id2}-clip)` });
   };
   try {
     const o = optics(i);
@@ -563,7 +688,7 @@ function diagram(host, i) {
   }
   if (i.tab === "zone" && i.zoneFlow === "target") try {
     const t = zoneTarget(i);
-    el("rect", { x: x(t.near), y: 145, width: Math.max(0, x(t.far) - x(t.near)), height: 13, fill: `url(#${id}-hatch)`, class: "pfm-target-zone" });
+    el("rect", { x: x(t.near), y: 145, width: Math.max(0, x(t.far) - x(t.near)), height: 13, fill: `url(#${id2}-hatch)`, class: "pfm-target-zone" });
     el("text", { x: SCENE.start, y: 57, class: "pfm-axis-label" }, "\uBAA9\uD45C \uAD6C\uAC04 \xB7 \uBE57\uAE08");
   } catch {
   }
@@ -596,7 +721,7 @@ function diagram(host, i) {
     const f = flash(i);
     const y = 228;
     el("rect", { x: SCENE.start, y, width: x(f.low) - SCENE.start, height: 12, class: "pfm-over-zone" });
-    el("rect", { x: x(f.low), y, width: x(f.high) - x(f.low), height: 12, fill: `url(#${id}-hatch)` });
+    el("rect", { x: x(f.low), y, width: x(f.high) - x(f.low), height: 12, fill: `url(#${id2}-hatch)` });
     el("rect", { x: x(f.high), y, width: SCENE.end - x(f.high), height: 12, class: "pfm-under-zone" });
     el("line", { x1: x(f.r), x2: x(f.r), y1: y - 5, y2: y + 17, class: "pfm-flash-marker" });
     el("text", { x: SCENE.start, y: 257, class: "pfm-axis-label" }, `${i.linked ? "\uD50C\uB798\uC2DC" : "\uD50C\uB798\uC2DC \uB3C5\uB9BD \uAC70\uB9AC \uCD95"} \xB7 \uD5C8\uC6A9 ${out(f.low)} ~ ${out(f.high)}`);
@@ -730,7 +855,244 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.aborters = [];
     this.gnDisplayUnit = "m";
     this.detailState = /* @__PURE__ */ new Map();
+    this.shotChanges = "";
+    this.fieldMessage = "";
     this.numeric = /* @__PURE__ */ new Map();
+  }
+  fieldButton(parent, text, fn) {
+    const b = node(parent, "button", text);
+    b.type = "button";
+    b.onclick = fn;
+    return b;
+  }
+  closeFieldManager() {
+    const d = this.fieldExtras?.querySelector("details");
+    if (d) d.open = false;
+    this.detailState.set("\uC990\uACA8\uCC3E\uAE30\xB7\uB0B4 \uAC70\uB9AC \uAD00\uB9AC", false);
+  }
+  fieldAction(fn) {
+    try {
+      fn();
+      this.changed();
+      this.render();
+    } catch (e) {
+      this.plugin.report(e);
+    }
+  }
+  fieldPanel() {
+    const s = this.plugin.state, f = field(s), i = s.inputs;
+    const bar = node(this.root, "nav", void 0, "pfm-field-viewbar");
+    const mode = this.fieldButton(bar, f.simple ? "\uC0C1\uC138 \uD654\uBA74\uC73C\uB85C" : "\uD604\uC7A5 \uAC04\uD3B8 \uD654\uBA74\uC73C\uB85C", () => this.fieldAction(() => {
+      f.simple = !f.simple;
+      if (f.simple) this.closeFieldManager();
+    }));
+    mode.dataset.fieldMode = "true";
+    this.fieldButton(bar, "\uC990\uACA8\uCC3E\uAE30\xB7\uAC70\uB9AC \uAD00\uB9AC", () => {
+      const d = this.fieldExtras.querySelector("details");
+      if (d) {
+        d.open = true;
+        d.scrollIntoView({ block: "start" });
+        d.querySelector("summary")?.focus({ preventScroll: true });
+      }
+    });
+    this.fieldHost = node(this.root, "section", void 0, "pfm-field-tools");
+  }
+  paintField() {
+    const s = this.plugin.state, f = field(s), i = s.inputs, h = this.fieldHost;
+    this.distanceButtons?.remove();
+    h.replaceChildren();
+    this.fieldExtras.replaceChildren();
+    this.root.dataset.simple = String(f.simple);
+    const mode = this.root.querySelector("[data-field-mode]");
+    if (mode) mode.textContent = f.simple ? "\uC0C1\uC138 \uD654\uBA74\uC73C\uB85C" : "\uD604\uC7A5 \uAC04\uD3B8 \uD654\uBA74\uC73C\uB85C";
+    const active = f.shots.find((x) => x.id === f.activeShotId);
+    this.fieldStorage = node(h, "div");
+    const status = node(this.fieldStorage, "p", this.plugin.saveError, "pfm-error");
+    status.setAttribute("role", "status");
+    this.fieldButton(this.fieldStorage, "\uC800\uC7A5 \uC7AC\uC2DC\uB3C4", () => {
+      void this.plugin.persist().then(() => this.plugin.flush()).catch((e) => this.plugin.reportSaveError(e));
+    });
+    this.fieldStorage.hidden = !this.plugin.saveError;
+    if (this.shotUndo && !canUndo(i, this.shotUndo)) {
+      this.shotUndo = void 0;
+      this.fieldMessage = "\uCD2C\uC601 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC \xB7 \uC801\uC6A9 \uD56D\uBAA9\uC774 \uC774\uD6C4 \uBCC0\uACBD\uB418\uC5C8\uC2B5\uB2C8\uB2E4.";
+    }
+    const shotHeading = node(h, "strong", active ? `${active.name} \xB7 ${Object.entries(active.values).every(([k, v]) => Object.is(i[k], v)) ? "\uC801\uC6A9\uB428" : "\uC774\uD6C4 \uC218\uC815\uB428"}` : "\uCD2C\uC601 \uC990\uACA8\uCC3E\uAE30 \xB7 \uC870\uAC74 \uBB36\uC74C");
+    shotHeading.className = "pfm-shot-heading";
+    const shots = node(h, "div", void 0, "pfm-field-buttons pfm-shot-buttons");
+    for (const shot of f.shots) {
+      const b = this.fieldButton(shots, shot.name, () => this.fieldAction(() => {
+        this.closeFieldManager();
+        const expired = !!this.outputUndo;
+        this.outputUndo = void 0;
+        this.previousShotId = f.activeShotId;
+        const applied = applyShot(s, shot);
+        this.shotUndo = Object.keys(applied.after).length ? applied : void 0;
+        this.shotChanges = Object.entries(applied.after).map(([k, v]) => `${this.fieldLabel(k)}: ${this.fieldValue(k, applied.before[k])} \u2192 ${this.fieldValue(k, v)}`).join(" / ") || "\uBCC0\uACBD \uC5C6\uC74C";
+        this.fieldMessage = `${shot.name} \uC801\uC6A9 \xB7 ${"cameraDistance" in shot.values ? "\uCE74\uBA54\uB77C\xB7\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC \uD3EC\uD568" : "\uD604\uC7AC \uAC70\uB9AC \uC720\uC9C0"}${expired ? " \xB7 \uC774\uC804 \uCD9C\uB825 \uCDE8\uC18C \uB9CC\uB8CC" : ""}`;
+        if (!this.shotUndo && !expired) this.fieldMessage = "";
+      }));
+      b.dataset.shotId = shot.id;
+    }
+    if (active) {
+      const problem = issue(s, active);
+      if (problem) node(h, "p", `\uBD88\uC644\uC804\uD55C \uCD2C\uC601 \uC870\uAC74 \xB7 ${problem}`, "pfm-error");
+    }
+    if (this.shotUndo) {
+      const b = this.fieldButton(h, "\uCD2C\uC601 \uC801\uC6A9 \uD55C \uBC88 \uCDE8\uC18C \xB7 \uBCC0\uACBD \uD56D\uBAA9\uB9CC", () => this.fieldAction(() => {
+        if (this.shotUndo) undo(i, this.shotUndo);
+        this.shotUndo = void 0;
+        f.activeShotId = this.previousShotId;
+        applyEquipment(s);
+        this.fieldMessage = "\uCD2C\uC601 \uC870\uAC74 \uC801\uC6A9 \uCDE8\uC18C\uB428 \xB7 \uC0AD\uC81C \uBCF5\uAD6C\uC640 \uBCC4\uAC1C";
+      }));
+      b.className = "pfm-shot-undo";
+    }
+    let review;
+    if (this.fieldMessage) {
+      review = node(h, "details", void 0, "pfm-field-review");
+      node(review, "summary", this.fieldMessage.includes(" \uC801\uC6A9 \xB7 ") ? "\uCD2C\uC601 \uC801\uC6A9 \uB0B4\uC5ED \uD655\uC778" : this.fieldMessage);
+      node(review, "p", this.fieldMessage);
+      if (this.shotChanges) node(review, "p", this.shotChanges, "pfm-field-status");
+    }
+    const distance = node(h, "div", void 0, "pfm-distance-buttons");
+    this.distanceButtons = distance;
+    const key = distanceKey(i);
+    node(distance, "p", key === "flashDistance" ? `\uB0B4 \uAC70\uB9AC \xB7 \uD50C\uB798\uC2DC \u2192 \uD53C\uC0AC\uCCB4 ${metres(i.flashDistance)} (\uCE74\uBA54\uB77C \uCD08\uC810 \uC720\uC9C0)` : `\uB0B4 \uAC70\uB9AC \xB7 \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(i.cameraDistance)}${i.linked && (i.tab === "flash" || i.tab === "combined") ? " \xB7 \uD50C\uB798\uC2DC \uC5F0\uB3D9" : ""}`);
+    const addDistances = (parent, start, end) => {
+      for (const d of f.distances.slice(start, end)) {
+        const b = this.fieldButton(parent, metres(d.metres), () => this.fieldAction(() => {
+          this.plugin.update(key, d.metres);
+        }));
+        b.dataset.distanceId = d.id;
+      }
+    };
+    addDistances(distance, 0, 5);
+    if (f.distances.length > 5) {
+      const more = node(distance, "details");
+      node(more, "summary", "\uAC70\uB9AC \uB354\uBCF4\uAE30");
+      addDistances(more, 5, f.distances.length);
+    }
+    const actions = this.powerAdjust;
+    actions.replaceChildren();
+    for (const [dir, label2] of [["weaker", "\uCD9C\uB825 \uC57D\uD558\uAC8C"], ["stronger", "\uCD9C\uB825 \uAC15\uD558\uAC8C"]]) {
+      const n = nextPower(i, dir);
+      const b = this.fieldButton(actions, label2, () => this.fieldAction(() => {
+        if (n !== void 0) this.plugin.update("denominator", n);
+      }));
+      b.disabled = n === void 0;
+      b.dataset.powerDirection = dir;
+    }
+    actions.classList.add("pfm-field-power", "pfm-field-buttons");
+    if (f.simple && (i.tab === "flash" || i.tab === "combined")) {
+      const action = this.root.querySelector(".pfm-output-action");
+      if (action) action.append(actions);
+      else this.root.querySelector(".pfm-quick")?.prepend(actions);
+      if (review && this.fieldMessage.startsWith("\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC")) action?.append(review);
+    }
+    const manage = node(this.fieldExtras, "details", void 0, "pfm-field-manage");
+    node(manage, "summary", "\uC990\uACA8\uCC3E\uAE30\xB7\uB0B4 \uAC70\uB9AC \uAD00\uB9AC");
+    node(manage, "p", "\uC7A5\uBE44 \uD504\uB9AC\uC14B\uC740 \uC0AC\uC591, \uCD2C\uC601 \uC990\uACA8\uCC3E\uAE30\uB294 \uC870\uAC74 \uBB36\uC74C, \uC874 \uC990\uACA8\uCC3E\uAE30\uB294 \uBAA9\uD45C \uAD6C\uAC04\uC785\uB2C8\uB2E4.");
+    const label = this.text(manage, "\uCD2C\uC601 \uC990\uACA8\uCC3E\uAE30 \uC774\uB984", "");
+    label.maxLength = 100;
+    const check = node(manage, "label", void 0, "pfm-check"), include = node(check, "input");
+    include.type = "checkbox";
+    node(check, "span", "\uAC70\uB9AC\uB3C4 \uC800\uC7A5 \xB7 \uCE74\uBA54\uB77C \uCD08\uC810 \uAC70\uB9AC + \uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC (\uC628\uCE74\uBA54\uB77C: \uC5F0\uB3D9 \uAC70\uB9AC)");
+    this.fieldButton(manage, "\uD604\uC7AC \uCD2C\uC601 \uC870\uAC74 \uC0C8\uB85C \uC800\uC7A5", () => this.fieldAction(() => {
+      f.shots.push(capture(s, label.value, include.checked));
+    }));
+    const editShot = (shot) => {
+      const row = node(manage, "div", void 0, "pfm-field-row"), n = this.text(row, "\uCD2C\uC601 \uC774\uB984", shot.name);
+      n.maxLength = 100;
+      this.fieldButton(row, "\uC774\uB984 \uBCC0\uACBD", () => this.fieldAction(() => {
+        shot.name = name(n.value);
+      }));
+      this.fieldButton(row, `\uD604\uC7AC \uC124\uC815\uC73C\uB85C \uAC31\uC2E0 \xB7 ${"cameraDistance" in shot.values ? "\uAC70\uB9AC \uD3EC\uD568" : "\uAC70\uB9AC \uC81C\uC678"}`, () => this.fieldAction(() => {
+        Object.assign(shot, capture(s, n.value, "cameraDistance" in shot.values, shot.id));
+        applyEquipment(s);
+      }));
+      this.fieldButton(row, "\uCD2C\uC601 \uC0AD\uC81C", () => this.fieldAction(() => {
+        const index = f.shots.indexOf(shot);
+        this.deletedField = { kind: "shots", value: shot, index };
+        f.shots.splice(index, 1);
+      }));
+    };
+    f.shots.forEach(editShot);
+    const newDistance = this.text(manage, "\uC0C8 \uB0B4 \uAC70\uB9AC (m)", "");
+    newDistance.inputMode = "decimal";
+    this.fieldButton(manage, "\uAC70\uB9AC \uCD94\uAC00", () => this.fieldAction(() => {
+      f.distances.push({ id: id(), metres: validDistance(parseNumber(newDistance.value), f.distances.map((d) => d.metres)) });
+    }));
+    f.distances.forEach((d, index) => {
+      const row = node(manage, "div", void 0, "pfm-field-row");
+      const input = this.text(row, "\uB0B4 \uAC70\uB9AC \uD3B8\uC9D1 (m)", String(d.metres));
+      input.inputMode = "decimal";
+      this.fieldButton(row, "\uAC70\uB9AC \uC218\uC815", () => this.fieldAction(() => {
+        d.metres = validDistance(parseNumber(input.value), f.distances.filter((x) => x !== d).map((x) => x.metres));
+      }));
+      for (const [offset, label2] of [[-1, "\uC55E\uC73C\uB85C"], [1, "\uB4A4\uB85C"]]) {
+        const b = this.fieldButton(row, label2, () => this.fieldAction(() => {
+          [f.distances[index], f.distances[index + offset]] = [f.distances[index + offset], d];
+        }));
+        b.disabled = index + offset < 0 || index + offset >= f.distances.length;
+      }
+      this.fieldButton(row, "\uAC70\uB9AC \uC0AD\uC81C", () => this.fieldAction(() => {
+        f.distances.splice(index, 1);
+      }));
+    });
+    const zones = node(h, "div", void 0, "pfm-zone-favorites");
+    node(zones, "strong", "\uC874 \uBAA9\uD45C \uC990\uACA8\uCC3E\uAE30 \xB7 \uBAA9\uD45C\uB9CC \uBCC0\uACBD");
+    for (const z of f.zones) {
+      const b = this.fieldButton(zones, `${z.name} \xB7 ${metres(z.near)}~${z.infinity ? "\u221E" : metres(z.far)}`, () => this.fieldAction(() => {
+        this.closeFieldManager();
+        Object.assign(i, { zoneNear: z.near, zoneFar: z.far, zoneInfinity: z.infinity, zoneFlow: "target" });
+      }));
+      b.dataset.zoneFavorite = z.id;
+    }
+    const zoneName = this.text(manage, "\uC874 \uBAA9\uD45C \uC774\uB984", "");
+    zoneName.maxLength = 100;
+    this.fieldButton(manage, "\uD604\uC7AC \uC874 \uBAA9\uD45C \uC0C8\uB85C \uC800\uC7A5", () => this.fieldAction(() => {
+      solveZone(i);
+      f.zones.push({ id: id(), name: name(zoneName.value), near: i.zoneNear, far: i.zoneFar, infinity: i.zoneInfinity });
+    }));
+    for (const z of f.zones) {
+      const row = node(manage, "div", void 0, "pfm-field-row"), n = this.text(row, "\uC874 \uC774\uB984", z.name), near = this.text(row, "\uBAA9\uD45C \uADFC\uAC70\uB9AC (m)", String(z.near)), far = this.text(row, "\uBAA9\uD45C \uC6D0\uAC70\uB9AC (m)", String(z.far)), label2 = node(row, "label", void 0, "pfm-check"), inf = node(label2, "input");
+      inf.type = "checkbox";
+      inf.checked = z.infinity;
+      node(label2, "span", "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300");
+      this.fieldButton(row, "\uC874 \uC774\uB984\xB7\uAD6C\uAC04 \uC800\uC7A5", () => this.fieldAction(() => {
+        const a = validDistance(parseNumber(near.value)), b = inf.checked ? z.far : validDistance(parseNumber(far.value));
+        if (!inf.checked && b <= a) throw Error("\uC6D0\uAC70\uB9AC\uB294 \uADFC\uAC70\uB9AC\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4.");
+        Object.assign(z, { name: name(n.value), near: a, far: b, infinity: inf.checked });
+      }));
+      this.fieldButton(row, "\uC874 \uC0AD\uC81C", () => this.fieldAction(() => {
+        const index = f.zones.indexOf(z);
+        this.deletedField = { kind: "zones", value: z, index };
+        f.zones.splice(index, 1);
+      }));
+    }
+    if (this.deletedField) this.fieldButton(manage, `${this.deletedField.kind === "shots" ? "\uCD2C\uC601" : "\uC874"} \uC990\uACA8\uCC3E\uAE30 \uC0AD\uC81C \uBCF5\uAD6C`, () => this.fieldAction(() => {
+      const d = this.deletedField;
+      if (d.kind === "shots") f.shots.splice(d.index, 0, d.value);
+      else f.zones.splice(d.index, 0, d.value);
+      this.deletedField = void 0;
+    }));
+  }
+  fieldLabel(k) {
+    return { sensor: "\uC13C\uC11C", width: "\uC13C\uC11C \uAC00\uB85C(mm)", height: "\uC13C\uC11C \uC138\uB85C(mm)", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C", iso: "ISO", denominator: "\uCD9C\uB825", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC", flashDistance: "\uD50C\uB798\uC2DC \uAC70\uB9AC", linked: "\uAC70\uB9AC \uC5F0\uB3D9", gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44", gn: "GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C(mm)", zoom: "\uD50C\uB798\uC2DC \uC90C(mm)", conditions: "\uCE21\uC815 \uC870\uAC74", loss: "\uC190\uC2E4(stop)", tolerance: "\uD5C8\uC6A9 \uC624\uCC28(EV)", minDenominator: "\uCD5C\uC18C \uCD9C\uB825", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coc: "CoC(mm)", cocMode: "CoC \uAE30\uC900", coverage: "\uC870\uC0AC\uAC01 \uAE30\uC900", horizontal: "\uC218\uD3C9 \uC870\uC0AC\uAC01(\uB3C4)", vertical: "\uC218\uC9C1 \uC870\uC0AC\uAC01(\uB3C4)", mode: "\uB3D9\uC870\xB7\uBC1C\uAD11 \uC870\uAC74" }[k] ?? k;
+  }
+  fieldValue(k, value) {
+    if (typeof value === "number") {
+      if (k === "denominator" || k === "minDenominator") return `1/${value}`;
+      if (k === "cameraDistance" || k === "flashDistance") return metres(value);
+      if (k === "aperture") return `f/${fmt(value)}`;
+      return String(value);
+    }
+    if (k === "linked") return value ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C";
+    if (k === "equipmentId") return this.plugin.state.equipment.find((e) => e.id === value)?.name ?? (value ? "\uCC38\uC870 \uC7A5\uBE44 \uC5C6\uC74C" : "\uC120\uD0DD \uC5C6\uC74C");
+    if (k === "sensor") return sensors[String(value)]?.name ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C";
+    const labels = { gnMode: { manual: "\uC218\uB3D9 GN", equipment: "\uC7A5\uBE44" }, cocMode: { estimate: "\uC13C\uC11C \uB300\uAC01 \uAE30\uC900", custom: "\uC0AC\uC6A9\uC790 CoC" }, coverage: { approx: "\uC90C \uAE30\uBC18 \uADFC\uC0AC", angles: "\uC9C1\uC811 \uC870\uC0AC\uAC01" }, mode: { manual: "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870", ttl: "TTL", hss: "HSS", bounce: "\uBC14\uC6B4\uC2A4", modifier: "\uAD11\uC9C8 \uC870\uC808 \uB3C4\uAD6C", near: "\uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0" } };
+    return labels[k]?.[String(value)] ?? String(value);
   }
   getViewType() {
     return VIEW;
@@ -1000,6 +1362,11 @@ var PhotoView = class extends import_obsidian.ItemView {
     return t;
   }
   jumpSettings(target) {
+    if (field(this.plugin.state).simple) {
+      field(this.plugin.state).simple = false;
+      this.root.dataset.simple = "false";
+      void this.plugin.persist().catch((e) => this.plugin.reportSaveError(e));
+    }
     const section = this.root.querySelector(`[data-pfm-settings=${target}]`);
     if (section) {
       section.open = true;
@@ -1011,12 +1378,12 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.root.querySelector(".pfm-tabs [aria-pressed=true]")?.focus({ preventScroll: true });
     this.contentEl.scrollTop = 0;
   }
-  details(label, id) {
+  details(label, id2) {
     const d = node(this.root, "details");
-    if (id) d.dataset.pfmSettings = id;
+    if (id2) d.dataset.pfmSettings = id2;
     node(d, "summary", label);
     const body = node(d, "div", void 0, "pfm-settings");
-    if (id) {
+    if (id2) {
       const b = this.button(body, "\uACB0\uACFC\uB85C \uB3CC\uC544\uAC00\uAE30", () => this.returnToResults());
       b.dataset.resultsReturn = "true";
     }
@@ -1044,6 +1411,11 @@ var PhotoView = class extends import_obsidian.ItemView {
     }
   }
   updateSaveStatus() {
+    if (this.fieldStorage) {
+      this.fieldStorage.hidden = !this.plugin.saveError;
+      const p = this.fieldStorage.querySelector("p");
+      if (p) p.textContent = this.plugin.saveError;
+    }
     if (this.saveStatus) {
       this.saveStatus.textContent = this.plugin.saveError;
       this.saveStatus.hidden = !this.plugin.saveError;
@@ -1105,6 +1477,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       });
       b.setAttribute("aria-pressed", String(i.tab === v));
     }
+    this.fieldPanel();
     this.context = node(this.root, "p", void 0, "pfm-context");
     this.results = node(this.root, "section", void 0, "pfm-results");
     this.results.setAttribute("aria-live", "polite");
@@ -1113,6 +1486,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.flushOnEnd();
     const quick = node(this.root, "section", void 0, "pfm-quick");
     node(quick, "h2", "\uBE60\uB978 \uC870\uC808");
+    this.powerAdjust = node(quick, "div", void 0, "pfm-field-power");
     const shortcuts = node(quick, "nav", void 0, "pfm-settings-shortcuts");
     shortcuts.setAttribute("aria-label", "\uC0C1\uC138 \uC124\uC815 \uBC14\uB85C\uAC00\uAE30");
     for (const [target, text] of [["camera", "\uCE74\uBA54\uB77C \uC124\uC815"], ["flash", "\uD50C\uB798\uC2DC \uC124\uC815"], ["equipment", "\uB0B4 \uC7A5\uBE44"]]) {
@@ -1176,8 +1550,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.number(quick, "ISO", "iso");
     this.number(quick, "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC (mm)", "focal", { min: 8, max: 200, step: 1 });
     for (const selector of ["[data-field=cameraDistance]", "[data-field=aperture]", "label[data-field=denominator]:not(.pfm-custom-power)", "[data-field=iso]", "[data-field=focal]", "[data-field=sensor]", ".pfm-check", ".pfm-flash-distance", ".pfm-custom-power"]) {
-      const field = quick.querySelector(selector);
-      if (field) quick.append(field);
+      const field2 = quick.querySelector(selector);
+      if (field2) quick.append(field2);
     }
     this.select(camera, "CoC \uBC29\uC2DD", "cocMode", { estimate: "\uC13C\uC11C \uB300\uAC01 \xF71500 \uCD94\uC815", custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 mm" });
     this.number(camera, "\uC0AC\uC6A9\uC790 CoC (mm)", "coc");
@@ -1248,6 +1622,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       const back = section.querySelector("[data-results-return]");
       if (back) section.append(back);
     }
+    this.fieldExtras = node(this.root, "section", void 0, "pfm-field-extras");
     const footer = node(this.root, "footer");
     this.saveStatus = node(footer, "p", void 0, "pfm-error");
     this.saveStatus.setAttribute("role", "status");
@@ -1360,11 +1735,13 @@ var PhotoView = class extends import_obsidian.ItemView {
           b.type = "button";
           b.dataset.zoneApply = "true";
           b.onclick = () => {
+            const scrollTop = this.contentEl.scrollTop;
             this.plugin.update("cameraDistance", r.cameraDistance);
             this.plugin.update("aperture", r.aperture);
             this.syncNumeric("cameraDistance");
             this.syncNumeric("aperture");
             this.changed();
+            this.contentEl.scrollTop = scrollTop;
             this.root.querySelector("[data-zone-apply]")?.focus({ preventScroll: true });
           };
         } else {
@@ -1513,10 +1890,14 @@ var PhotoView = class extends import_obsidian.ItemView {
     }
     const i = this.plugin.state.inputs;
     const selected = selectedEquipment(this.plugin.state);
-    this.context.textContent = `${sensors[i.sensor]?.name.split(" (")[0] ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 \uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)}${i.tab === "zone" ? "" : ` \xB7 ISO ${fmt(i.iso, 0)}`}${i.tab === "flash" || i.tab === "combined" ? ` / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"} \xB7 ${i.mode === "manual" ? "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870" : "GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : ""}`;
+    const compactFlash = field(this.plugin.state).simple && (i.tab === "flash" || i.tab === "combined");
+    this.context.textContent = compactFlash ? `\uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"}${i.mode === "manual" ? "" : " \xB7 GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : `${sensors[i.sensor]?.name.split(" (")[0] ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 \uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)}${i.tab === "zone" ? "" : ` \xB7 ISO ${fmt(i.iso, 0)}`}${i.tab === "flash" || i.tab === "combined" ? ` / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"} \xB7 ${i.mode === "manual" ? "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870" : "GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : ""}`;
     const tabSave = this.root.querySelector(".pfm-tab-save");
     if (tabSave) tabSave.textContent = `${{ flash: "\uD50C\uB798\uC2DC", dof: "\uC2EC\uB3C4\xB7\uD654\uAC01", combined: "\uD1B5\uD569", zone: "\uC874 \uD3EC\uCEE4\uC2F1" }[i.tab]} \uACB0\uACFC \uC800\uC7A5`;
-    if (this.outputUndo && this.outputUndo.applied !== i.denominator) this.outputUndo = void 0;
+    if (this.outputUndo && this.outputUndo.applied !== i.denominator) {
+      this.outputUndo = void 0;
+      this.fieldMessage = "\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC \xB7 \uC774\uD6C4 \uCD9C\uB825 \uBCC0\uACBD\uC744 \uBCF4\uC874\uD569\uB2C8\uB2E4.";
+    }
     this.syncPower();
     for (const key of ["gn", "gnZoom", "minDenominator"]) if (document.activeElement !== this.numeric.get(key)?.input) this.syncNumeric(key);
     const mode = this.root.querySelector("select[data-key=gnMode]");
@@ -1525,8 +1906,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     const unit = this.root.querySelector("select[data-key=gnUnit]");
     if (unit) unit.value = i.gnUnit;
     for (const key of ["conditions", "steps"]) {
-      const field = this.root.querySelector(`input[data-key=${key}]`);
-      if (field && document.activeElement !== field) field.value = i[key];
+      const field2 = this.root.querySelector(`input[data-key=${key}]`);
+      if (field2 && document.activeElement !== field2) field2.value = i[key];
     }
     this.results.replaceChildren();
     this.resultDetails.replaceChildren();
@@ -1544,7 +1925,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(hero, "span", display.value, "pfm-value");
       hero.append(document.createTextNode(" "));
       node(hero, "span", display.unit, "pfm-unit");
-      node(flashPanel, "p", `1/${i.denominator} \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} \xB7 GN ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300)`);
+      node(flashPanel, "p", field(this.plugin.state).simple ? `\uCD9C\uB825 1/${i.denominator} \xB7 GN ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300)` : `1/${i.denominator} \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} \xB7 GN ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300)`);
       if (i.conditions.includes("\uC5F0\uC2B5\uC6A9 \uAC00\uC0C1 GN")) node(flashPanel, "small", "\uC5F0\uC2B5\uC6A9 GN \xB7 \uC2E4\uC81C \uC7A5\uBE44 \uC0AC\uC591 \uC544\uB2D8", "pfm-model-note");
       const label = f.ev > i.tolerance ? "\uC608\uC0C1 \uACFC\uB2E4 \uB178\uCD9C" : f.ev < -i.tolerance ? "\uC608\uC0C1 \uBD80\uC871 \uB178\uCD9C" : "\uD5C8\uC6A9 \uBC94\uC704 \uB0B4";
       node(flashPanel, "p", `${metres(f.r)}\uC5D0\uC11C ${f.ev > 0 ? "+" : ""}${fmt(f.ev)} EV \xB7 ${label}`, "pfm-ev");
@@ -1563,10 +1944,10 @@ var PhotoView = class extends import_obsidian.ItemView {
       };
       if (this.outputUndo) {
         const before = this.outputUndo.before;
-        const undo = node(action, "button", `\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \xB7 1/${before}\uB85C`);
-        undo.type = "button";
-        undo.dataset.flashUndo = "true";
-        undo.onclick = () => {
+        const undo2 = node(action, "button", `\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \xB7 1/${before}\uB85C`);
+        undo2.type = "button";
+        undo2.dataset.flashUndo = "true";
+        undo2.onclick = () => {
           this.outputUndo = void 0;
           this.plugin.update("denominator", before);
           this.syncNumeric("denominator");
@@ -1635,9 +2016,20 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (i.loss > 0) node(this.resultDetails, "p", "\uCD94\uAC00 \uC190\uC2E4\uC744 \uC801\uC6A9\uD55C \uCD94\uC815. GN\uC5D0 \uD3EC\uD568\uB41C \uC190\uC2E4\uC758 \uC911\uBCF5 \uBCF4\uC815\uC5D0 \uC8FC\uC758\uD558\uC138\uC694.");
     this.paintEquivalence();
     this.paintZone();
+    this.paintField();
     for (const pair of this.numeric.values()) pair.updateControls();
     this.restoreDetails();
     diagram(this.picture, i);
+    if (field(this.plugin.state).simple) {
+      this.root.querySelector(".pfm-quick")?.after(this.picture);
+      if (i.tab === "zone") {
+        const panel = this.zoneResult.closest(".pfm-zone-panel");
+        if (panel) {
+          this.results.before(panel);
+          if (this.distanceButtons) panel.after(this.distanceButtons);
+        }
+      }
+    }
   }
   table(parent, headers, rows) {
     const t = node(parent, "table");
@@ -1765,6 +2157,7 @@ var PhotoPlugin = class extends import_obsidian2.Plugin {
     return task;
   }
   update(key, value) {
+    if ((key === "gnMode" || key === "equipmentId") && this.state.field) delete this.state.field.activeShotId;
     if (key === "gnMode") {
       setGnMode(this.state, value);
       return;

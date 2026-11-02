@@ -1,0 +1,10 @@
+// Preserve original regression sources and their historical evidence.
+import {fileURLToPath} from 'node:url';
+import {readFile,writeFile,unlink,mkdir} from 'node:fs/promises';import {spawnSync} from 'node:child_process';
+const out='docs/releases/1.4.0/legacy';await mkdir(`${out}/screenshots`,{recursive:true});
+const cases=[['distance-mobile',[]],['preparation',[['docs/preparation',`${out}/preparation`],['docs/screenshots',`${out}/screenshots`]]],['scene',[['docs/visual-comparison',`${out}/scene`],['docs/scene-results.json',`${out}/scene-results.json`]]],['slider-alignment',[['docs/slider-alignment',`${out}/slider`]]]];
+let failed=false;for(const [name,maps]of cases){const file=new URL(`.field-legacy-${name}.mjs`,import.meta.url);let source=await readFile(new URL(`${name}.mjs`,import.meta.url),'utf8');for(const [from,to]of maps)source=source.replaceAll(from,to);source=source.replaceAll("page.locator('.pfm-check')","page.locator('.pfm-quick .pfm-check')");source=source.replaceAll("p.url().includes('obsidian.md')","p.url().includes('index.html')");
+if(name==='preparation'){source=source.replaceAll("page.getByRole('button',{name,exact:true})","(name==='현재 탭 결과 저장'?page.locator('.pfm-tab-save'):page.getByRole('button',{name,exact:true}))");source=source.replace("await input('denominator').fill('3');","await input('denominator').evaluate(e=>{for(let p=e.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;});await input('denominator').fill('3');");}
+if(name==='slider-alignment')source=source.replace("Number(await page.locator(`input[data-key=${key}]`).inputValue())","Number(await page.locator(`input[data-key=${key}]`).inputValue())*(await page.locator(`input[data-key=${key}]`).getAttribute('data-display-unit')==='cm'?.01:1)");
+try{await writeFile(file,source);const r=spawnSync(process.execPath,[fileURLToPath(file)],{encoding:'utf8',env:{...process.env,QA_OUT:`${out}/distance`}});const log=(r.stdout??'')+(r.stderr??'');await writeFile(`${out}/${name}.log`,log);process.stdout.write(log);if(r.status!==0)failed=true;}finally{await unlink(file);}}
+if(failed)process.exitCode=1;

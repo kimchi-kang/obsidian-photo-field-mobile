@@ -1,0 +1,17 @@
+{
+  "version": "1.4.0",
+  "approvedCandidateRuntimeUnchanged": true,
+  "zipVerified": true,
+  "userDataExcluded": true,
+  "licensesIncluded": true,
+  "installationGuideUpdatedForRelease": true,
+  "assets": {
+    "main.js": "b9c405ea87dc7fff4fe2d9032c5761ebd5dbcba61ace0944bd8846d7f06ff1e2",
+    "manifest.json": "235b7678e7215f730569587ab2cb49a4832c81d97518aa6518c6f0d5cf36adc4",
+    "styles.css": "8eff3c7a796da40c6690f409203dd7bb643b9a4c776f21ed0b852b313719bb2f",
+    "LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+    "THIRD_PARTY_NOTICES.md": "c4b91b59d4ed41507df5b4abb618f9a979930a80f0816b161744a2ae16b9a641",
+    "photo-field-mobile-1.4.0.zip": "d8964b5f1bd52ae3814665cc71db088d3da19eea2582b072666f2514a1fdfb19",
+    "photo-field-mobile-1.3.4.zip": "0ccd4c1698ad91f8df0db0cfe7fbb758dccb9d393ecf07fd7bfd543afadd2dab"
+  }
+}

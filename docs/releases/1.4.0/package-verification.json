@@ -1,0 +1,68 @@
+{
+  "version": "1.4.0",
+  "candidate": true,
+  "unitTests": 92,
+  "newMobileGroups": 15,
+  "legacyMobileGroups": 26,
+  "mobileGroupsTotal": 41,
+  "viewportCaptures": 24,
+  "flows": [
+    {
+      "name": "shooting favorite → distance → EV → apply recommendation",
+      "actions": 3,
+      "settingsVisits": 0,
+      "keyboard": 0,
+      "scrollAdjustments": 0,
+      "touchEvents": [
+        {
+          "label": "주간 스냅",
+          "scrollAdjustment": false
+        },
+        {
+          "label": "3 m",
+          "scrollAdjustment": false
+        },
+        {
+          "label": "권장 출력 1/8 적용",
+          "scrollAdjustment": false
+        }
+      ]
+    },
+    {
+      "name": "zone favorite → inspect result → apply settings",
+      "actions": 2,
+      "settingsVisits": 0,
+      "keyboard": 0,
+      "scrollAdjustments": 1,
+      "touchEvents": [
+        {
+          "label": "거리 2~5m · 2 m~5 m",
+          "scrollAdjustment": true
+        },
+        {
+          "label": "역산 결과를 현재 설정에 적용",
+          "scrollAdjustment": false
+        }
+      ]
+    }
+  ],
+  "archive": "photo-field-mobile-1.4.0-candidate.zip",
+  "archiveSha256": "d418fc16644812187cccddfbe4c02d3738552686cda4d3f1ccfa67ab077c387e",
+  "runtimeMatchesTestedAndInstalled": true,
+  "zipVerified": true,
+  "userDataExcluded": true,
+  "licensesIncluded": true,
+  "files": {
+    "photo-field-mobile/main.js": "3cbf6470bc4c9d52d20e0bf8142749b597fa2ecc193f55d7f6c1db3857bdf4cb",
+    "photo-field-mobile/manifest.json": "235b7678e7215f730569587ab2cb49a4832c81d97518aa6518c6f0d5cf36adc4",
+    "photo-field-mobile/styles.css": "8281eb1cdcf5d401cd32a453bf9291ac89de93db99f10d62370e5e9cda6b5190",
+    "photo-field-mobile/LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+    "photo-field-mobile/THIRD_PARTY_NOTICES.md": "c4b91b59d4ed41507df5b4abb618f9a979930a80f0816b161744a2ae16b9a641",
+    "photo-field-mobile/vendor/depth-of-field-LICENSE.txt": "d9ded95dec98e5d03c794d743d9b5aad33cf0f1988c44e252f3a8af6906c9b9d",
+    "photo-field-mobile/INSTALL.md": "e6ccc1c1c34b25a340502a737cc40d0d1a2523e1b7b74e8c9b989b8677237937"
+  },
+  "actualIOS": false,
+  "actualAndroid": false,
+  "publicRelease": false,
+  "productionInstall": false
+}

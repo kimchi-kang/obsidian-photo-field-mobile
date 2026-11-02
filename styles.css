@@ -156,3 +156,32 @@
 .pfm-root button:disabled{cursor:default;}
 .pfm-root button.pfm-tab-save,.pfm-root button.pfm-tab-save:hover{background:var(--pfm-accent);color:var(--pfm-accent-ink);border-color:var(--pfm-accent);}
 .pfm-root .pfm-flash-results>.pfm-error-action{order:6;margin:8px 8px 0 0;}
+/* Field workflow shares the detailed view's inputs, engine and live scene. */
+.pfm-root .pfm-field-tools{border-block:1px solid var(--pfm-ink);padding-block:8px;min-width:0;}
+.pfm-root .pfm-field-buttons,.pfm-root .pfm-distance-buttons{display:flex;flex-wrap:wrap;gap:6px;}
+.pfm-root .pfm-field-tools button{min-height:44px;white-space:normal;overflow-wrap:anywhere;max-width:100%;height:auto;}
+.pfm-root .pfm-distance-buttons p{flex-basis:100%;margin:8px 0 4px;}
+.pfm-root .pfm-field-row{border-top:1px solid var(--pfm-line);padding-block:10px;display:flex;gap:6px;flex-wrap:wrap;}
+.pfm-root .pfm-field-row .pfm-field{flex-basis:100%;min-width:0;}
+.pfm-root .pfm-field-status{font-size:var(--pfm-label);overflow-wrap:anywhere;}
+.pfm-root .pfm-zone-favorites{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;}
+.pfm-root .pfm-zone-favorites strong{flex-basis:100%;}
+.pfm-root:is([data-tab=dof],[data-tab=zone]) .pfm-field-power,.pfm-root:is([data-tab=flash],[data-tab=combined]) .pfm-zone-favorites{display:none;}
+.pfm-root[data-simple=true]>.pfm-quick>:not([data-field=aperture]):not(.pfm-settings-shortcuts):not(.pfm-field-power){display:none;}
+.pfm-root[data-simple=true]>details{display:none;}
+.pfm-root[data-simple=true] .pfm-zone-panel>:is(.pfm-zone-target,.pfm-field,.pfm-zone-limits){display:none;}
+.pfm-root[data-simple=true][data-tab=dof] .pfm-zone-panel{display:block;}
+.pfm-root[data-simple=true] .pfm-context{font-weight:650;}
+.pfm-root [data-field-mode]{min-height:44px;}
+.pfm-root .pfm-field-viewbar{display:flex;flex-wrap:wrap;gap:6px;margin-block:6px;}
+.pfm-root .pfm-field-viewbar button{flex:1;min-height:44px;}
+.pfm-root .pfm-field-power{grid-column:1/-1;}
+.pfm-root[data-simple=true]>.pfm-quick>.pfm-field-power{display:flex;}
+.pfm-root[data-simple=true]:is([data-tab=dof],[data-tab=zone])>.pfm-quick>.pfm-field-power{display:none;}
+.pfm-root[data-simple=true][data-tab=zone] .pfm-field-tools>:is(.pfm-shot-heading,.pfm-shot-buttons,.pfm-field-review){display:none;}
+/* Keep field adjustments beside their result; detailed shortcuts stay in detailed mode. */
+.pfm-root[data-simple=true]>.pfm-quick>.pfm-settings-shortcuts{display:none;}
+.pfm-root[data-simple=true] .pfm-output-action>.pfm-field-power{display:flex;gap:6px;}
+.pfm-root[data-simple=true] .pfm-output-action>.pfm-field-power>button{margin:2px 0;flex:1;}
+
+.pfm-root[data-simple=true][data-tab=zone] .pfm-field-tools>.pfm-shot-undo{display:none;}

@@ -1,0 +1,559 @@
+{
+  "phase": "before",
+  "checks": [
+    {
+      "name": "01 favorite → distance → EV → recommended output",
+      "passed": true,
+      "events": [
+        {
+          "label": "주간 스냅",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "3m",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "권장 출력 적용",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        }
+      ]
+    },
+    {
+      "name": "02 consecutive weaker / stronger and result stay together",
+      "passed": true,
+      "events": [
+        {
+          "label": "출력 약하게",
+          "scrollToReach": 399.5,
+          "scrolledToReach": true,
+          "scrollBefore": 399.5,
+          "scrollAfter": 399.5,
+          "automaticJump": 0
+        },
+        {
+          "label": "출력 강하게",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 399.5,
+          "scrollAfter": 399.5,
+          "automaticJump": 0
+        }
+      ]
+    },
+    {
+      "name": "03 switch favorite → inspect changes → undo",
+      "passed": true,
+      "events": [
+        {
+          "label": "야간 플래시",
+          "scrollToReach": -399.5,
+          "scrolledToReach": true,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "변경 항목 확인",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "촬영 적용 취소",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        }
+      ]
+    },
+    {
+      "name": "04 off-camera distance changes flash only",
+      "passed": true,
+      "events": [
+        {
+          "label": "별도 플래시",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "1.5m",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        }
+      ]
+    },
+    {
+      "name": "05 zone goal → recompute → explicit apply",
+      "passed": true,
+      "events": [
+        {
+          "label": "존 포커싱",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "거리 2~5m",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "존 결과 적용",
+          "scrollToReach": 375,
+          "scrolledToReach": true,
+          "scrollBefore": 375,
+          "scrollAfter": 375,
+          "automaticJump": 0
+        }
+      ]
+    },
+    {
+      "name": "06 new lens / sensor recomputes same goal",
+      "passed": true,
+      "events": [
+        {
+          "label": "상세 화면",
+          "scrollToReach": -375,
+          "scrolledToReach": true,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "간편 화면",
+          "scrollToReach": -1438.5,
+          "scrolledToReach": true,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "같은 존 목표",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "새 렌즈 존 결과 적용",
+          "scrollToReach": 375,
+          "scrolledToReach": true,
+          "scrollBefore": 375,
+          "scrollAfter": 375,
+          "automaticJump": 0
+        }
+      ]
+    },
+    {
+      "name": "07 simple/detail switching keeps identical inputs and results",
+      "passed": true,
+      "events": [
+        {
+          "label": "화면 전환",
+          "scrollToReach": -375,
+          "scrolledToReach": true,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "화면 전환",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "화면 전환",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "화면 전환",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        }
+      ]
+    },
+    {
+      "name": "08 close/reenter preserves settings without listener or save amplification",
+      "passed": true,
+      "events": [
+        {
+          "label": "플래시",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "복귀 후 거리 한번",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        }
+      ]
+    },
+    {
+      "name": "09 deleted / modified equipment never substitutes stale GN",
+      "passed": true,
+      "events": [
+        {
+          "label": "수정된 장비 참조",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "삭제된 장비 참조",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        }
+      ]
+    },
+    {
+      "name": "10 safe undo after later edits preserves latest values",
+      "passed": true,
+      "events": [
+        {
+          "label": "야간 적용",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "뒤에 거리 수정",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "비충돌 촬영 취소",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "야간 재적용",
+          "scrollToReach": 0,
+          "scrolledToReach": false,
+          "scrollBefore": 0,
+          "scrollAfter": 0,
+          "automaticJump": 0
+        },
+        {
+          "label": "뒤에 출력 수정",
+          "scrollToReach": 443.5,
+          "scrolledToReach": true,
+          "scrollBefore": 443.5,
+          "scrollAfter": 399.5,
+          "automaticJump": -44
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "주간 스냅",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "3m",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "권장 출력 적용",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "출력 약하게",
+      "scrollToReach": 399.5,
+      "scrolledToReach": true,
+      "scrollBefore": 399.5,
+      "scrollAfter": 399.5,
+      "automaticJump": 0
+    },
+    {
+      "label": "출력 강하게",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 399.5,
+      "scrollAfter": 399.5,
+      "automaticJump": 0
+    },
+    {
+      "label": "야간 플래시",
+      "scrollToReach": -399.5,
+      "scrolledToReach": true,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "변경 항목 확인",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "촬영 적용 취소",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "별도 플래시",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "1.5m",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "존 포커싱",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "거리 2~5m",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "존 결과 적용",
+      "scrollToReach": 375,
+      "scrolledToReach": true,
+      "scrollBefore": 375,
+      "scrollAfter": 375,
+      "automaticJump": 0
+    },
+    {
+      "label": "상세 화면",
+      "scrollToReach": -375,
+      "scrolledToReach": true,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "간편 화면",
+      "scrollToReach": -1438.5,
+      "scrolledToReach": true,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "같은 존 목표",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "새 렌즈 존 결과 적용",
+      "scrollToReach": 375,
+      "scrolledToReach": true,
+      "scrollBefore": 375,
+      "scrollAfter": 375,
+      "automaticJump": 0
+    },
+    {
+      "label": "화면 전환",
+      "scrollToReach": -375,
+      "scrolledToReach": true,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "화면 전환",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "화면 전환",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "화면 전환",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "플래시",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "복귀 후 거리 한번",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "수정된 장비 참조",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "삭제된 장비 참조",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "야간 적용",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "뒤에 거리 수정",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "비충돌 촬영 취소",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "야간 재적용",
+      "scrollToReach": 0,
+      "scrolledToReach": false,
+      "scrollBefore": 0,
+      "scrollAfter": 0,
+      "automaticJump": 0
+    },
+    {
+      "label": "뒤에 출력 수정",
+      "scrollToReach": 443.5,
+      "scrolledToReach": true,
+      "scrollBefore": 443.5,
+      "scrollAfter": 399.5,
+      "automaticJump": -44
+    }
+  ],
+  "errors": [],
+  "fingerprints": {
+    "main.js": "3cbf6470bc4c9d52d20e0bf8142749b597fa2ecc193f55d7f6c1db3857bdf4cb",
+    "manifest.json": "235b7678e7215f730569587ab2cb49a4832c81d97518aa6518c6f0d5cf36adc4",
+    "styles.css": "8281eb1cdcf5d401cd32a453bf9291ac89de93db99f10d62370e5e9cda6b5190"
+  },
+  "viewport": [
+    390,
+    844
+  ],
+  "actualIOS": false,
+  "actualAndroid": false
+}

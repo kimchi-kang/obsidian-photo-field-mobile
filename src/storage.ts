@@ -1,11 +1,12 @@
+import {restoreField} from './field';
 import {defaults,Equipment,Inputs,Saved,emptyDraft} from './model';
 import {equipmentValid,applyEquipment,manualFlash} from './presets';
 export function restore(data:unknown):Saved {
-  const result:Saved={version:2,inputs:{...defaults},equipment:[]};
+  const result:Saved={version:2,inputs:{...defaults},equipment:[],field:restoreField(undefined)};
   if(!data||typeof data!=='object')return result;
   const d=data as Partial<Saved>;
   if(typeof d.version==='number'&&d.version>2)throw Error('이 데이터는 더 새 플러그인 버전에서 저장되었습니다. 덮어쓰지 않도록 로드를 중단합니다.');
-  if(d.version!==2)result.migrationBackup=JSON.parse(JSON.stringify(data));else if(d.migrationBackup)result.migrationBackup=d.migrationBackup;
+  if(d.version!==2||!d.field)result.migrationBackup=JSON.parse(JSON.stringify(data));else if(d.migrationBackup)result.migrationBackup=d.migrationBackup;
   if(d.inputs&&typeof d.inputs==='object') {
     for(const key of Object.keys(defaults) as (keyof Inputs)[]) {
       const value=d.inputs[key];
@@ -31,6 +32,7 @@ export function restore(data:unknown):Saved {
   if(d.draft&&typeof d.draft==='object'){const draft=emptyDraft();for(const k of Object.keys(draft) as (keyof typeof draft)[])if(typeof d.draft[k]==='string')Object.assign(draft,{[k]:d.draft[k]});if(draft.unit!=='ft')draft.unit='m';result.draft=draft;}
   if(d.deletedEquipment&&equipmentValid(d.deletedEquipment.equipment)&&typeof d.deletedEquipment.equipment.id==='string')result.deletedEquipment=JSON.parse(JSON.stringify(d.deletedEquipment));
   if(d.manualFlash&&typeof d.manualFlash==='object'){const m={...defaults};for(const k of Object.keys(manualFlash(defaults))as (keyof typeof d.manualFlash)[]){const v=d.manualFlash[k];if(typeof v===typeof defaults[k]&&(typeof v!=='number'||Number.isFinite(v)))Object.assign(m,{[k]:v});}result.manualFlash=manualFlash(m);}
+  result.field=restoreField(d.field);
   applyEquipment(result);
   return result;
 }

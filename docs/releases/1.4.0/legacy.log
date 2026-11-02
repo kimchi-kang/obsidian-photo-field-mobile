@@ -1,0 +1,26 @@
+PASS cm input conversion is deferred during editing; both directions and exact 1m preserve physics
+PASS flash hero, depth, scene axes, tables and frame dimensions all expose units
+PASS zone target cm edit, application and restore never introduce 100x conversion
+PASS actual save button emits adaptive results, canonical input values and readable mobile layouts
+PASS A manual GN40 ISO100 f4 quarter power: screen, Markdown and restored state agree
+PASS GN decimal typing retains focus and insertion order after clear and reentry
+PASS distance and custom CoC decimals keep focus and restore after plugin reactivation
+PASS B create synthetic equipment, exact zoom, missing zoom, theoretical power, note, draft and selection restoration
+PASS C valid DOF with missing GN and HSS saves only current tab; full save rejects; reentry restores
+PASS D offcamera axes, independent distances and explicit spatial limitation persist to note and restore
+PASS view close immediately after edit flushes final state before reactivation
+PASS background/pagehide hooks flush edits; failed setting save stays failed until explicit retry
+PASS rapid tabs and offline partial/full Markdown exports with view reentry
+PASS new save actions remain reachable at 360px, large rem font, landscape and reduced viewport
+PASS primary layout restores scene, four DOF readouts, then optical controls
+PASS 360px portrait and landscape have no horizontal overflow
+PASS dragging the subject updates distance and optical results
+PASS touch dragging moves the subject without opening a sidebar
+PASS subject keyboard control remains available without dragging
+PASS direct numeric distance entry updates the scene marker
+PASS aperture updates DOF region and flash distance together
+PASS offcamera mode separates flash geometry from the camera scene
+PASS blank numeric edits do not emit NaN geometry
+PASS finite out-of-scene DOF stays numeric with an arrow
+PASS native thumb and track centres align within 0.5px at rest and while pressed: 0 failures
+PASS CDP touch min/middle/max values match the direct numeric inputs and targets stay >=44px: 0 failures

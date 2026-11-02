@@ -1,0 +1,3667 @@
+{
+  "host": "macOS Obsidian mobile emulation; Chromium native range shadow geometry",
+  "actualIos": false,
+  "phase": "after",
+  "results": [
+    {
+      "name": "native thumb and track centres align within 0.5px at rest and while pressed",
+      "passed": true,
+      "failures": 0,
+      "samples": 192
+    },
+    {
+      "name": "CDP touch min/middle/max values match the direct numeric inputs and targets stay >=44px",
+      "passed": true
+    }
+  ],
+  "samples": [
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 91,
+        "centreY": 377.296875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 377.296875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 91,
+        "centreY": 377.296875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 377.296875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 91,
+        "centreY": 400.140625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 91.234375,
+        "centreY": 400.140625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 91,
+        "centreY": 400.140625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 91.234375,
+        "centreY": 400.140625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 91,
+        "centreY": 400.140625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 162,
+        "centreY": 400.140625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 91,
+        "centreY": 400.140625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 162,
+        "centreY": 400.140625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 269,
+        "centreY": 379.640625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 198,
+        "centreY": 379.640625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 269,
+        "centreY": 379.640625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 198,
+        "centreY": 379.640625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 269,
+        "centreY": 399.9375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 269.2265625,
+        "centreY": 399.9375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 269,
+        "centreY": 399.9375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 269.2265625,
+        "centreY": 399.9375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 269,
+        "centreY": 399.9375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 399.9375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 269,
+        "centreY": 399.9375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 399.9375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.015625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 400.015625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.015625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 400.015625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 399.8125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 180.53125,
+        "centreY": 399.8125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 399.8125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 180.53125,
+        "centreY": 399.8125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 399.8125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 399.8125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 399.8125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 399.8125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 91,
+        "centreY": 302.25,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 302.25,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 91,
+        "centreY": 302.25,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 302.25,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 91,
+        "centreY": 302.4375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 91.234375,
+        "centreY": 302.4375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 91,
+        "centreY": 302.4375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 91.234375,
+        "centreY": 302.4375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 91,
+        "centreY": 302.4375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 162,
+        "centreY": 302.4375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 91,
+        "centreY": 302.4375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 162,
+        "centreY": 302.4375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 269,
+        "centreY": 400.4375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 198,
+        "centreY": 400.4375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 269,
+        "centreY": 400.4375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 198,
+        "centreY": 400.4375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 269,
+        "centreY": 399.9375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 269.2265625,
+        "centreY": 399.9375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 269,
+        "centreY": 399.9375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 269.2265625,
+        "centreY": 399.9375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 269,
+        "centreY": 399.9375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 399.9375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 269,
+        "centreY": 399.9375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 399.9375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 400.125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.015625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 400.015625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 400.015625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 20,
+        "centreY": 400.015625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 399.8125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 180.53125,
+        "centreY": 399.8125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 399.8125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 180.53125,
+        "centreY": 399.8125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 180,
+        "centreY": 399.8125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 399.8125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 180,
+        "centreY": 399.8125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 340,
+        "centreY": 399.8125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 324.234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 324.234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 100.75,
+        "centreY": 324.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 100.75,
+        "centreY": 324.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 177,
+        "centreY": 324.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 177,
+        "centreY": 324.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 422.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 213,
+        "centreY": 422.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 422.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 213,
+        "centreY": 422.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 421.921875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 289.7421875,
+        "centreY": 421.921875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 421.921875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 289.7421875,
+        "centreY": 421.921875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 421.921875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 421.921875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 421.921875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 421.921875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 422,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 422,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 422,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 422,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 421.796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 195.5703125,
+        "centreY": 421.796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 421.796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 195.5703125,
+        "centreY": 421.796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 421.796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 421.796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 421.796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 421.796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 324.234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 324.234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 100.75,
+        "centreY": 324.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 100.75,
+        "centreY": 324.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 177,
+        "centreY": 324.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 100.5,
+        "centreY": 324.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 177,
+        "centreY": 324.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 422.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 213,
+        "centreY": 422.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 422.421875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 213,
+        "centreY": 422.421875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 421.921875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 289.7421875,
+        "centreY": 421.921875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 421.921875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 289.7421875,
+        "centreY": 421.921875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 421.921875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 421.921875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 289.5,
+        "centreY": 421.921875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 421.921875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 422.109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 422.109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 422,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 422,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 422,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 422,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 421.796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 195.5703125,
+        "centreY": 421.796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 421.796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 195.5703125,
+        "centreY": 421.796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 195,
+        "centreY": 421.796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 421.796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 195,
+        "centreY": 421.796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 366,
+        "centreY": 421.796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 368.09375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 368.09375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 368.09375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 368.09375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 467.28125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 110.7890625,
+        "centreY": 467.28125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 467.28125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 110.7890625,
+        "centreY": 467.28125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 467.28125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 197,
+        "centreY": 467.28125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 467.28125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 197,
+        "centreY": 467.28125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 233,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 233,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 319.7734375,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 319.7734375,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 215.6328125,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 215.6328125,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 368.09375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 368.09375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 368.09375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 368.09375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 467.28125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 110.7890625,
+        "centreY": 467.28125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 467.28125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 110.7890625,
+        "centreY": 467.28125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 467.28125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 197,
+        "centreY": 467.28125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 110.5,
+        "centreY": 467.28125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 197,
+        "centreY": 467.28125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 233,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 233,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 319.7734375,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 319.7734375,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 319.5,
+        "centreY": 465.78125,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 465.78125,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 465.96875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 465.96875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 24,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 215.6328125,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 215.6328125,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 215,
+        "centreY": 466.15625,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 406,
+        "centreY": 466.15625,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.6484375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 196.6484375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.6484375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 196.6484375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.3359375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 423.1484375,
+        "centreY": 196.3359375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.3359375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 423.1484375,
+        "centreY": 196.3359375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.3359375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 196.3359375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.3359375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 196.3359375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 241.515625,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 241.515625,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 404,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 404,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 440,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 440,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "focal",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 423.1484375,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 423.1484375,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.6484375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 196.6484375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.6484375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 196.6484375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.3359375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 423.1484375,
+        "centreY": 196.3359375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.3359375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 423.1484375,
+        "centreY": 196.3359375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.3359375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 196.3359375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "cameraDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 196.3359375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 196.3359375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 241.515625,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 241.515625,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 404,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "aperture",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 241,
+        "centreY": 195.1796875,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 404,
+        "centreY": 195.1796875,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 440,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 440,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "focal",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 603,
+        "centreY": 195.0234375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 195.0234375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 78,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 423.1484375,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 0.5,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 423.1484375,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "pressed",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "key": "flashDistance",
+      "fraction": 1,
+      "state": "released",
+      "track": {
+        "centreX": 422,
+        "centreY": 195.2109375,
+        "height": 4
+      },
+      "thumb": {
+        "centreX": 766,
+        "centreY": 195.2109375,
+        "height": 24
+      },
+      "delta": 0
+    }
+  ]
+}

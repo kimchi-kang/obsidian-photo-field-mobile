@@ -58,7 +58,7 @@ export default class PhotoPlugin extends Plugin {
       }throw Error('새 노트 이름을 확보하지 못했습니다. 다시 저장하세요.');
     });this.notes=task;return task;
   }
-  update<K extends keyof Inputs>(key:K,value:Inputs[K]):void {if(key==='gnMode'){setGnMode(this.state,value as Inputs['gnMode']);return;}this.state.inputs[key]=value;if(key==='zoom')applyEquipment(this.state);
+  update<K extends keyof Inputs>(key:K,value:Inputs[K]):void {if((key==='gnMode'||key==='equipmentId')&&this.state.field)delete this.state.field.activeShotId;if(key==='gnMode'){setGnMode(this.state,value as Inputs['gnMode']);return;}this.state.inputs[key]=value;if(key==='zoom')applyEquipment(this.state);
     if(['gn','gnZoom','conditions','steps','minDenominator'].includes(key)&&this.state.inputs.gnMode==='equipment'){this.state.inputs.gnMode='manual';}}
   onunload():void {this.active=false;this.noteNotice?.hide();void this.flush().catch(e=>this.reportSaveError(e));this.app.workspace.detachLeavesOfType(VIEW);}
 }

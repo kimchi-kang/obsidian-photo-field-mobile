@@ -1,0 +1,7 @@
+PASS distance-inclusive favorite, rename and renewal preserve explicit scope
+PASS distance add edit reorder overflow and delete use stable metre values
+PASS zone infinity editing rename deletion recovery and restart preserve target
+PASS equipment change blocks favorite, renewal explicitly resolves, deletion never substitutes stale GN
+PASS power boundaries and missing GN retain honest selection controls in simple mode
+PASS storage failure visible in simple mode and retry saves merged latest state
+PASS legacy migration preserves existing draft, equipment and zone goal through plugin reload

@@ -1,0 +1,193 @@
+{
+  "version": 2,
+  "inputs": {
+    "gnMode": "manual",
+    "equipmentId": "",
+    "sensor": "ff",
+    "width": 36,
+    "height": 24,
+    "focal": 50,
+    "aperture": 4,
+    "iso": 100,
+    "cameraDistance": 5,
+    "linked": true,
+    "flashDistance": 5,
+    "cocMode": "estimate",
+    "coc": 0.029,
+    "gn": 40,
+    "gnUnit": "m",
+    "gnZoom": 50,
+    "zoom": 50,
+    "conditions": "연습용 가상 GN · 장비 사양 아님 · ISO100·최대출력·직접광·50mm",
+    "denominator": 4,
+    "loss": 0,
+    "tolerance": 1,
+    "minDenominator": 256,
+    "steps": "1,2,4,8,16,32,64,128,256",
+    "coverage": "approx",
+    "horizontal": 40,
+    "vertical": 27,
+    "mode": "manual",
+    "diagramMax": 15,
+    "tab": "flash",
+    "cropBasis": "nominal",
+    "zoneFlow": "current",
+    "zoneNear": 2,
+    "zoneFar": 5,
+    "zoneInfinity": false,
+    "apertureMin": 1.4,
+    "apertureMax": 16,
+    "apertureSteps": "1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32"
+  },
+  "equipment": [
+    {
+      "id": "qa-device",
+      "name": "현장 테스트 장비",
+      "conditions": "Synthetic only ISO100",
+      "source": "Integration QA",
+      "table": {
+        "35": 30,
+        "50": 40
+      },
+      "minDenominator": 20,
+      "steps": "1,3,7,20"
+    }
+  ],
+  "field": {
+    "version": 1,
+    "simple": true,
+    "shots": [
+      {
+        "id": "qa-day",
+        "name": "주간 스냅",
+        "values": {
+          "sensor": "ff",
+          "width": 36,
+          "height": 24,
+          "focal": 50,
+          "aperture": 4,
+          "iso": 100,
+          "gnMode": "manual",
+          "equipmentId": "",
+          "gn": 40,
+          "gnUnit": "m",
+          "gnZoom": 50,
+          "zoom": 50,
+          "conditions": "연습용 가상 GN · 장비 사양 아님 · ISO100·최대출력·직접광·50mm",
+          "denominator": 4,
+          "linked": true,
+          "cocMode": "estimate",
+          "coc": 0.029,
+          "coverage": "approx",
+          "horizontal": 40,
+          "vertical": 27,
+          "loss": 0,
+          "tolerance": 1,
+          "minDenominator": 256,
+          "steps": "1,2,4,8,16,32,64,128,256",
+          "mode": "manual"
+        }
+      },
+      {
+        "id": "qa-night",
+        "name": "야간 플래시",
+        "values": {
+          "sensor": "ff",
+          "width": 36,
+          "height": 24,
+          "focal": 50,
+          "aperture": 5.6,
+          "iso": 400,
+          "gnMode": "manual",
+          "equipmentId": "",
+          "gn": 40,
+          "gnUnit": "m",
+          "gnZoom": 50,
+          "zoom": 50,
+          "conditions": "연습용 가상 GN · 장비 사양 아님 · ISO100·최대출력·직접광·50mm",
+          "denominator": 16,
+          "linked": true,
+          "cocMode": "estimate",
+          "coc": 0.029,
+          "coverage": "approx",
+          "horizontal": 40,
+          "vertical": 27,
+          "loss": 0,
+          "tolerance": 1,
+          "minDenominator": 256,
+          "steps": "1,2,4,8,16,32,64,128,256",
+          "mode": "manual"
+        }
+      },
+      {
+        "id": "qa-off",
+        "name": "별도 플래시",
+        "values": {
+          "sensor": "ff",
+          "width": 36,
+          "height": 24,
+          "focal": 50,
+          "aperture": 4,
+          "iso": 100,
+          "gnMode": "manual",
+          "equipmentId": "",
+          "gn": 40,
+          "gnUnit": "m",
+          "gnZoom": 50,
+          "zoom": 50,
+          "conditions": "연습용 가상 GN · 장비 사양 아님 · ISO100·최대출력·직접광·50mm",
+          "denominator": 4,
+          "linked": false,
+          "cocMode": "estimate",
+          "coc": 0.029,
+          "coverage": "approx",
+          "horizontal": 40,
+          "vertical": 27,
+          "loss": 0,
+          "tolerance": 1,
+          "minDenominator": 256,
+          "steps": "1,2,4,8,16,32,64,128,256",
+          "mode": "manual"
+        }
+      }
+    ],
+    "zones": [
+      {
+        "id": "qa-zone",
+        "name": "거리 2~5m",
+        "near": 2,
+        "far": 5,
+        "infinity": false
+      },
+      {
+        "id": "qa-infinity",
+        "name": "3m~무한대",
+        "near": 3,
+        "far": 5,
+        "infinity": true
+      }
+    ],
+    "distances": [
+      {
+        "id": "distance-1",
+        "metres": 1
+      },
+      {
+        "id": "distance-2",
+        "metres": 1.5
+      },
+      {
+        "id": "distance-3",
+        "metres": 2
+      },
+      {
+        "id": "distance-4",
+        "metres": 3
+      },
+      {
+        "id": "distance-5",
+        "metres": 5
+      }
+    ]
+  }
+}

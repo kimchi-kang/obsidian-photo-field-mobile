@@ -1,0 +1,10 @@
+PASS A manual GN40 ISO100 f4 quarter power: screen, Markdown and restored state agree
+PASS GN decimal typing retains focus and insertion order after clear and reentry
+PASS distance and custom CoC decimals keep focus and restore after plugin reactivation
+PASS B create synthetic equipment, exact zoom, missing zoom, theoretical power, note, draft and selection restoration
+PASS C valid DOF with missing GN and HSS saves only current tab; full save rejects; reentry restores
+PASS D offcamera axes, independent distances and explicit spatial limitation persist to note and restore
+PASS view close immediately after edit flushes final state before reactivation
+PASS background/pagehide hooks flush edits; failed setting save stays failed until explicit retry
+PASS rapid tabs and offline partial/full Markdown exports with view reentry
+PASS new save actions remain reachable at 360px, large rem font, landscape and reduced viewport

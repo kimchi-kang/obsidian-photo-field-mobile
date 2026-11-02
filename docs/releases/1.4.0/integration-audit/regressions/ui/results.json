@@ -1,0 +1,85 @@
+{
+  "checks": [
+    {
+      "name": "UI save shooting favorite without distance and apply using touch",
+      "passed": true
+    },
+    {
+      "name": "simple shooting flow favorite → distance → EV → recommendation, 3 actions",
+      "passed": true
+    },
+    {
+      "name": "off-camera distance touches only flash distance and power follows irregular list",
+      "passed": true
+    },
+    {
+      "name": "shooting apply undo expires only when overlapping field changes; deletion undo distinct",
+      "passed": true
+    },
+    {
+      "name": "zone favorite applies target only and uses explicit recalculated settings, 2 actions",
+      "passed": true
+    },
+    {
+      "name": "simple and detailed use identical calculation values; decimal cursor and centimetres boundary",
+      "passed": true
+    },
+    {
+      "name": "long names and mobile matrix: 360/390 portrait + landscape, both themes and large text",
+      "passed": true
+    },
+    {
+      "name": "save and plugin relaunch restores favorites, order and simple mode",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "fingerprints": {
+    "main.js": "b9c405ea87dc7fff4fe2d9032c5761ebd5dbcba61ace0944bd8846d7f06ff1e2",
+    "manifest.json": "235b7678e7215f730569587ab2cb49a4832c81d97518aa6518c6f0d5cf36adc4",
+    "styles.css": "8eff3c7a796da40c6690f409203dd7bb643b9a4c776f21ed0b852b313719bb2f"
+  },
+  "host": "macOS Obsidian dedicated vault/profile, app.emulateMobile(true), CDP mobile viewport and touch",
+  "actualIOS": false,
+  "actualAndroid": false,
+  "flows": [
+    {
+      "name": "shooting favorite → distance → EV → apply recommendation",
+      "actions": 3,
+      "settingsVisits": 0,
+      "keyboard": 0,
+      "scrollAdjustments": 1,
+      "touchEvents": [
+        {
+          "label": "주간 스냅",
+          "scrollAdjustment": false
+        },
+        {
+          "label": "3 m",
+          "scrollAdjustment": false
+        },
+        {
+          "label": "권장 출력 1/8 적용",
+          "scrollAdjustment": true
+        }
+      ]
+    },
+    {
+      "name": "zone favorite → inspect result → apply settings",
+      "actions": 2,
+      "settingsVisits": 0,
+      "keyboard": 0,
+      "scrollAdjustments": 1,
+      "touchEvents": [
+        {
+          "label": "거리 2~5m · 2 m~5 m",
+          "scrollAdjustment": true
+        },
+        {
+          "label": "역산 결과를 현재 설정에 적용",
+          "scrollAdjustment": false
+        }
+      ]
+    }
+  ]
+}

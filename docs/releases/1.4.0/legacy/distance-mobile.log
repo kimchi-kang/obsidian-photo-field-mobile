@@ -1,0 +1,4 @@
+PASS cm input conversion is deferred during editing; both directions and exact 1m preserve physics
+PASS flash hero, depth, scene axes, tables and frame dimensions all expose units
+PASS zone target cm edit, application and restore never introduce 100x conversion
+PASS actual save button emits adaptive results, canonical input values and readable mobile layouts
