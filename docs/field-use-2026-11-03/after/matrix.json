@@ -1,0 +1,1716 @@
+{
+  "records": [
+    {
+      "w": 360,
+      "h": 800,
+      "theme": "light",
+      "large": false,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -1062,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 468,
+          "automaticScroll": 0
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -492.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 320.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -320.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 1755.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -1804.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 15.5,
+          "automaticScroll": 1549
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 612.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2128.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 320.5,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 241, 232)",
+        "foreground": "rgb(32, 33, 30)",
+        "context": "rgb(91, 93, 89)",
+        "contextFont": "13px"
+      }
+    },
+    {
+      "w": 360,
+      "h": 800,
+      "theme": "light",
+      "large": true,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -374,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 16.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 675.5,
+          "automaticScroll": -48
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -644,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 436,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -436,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 2527.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2647.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 372,
+          "automaticScroll": 1562.5
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 713,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2556,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 436,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 241, 232)",
+        "foreground": "rgb(32, 33, 30)",
+        "context": "rgb(91, 93, 89)",
+        "contextFont": "17.875px"
+      }
+    },
+    {
+      "w": 360,
+      "h": 800,
+      "theme": "dark",
+      "large": false,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -375.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 492.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -492.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 320.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -320.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 2128,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2176.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 15.5,
+          "automaticScroll": 1549
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 612.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2128.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 320.5,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(28, 29, 32)",
+        "foreground": "rgb(240, 238, 230)",
+        "context": "rgb(181, 184, 192)",
+        "contextFont": "13px"
+      }
+    },
+    {
+      "w": 360,
+      "h": 800,
+      "theme": "dark",
+      "large": true,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -374,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 16.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 675.5,
+          "automaticScroll": -48
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -644,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 436,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -436,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 2527.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2647.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 372,
+          "automaticScroll": 1562.5
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 713,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2556,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 436,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(28, 29, 32)",
+        "foreground": "rgb(240, 238, 230)",
+        "context": "rgb(181, 184, 192)",
+        "contextFont": "17.875px"
+      }
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "theme": "light",
+      "large": false,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -344,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 426,
+          "automaticScroll": 0
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -426,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 1997.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2046.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 1454
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 592,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -1997,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 241, 232)",
+        "foreground": "rgb(32, 33, 30)",
+        "context": "rgb(91, 93, 89)",
+        "contextFont": "13px"
+      }
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "theme": "light",
+      "large": true,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 651.5,
+          "automaticScroll": -48
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -603.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 388,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -388,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 2463,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2583.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 47.5,
+          "automaticScroll": 1850.5
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 685.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2491.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 388,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 241, 232)",
+        "foreground": "rgb(32, 33, 30)",
+        "context": "rgb(91, 93, 89)",
+        "contextFont": "17.875px"
+      }
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "theme": "dark",
+      "large": false,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -303.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 426,
+          "automaticScroll": 0
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -426,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 1997.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2046.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 1454
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 592,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -1997,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(28, 29, 32)",
+        "foreground": "rgb(240, 238, 230)",
+        "context": "rgb(181, 184, 192)",
+        "contextFont": "13px"
+      }
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "theme": "dark",
+      "large": true,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 651.5,
+          "automaticScroll": -48
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -603.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 388,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -388,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 2463,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2583.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 47.5,
+          "automaticScroll": 1850.5
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 685.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2491.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 388,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(28, 29, 32)",
+        "foreground": "rgb(240, 238, 230)",
+        "context": "rgb(181, 184, 192)",
+        "contextFont": "17.875px"
+      }
+    },
+    {
+      "w": 844,
+      "h": 390,
+      "theme": "light",
+      "large": false,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -343.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 105.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 172.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 260,
+          "automaticScroll": -44
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -494,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 119.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 269.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -362.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 2224.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2252.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 41.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 292.5,
+          "automaticScroll": 1347
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 572,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2225,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 41.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 321,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 241, 232)",
+        "foreground": "rgb(32, 33, 30)",
+        "context": "rgb(91, 93, 89)",
+        "contextFont": "13px"
+      }
+    },
+    {
+      "w": 844,
+      "h": 390,
+      "theme": "light",
+      "large": true,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -442,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 126.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 197,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 320,
+          "automaticScroll": -48
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 4.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -600,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 140.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 317.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -422.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 2485.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2549.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 105,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 282,
+          "automaticScroll": 1505
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 657.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2485.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 105,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 317.5,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(245, 241, 232)",
+        "foreground": "rgb(32, 33, 30)",
+        "context": "rgb(91, 93, 89)",
+        "contextFont": "17.875px"
+      }
+    },
+    {
+      "w": 844,
+      "h": 390,
+      "theme": "dark",
+      "large": false,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -398,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 105.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 172.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 260,
+          "automaticScroll": -44
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -494,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 119.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 269.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -362.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 2224.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2252.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 41.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 292.5,
+          "automaticScroll": 1347
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 572,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2225,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 41.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 321,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(28, 29, 32)",
+        "foreground": "rgb(240, 238, 230)",
+        "context": "rgb(181, 184, 192)",
+        "contextFont": "13px"
+      }
+    },
+    {
+      "w": 844,
+      "h": 390,
+      "theme": "dark",
+      "large": true,
+      "events": [
+        {
+          "label": "플래시",
+          "kind": "tap",
+          "reachScroll": -442,
+          "automaticScroll": 0
+        },
+        {
+          "label": "야간 조건",
+          "kind": "tap",
+          "reachScroll": 126.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-1",
+          "kind": "tap",
+          "reachScroll": 197,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-2",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "walk-3",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "권장 적용",
+          "kind": "tap",
+          "reachScroll": 320,
+          "automaticScroll": -48
+        },
+        {
+          "label": "약하게",
+          "kind": "tap",
+          "reachScroll": 4.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "강하게",
+          "kind": "tap",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존",
+          "kind": "tap",
+          "reachScroll": -600,
+          "automaticScroll": 0
+        },
+        {
+          "label": "2~5m",
+          "kind": "tap",
+          "reachScroll": 140.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "존 적용",
+          "kind": "tap",
+          "reachScroll": 317.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "상세",
+          "kind": "tap",
+          "reachScroll": -422.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 2485.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2549.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "달성 불가 목표",
+          "kind": "tap",
+          "reachScroll": 105,
+          "automaticScroll": 0
+        },
+        {
+          "label": "한계 확인",
+          "kind": "tap",
+          "reachScroll": 282,
+          "automaticScroll": 1505
+        },
+        {
+          "label": "focal",
+          "kind": "tap",
+          "reachScroll": 657.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "focal",
+          "kind": "keyboard"
+        },
+        {
+          "label": "간편",
+          "kind": "tap",
+          "reachScroll": -2485.5,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 목표",
+          "kind": "tap",
+          "reachScroll": 105,
+          "automaticScroll": 0
+        },
+        {
+          "label": "복구 적용",
+          "kind": "tap",
+          "reachScroll": 317.5,
+          "automaticScroll": 0
+        }
+      ],
+      "styles": {
+        "background": "rgb(28, 29, 32)",
+        "foreground": "rgb(240, 238, 230)",
+        "context": "rgb(181, 184, 192)",
+        "contextFont": "17.875px"
+      }
+    },
+    {
+      "name": "real MFT selection changes optical equivalence, not actual exposure inputs",
+      "passed": true,
+      "aperture": 4.5,
+      "equivalence": "실제 28mm f/4.5 → 풀프레임 화각 56mm / 심도 약 f/9\n\n노출·플래시 계산은 실제 조리개 f/4.5 사용\n\n심도 대응 조건·화각"
+    }
+  ],
+  "errors": [],
+  "continuedWithoutReset": true
+}

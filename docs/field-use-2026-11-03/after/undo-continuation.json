@@ -1,0 +1,8 @@
+{
+  "newRecommendationHasValidUndo": true,
+  "obsoleteExpiryVisible": false,
+  "explicitUndoRestoresPreviousOutput": true,
+  "taps": 10,
+  "apertureAdjustedWithoutKeyboard": true,
+  "keyboard": 0
+}

@@ -1,6 +1,6 @@
 import {Plugin,WorkspaceLeaf,Notice,normalizePath,TFolder} from 'obsidian';
 import {Inputs,Saved} from './model';
-import {restore,snapshot} from './storage';
+import {restore,snapshot,verifiedWrite} from './storage';
 import {LatestWriter} from './writer';
 import {applyEquipment,selectedEquipment,setGnMode} from './presets';
 import {PhotoView,VIEW} from './view';
@@ -15,7 +15,7 @@ export default class PhotoPlugin extends Plugin {
   private opening:Promise<void>|null=null;
   async onload():Promise<void> {
     this.state=restore(await this.loadData());this.stableInputs={...this.state.inputs};this.active=true;
-    this.writer=new LatestWriter(data=>this.saveData(data),()=>{if(this.writer.error&&!this.saveError)this.report(this.writer.error);this.saveError=this.writer.error?`설정 저장 실패: ${this.writer.error instanceof Error?this.writer.error.message:String(this.writer.error)} · 다시 저장하세요.`:'';for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.updateSaveStatus();});
+    this.writer=new LatestWriter(data=>verifiedWrite(data,()=>this.saveData(data),()=>this.app.vault.adapter.read(normalizePath(`${this.manifest.dir??`${this.app.vault.configDir}/plugins/${this.manifest.id}`}/data.json`))),()=>{if(this.writer.error&&!this.saveError)this.report(this.writer.error);this.saveError=this.writer.error?`설정 저장 실패: ${this.writer.error instanceof Error?this.writer.error.message:String(this.writer.error)} · 다시 저장하세요.`:'';for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.updateSaveStatus();});
     const flush=()=>{void this.flush().catch(e=>this.reportSaveError(e));};
     this.registerDomEvent(document,'visibilitychange',()=>{if(document.visibilityState==='hidden')flush();});
     this.registerDomEvent(window,'pagehide',flush);

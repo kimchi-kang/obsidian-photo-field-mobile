@@ -1,0 +1,230 @@
+{
+  "baseline": "1.4.0 df1a6fb",
+  "candidate": "1.4.1",
+  "newFeatures": false,
+  "productionVaultModified": false,
+  "publicReleaseModified": false,
+  "before": [
+    {
+      "name": "1 야간 플래시 스냅",
+      "taps": 8,
+      "inputFocusOpportunities": 0,
+      "reachScrollMoves": 2,
+      "directionChanges": 1,
+      "scrollRoundTrips": 1
+    },
+    {
+      "name": "2 주간 존 포커싱",
+      "taps": 21,
+      "inputFocusOpportunities": 3,
+      "reachScrollMoves": 7,
+      "directionChanges": 5,
+      "scrollRoundTrips": 3
+    },
+    {
+      "name": "3 가까운 피사체",
+      "taps": 11,
+      "inputFocusOpportunities": 3,
+      "reachScrollMoves": 3,
+      "directionChanges": 1,
+      "scrollRoundTrips": 1
+    },
+    {
+      "name": "4 오프카메라",
+      "taps": 11,
+      "inputFocusOpportunities": 1,
+      "reachScrollMoves": 4,
+      "directionChanges": 3,
+      "scrollRoundTrips": 2
+    },
+    {
+      "name": "5 중단·일반 노트·복귀",
+      "taps": 9,
+      "inputFocusOpportunities": 1,
+      "normalRestart": true,
+      "resumeTaps": 1
+    }
+  ],
+  "after": [
+    {
+      "name": "1 야간 플래시 스냅",
+      "taps": 8,
+      "inputFocusOpportunities": 0,
+      "reachScrollMoves": 2,
+      "directionChanges": 1,
+      "scrollRoundTrips": 1
+    },
+    {
+      "name": "2 주간 존 포커싱",
+      "taps": 19,
+      "inputFocusOpportunities": 3,
+      "reachScrollMoves": 6,
+      "directionChanges": 5,
+      "scrollRoundTrips": 3
+    },
+    {
+      "name": "3 가까운 피사체",
+      "taps": 11,
+      "inputFocusOpportunities": 3,
+      "reachScrollMoves": 2,
+      "directionChanges": 1,
+      "scrollRoundTrips": 1
+    },
+    {
+      "name": "4 오프카메라",
+      "taps": 11,
+      "inputFocusOpportunities": 1,
+      "reachScrollMoves": 4,
+      "directionChanges": 3,
+      "scrollRoundTrips": 2
+    },
+    {
+      "name": "5 중단·일반 노트·복귀",
+      "taps": 9,
+      "inputFocusOpportunities": 1,
+      "normalRestart": true,
+      "resumeTaps": 1
+    }
+  ],
+  "normalInputConsoleErrors": [],
+  "matrixConsoleErrors": [],
+  "contrast": [
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "large": false,
+      "contrast": {
+        "foreground": 14.36,
+        "context": 5.91
+      },
+      "contextFont": "13px"
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "light",
+      "large": true,
+      "contrast": {
+        "foreground": 14.36,
+        "context": 5.91
+      },
+      "contextFont": "17.875px"
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "large": false,
+      "contrast": {
+        "foreground": 14.51,
+        "context": 8.49
+      },
+      "contextFont": "13px"
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "theme": "dark",
+      "large": true,
+      "contrast": {
+        "foreground": 14.51,
+        "context": 8.49
+      },
+      "contextFont": "17.875px"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "large": false,
+      "contrast": {
+        "foreground": 14.36,
+        "context": 5.91
+      },
+      "contextFont": "13px"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "large": true,
+      "contrast": {
+        "foreground": 14.36,
+        "context": 5.91
+      },
+      "contextFont": "17.875px"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "large": false,
+      "contrast": {
+        "foreground": 14.51,
+        "context": 8.49
+      },
+      "contextFont": "13px"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "large": true,
+      "contrast": {
+        "foreground": 14.51,
+        "context": 8.49
+      },
+      "contextFont": "17.875px"
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "large": false,
+      "contrast": {
+        "foreground": 14.36,
+        "context": 5.91
+      },
+      "contextFont": "13px"
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "large": true,
+      "contrast": {
+        "foreground": 14.36,
+        "context": 5.91
+      },
+      "contextFont": "17.875px"
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "large": false,
+      "contrast": {
+        "foreground": 14.51,
+        "context": 8.49
+      },
+      "contextFont": "13px"
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "dark",
+      "large": true,
+      "contrast": {
+        "foreground": 14.51,
+        "context": 8.49
+      },
+      "contextFont": "17.875px"
+    }
+  ],
+  "finalRuntime": {
+    "main.js": "27d38502a5b51e725ef82fde2c52cea3f68676a4d76f5b810e2d67baf6832a6a",
+    "manifest.json": "72127caba1149cc4910aecbbaa96adfc38795de339b1a825abc1e0d1514c4d0d",
+    "styles.css": "8eff3c7a796da40c6690f409203dd7bb643b9a4c776f21ed0b852b313719bb2f"
+  }
+}

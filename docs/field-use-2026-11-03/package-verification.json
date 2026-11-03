@@ -1,0 +1,31 @@
+{
+  "version": "1.4.1",
+  "candidateOnly": true,
+  "sourceCommitBeforeChanges": "df1a6fb",
+  "archive": "dist/photo-field-mobile-1.4.1-field-use-candidate.zip",
+  "sha256": "4de1f13850932595c8fcbeb474a66ec83d90992fd99f0068cf9ce68aa78accec",
+  "runtime": {
+    "main.js": "27d38502a5b51e725ef82fde2c52cea3f68676a4d76f5b810e2d67baf6832a6a",
+    "manifest.json": "72127caba1149cc4910aecbbaa96adfc38795de339b1a825abc1e0d1514c4d0d",
+    "styles.css": "8eff3c7a796da40c6690f409203dd7bb643b9a4c776f21ed0b852b313719bb2f"
+  },
+  "allArchiveFiles": {
+    "photo-field-mobile/main.js": "27d38502a5b51e725ef82fde2c52cea3f68676a4d76f5b810e2d67baf6832a6a",
+    "photo-field-mobile/manifest.json": "72127caba1149cc4910aecbbaa96adfc38795de339b1a825abc1e0d1514c4d0d",
+    "photo-field-mobile/styles.css": "8eff3c7a796da40c6690f409203dd7bb643b9a4c776f21ed0b852b313719bb2f",
+    "photo-field-mobile/LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+    "photo-field-mobile/THIRD_PARTY_NOTICES.md": "c4b91b59d4ed41507df5b4abb618f9a979930a80f0816b161744a2ae16b9a641",
+    "photo-field-mobile/vendor/depth-of-field-LICENSE.txt": "d9ded95dec98e5d03c794d743d9b5aad33cf0f1988c44e252f3a8af6906c9b9d",
+    "photo-field-mobile/INSTALL.md": "136697a669c456d7698eda3b1822c824095a600499d823d5e464f5284cbed56c"
+  },
+  "rollbackSha256": "d8964b5f1bd52ae3814665cc71db088d3da19eea2582b072666f2514a1fdfb19",
+  "sourceAndQARuntimeMatch": true,
+  "tests": 95,
+  "chainedStories": 4,
+  "interruptionAndNormalRestart": true,
+  "screenCombinations": 12,
+  "edgeChecks": 5,
+  "expectedInjectedStorageConsoleErrors": 1,
+  "productionVaultModified": false,
+  "publicReleaseModified": false
+}

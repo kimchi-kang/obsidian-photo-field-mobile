@@ -1,0 +1,11 @@
+{
+  "actualFilesystemFault": "EISDIR during adapter write; original file restored",
+  "errorShown": false,
+  "writerError": "null",
+  "persistedInputsDifferFromLive": true,
+  "changedKeys": [
+    "cameraDistance",
+    "flashDistance"
+  ],
+  "obsidianBoundary": "async writeJson(e,i,r){let n=xe(e);try{await this.adapter.write(n,JSON.stringify(i,void 0,2),r)}catch{}}"
+}

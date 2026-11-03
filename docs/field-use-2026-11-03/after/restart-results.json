@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "normalDedicatedAppQuit": true,
+  "savedInputsAndFavoritesRestored": true,
+  "resumedWithOneDistanceTap": true,
+  "events": [
+    {
+      "kind": "tap",
+      "label": "바로 이어서 80cm"
+    }
+  ]
+}
