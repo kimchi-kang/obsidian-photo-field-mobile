@@ -48,3 +48,12 @@ export function snapshot(state:Saved,previous:Inputs):Saved {
   if(manual)for(const key of Object.keys(manual) as (keyof typeof manual)[])if(typeof manual[key]==='number'&&!Number.isFinite(manual[key]))Object.assign(manual,{[key]:previous[key]});
   return JSON.parse(JSON.stringify({...state,...(manual?{manualFlash:manual}:{}),inputs,...(inputs.gnMode==='manual'?{manualFlash:manualFlash(inputs)}:{})})) as Saved;
 }
+
+/** Obsidian versions may resolve saveData even when the adapter write fails. */
+export async function verifiedWrite(data:Saved,write:()=>Promise<void>,read:()=>Promise<string>):Promise<void> {
+  await write();
+  let actual:unknown;
+  try{actual=JSON.parse(await read());}
+  catch(cause){throw Object.assign(Error('저장 파일을 다시 읽을 수 없습니다. 저장 위치·권한을 확인하세요.'),{cause});}
+  if(JSON.stringify(actual)!==JSON.stringify(data))throw Error('저장 파일이 현재 설정과 일치하지 않습니다.');
+}

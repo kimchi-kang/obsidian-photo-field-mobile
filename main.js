@@ -515,6 +515,16 @@ function snapshot(state, previous) {
   }
   return JSON.parse(JSON.stringify({ ...state, ...manual ? { manualFlash: manual } : {}, inputs, ...inputs.gnMode === "manual" ? { manualFlash: manualFlash(inputs) } : {} }));
 }
+async function verifiedWrite(data, write, read) {
+  await write();
+  let actual;
+  try {
+    actual = JSON.parse(await read());
+  } catch (cause) {
+    throw Object.assign(Error("\uC800\uC7A5 \uD30C\uC77C\uC744 \uB2E4\uC2DC \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC800\uC7A5 \uC704\uCE58\xB7\uAD8C\uD55C\uC744 \uD655\uC778\uD558\uC138\uC694."), { cause });
+  }
+  if (JSON.stringify(actual) !== JSON.stringify(data)) throw Error("\uC800\uC7A5 \uD30C\uC77C\uC774 \uD604\uC7AC \uC124\uC815\uACFC \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+}
 
 // src/writer.ts
 var LatestWriter = class {
@@ -951,7 +961,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     let review;
     if (this.fieldMessage) {
       review = node(h, "details", void 0, "pfm-field-review");
-      node(review, "summary", this.fieldMessage.includes(" \uC801\uC6A9 \xB7 ") ? "\uCD2C\uC601 \uC801\uC6A9 \uB0B4\uC5ED \uD655\uC778" : this.fieldMessage);
+      node(review, "summary", this.fieldMessage.includes(" \uC801\uC6A9 \xB7 ") ? "\uCD2C\uC601 \uC801\uC6A9 \uB0B4\uC5ED \uD655\uC778" : this.fieldMessage.startsWith("\uCD2C\uC601 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC") ? "\uCD2C\uC601 \uCDE8\uC18C \uB9CC\uB8CC \xB7 \uC124\uC815 \uBCC0\uACBD\uB428" : this.fieldMessage.startsWith("\uAD8C\uC7A5 \uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC") ? "\uAD8C\uC7A5 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC \xB7 \uCD9C\uB825 \uBCC0\uACBD\uB428" : this.fieldMessage);
       node(review, "p", this.fieldMessage);
       if (this.shotChanges) node(review, "p", this.shotChanges, "pfm-field-status");
     }
@@ -963,6 +973,9 @@ var PhotoView = class extends import_obsidian.ItemView {
       for (const d of f.distances.slice(start, end)) {
         const b = this.fieldButton(parent, metres(d.metres), () => this.fieldAction(() => {
           this.plugin.update(key, d.metres);
+          const more = distance.querySelector("details");
+          if (more) more.open = false;
+          this.detailState.set("\uAC70\uB9AC \uB354\uBCF4\uAE30", false);
         }));
         b.dataset.distanceId = d.id;
       }
@@ -988,7 +1001,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       const action = this.root.querySelector(".pfm-output-action");
       if (action) action.append(actions);
       else this.root.querySelector(".pfm-quick")?.prepend(actions);
-      if (review && this.fieldMessage.startsWith("\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC")) action?.append(review);
+      if (review && this.fieldMessage.startsWith("\uAD8C\uC7A5 \uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC")) action?.append(review);
     }
     const manage = node(this.fieldExtras, "details", void 0, "pfm-field-manage");
     node(manage, "summary", "\uC990\uACA8\uCC3E\uAE30\xB7\uB0B4 \uAC70\uB9AC \uAD00\uB9AC");
@@ -1711,6 +1724,25 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(this.equivalent, "p", e instanceof Error ? e.message : String(e), "pfm-error");
     }
   }
+  showZoneLimits() {
+    const limits = this.root.querySelector("[data-zone-limits]");
+    if (!limits) return;
+    limits.open = true;
+    if (field(this.plugin.state).simple) {
+      field(this.plugin.state).simple = false;
+      this.changed();
+      this.render();
+    }
+    const current = this.root.querySelector("[data-zone-limits]");
+    if (!current) return;
+    current.open = true;
+    const target = current.querySelector("[data-field=apertureMax]") ?? current;
+    target.scrollIntoView({ block: "center" });
+    target.tabIndex = -1;
+    target.setAttribute("role", "group");
+    target.setAttribute("aria-label", "\uB80C\uC988 \uC870\uB9AC\uAC1C \uC0C1\uD55C \uD655\uC778");
+    target.focus({ preventScroll: true });
+  }
   paintZone() {
     const i = this.plugin.state.inputs;
     this.root.dataset.zoneFlow = i.zoneFlow;
@@ -1748,14 +1780,7 @@ var PhotoView = class extends import_obsidian.ItemView {
           const edit = node(this.zoneResult, "button", "\uB80C\uC988 \uC870\uB9AC\uAC1C \uD55C\uACC4 \uD655\uC778");
           edit.type = "button";
           edit.dataset.zoneLimitsJump = "true";
-          edit.onclick = () => {
-            const limits = this.root.querySelector("[data-zone-limits]");
-            if (limits) {
-              limits.open = true;
-              limits.scrollIntoView({ block: "start" });
-              limits.querySelector("summary")?.focus({ preventScroll: true });
-            }
-          };
+          edit.onclick = () => this.showZoneLimits();
           node(this.zoneResult, "p", "\uC9C0\uC6D0\uD558\uB294 \uC870\uB9AC\uAC1C \uB2E8\uACC4\uB85C \uBAA9\uD45C \uC804\uCCB4\uB97C \uD3EC\uD568\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uBAA9\uD45C \uADFC\uAC70\uB9AC\uB97C \uB354 \uBA40\uB9AC \uD558\uAC70\uB098 \uC6D0\uAC70\uB9AC\uB97C \uC904\uC774\uAC70\uB098 \uC2E4\uC81C \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC(mm)\uB97C \uC9E7\uAC8C \uD574 \uB2E4\uC2DC \uACC4\uC0B0\uD558\uC138\uC694. \uC704 \uB300\uC548\uC740 \uC804\uCCB4 \uD3EC\uD568\uC744 \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.", "pfm-error");
         }
       }
@@ -1896,7 +1921,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (tabSave) tabSave.textContent = `${{ flash: "\uD50C\uB798\uC2DC", dof: "\uC2EC\uB3C4\xB7\uD654\uAC01", combined: "\uD1B5\uD569", zone: "\uC874 \uD3EC\uCEE4\uC2F1" }[i.tab]} \uACB0\uACFC \uC800\uC7A5`;
     if (this.outputUndo && this.outputUndo.applied !== i.denominator) {
       this.outputUndo = void 0;
-      this.fieldMessage = "\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC \xB7 \uC774\uD6C4 \uCD9C\uB825 \uBCC0\uACBD\uC744 \uBCF4\uC874\uD569\uB2C8\uB2E4.";
+      this.fieldMessage = "\uAD8C\uC7A5 \uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC \xB7 \uC774\uD6C4 \uCD9C\uB825 \uBCC0\uACBD\uC744 \uBCF4\uC874\uD569\uB2C8\uB2E4.";
     }
     this.syncPower();
     for (const key of ["gn", "gnZoom", "minDenominator"]) if (document.activeElement !== this.numeric.get(key)?.input) this.syncNumeric(key);
@@ -1937,6 +1962,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       apply.disabled = i.denominator === f.nearest;
       apply.onclick = () => {
         this.outputUndo = { before: i.denominator, applied: f.nearest };
+        if (this.fieldMessage.startsWith("\uAD8C\uC7A5 \uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC")) this.fieldMessage = "";
         this.plugin.update("denominator", f.nearest);
         this.syncNumeric("denominator");
         this.changed();
@@ -1944,7 +1970,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       };
       if (this.outputUndo) {
         const before = this.outputUndo.before;
-        const undo2 = node(action, "button", `\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \xB7 1/${before}\uB85C`);
+        const undo2 = node(action, "button", `\uAD8C\uC7A5 \uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \xB7 1/${before}\uB85C`);
         undo2.type = "button";
         undo2.dataset.flashUndo = "true";
         undo2.onclick = () => {
@@ -1966,16 +1992,16 @@ var PhotoView = class extends import_obsidian.ItemView {
     } catch (e) {
       node(flashPanel, "p", "\uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC", "pfm-eyebrow");
       node(flashPanel, "div", "\u2014", "pfm-hero");
-      node(flashPanel, "p", !Number.isFinite(i.gn) || i.gn <= 0 ? "GN\uC774 \uBE44\uC5C8\uAC70\uB098 0 \uC774\uD558\uC785\uB2C8\uB2E4. \uD50C\uB798\uC2DC \uC870\uAC74\uC5D0\uC11C ISO100 \uCD5C\uB300 \uCD9C\uB825 GN\uC744 \uC785\uB825\uD558\uC138\uC694." : e instanceof Error ? e.message : String(e), "pfm-error");
+      node(flashPanel, "p", i.gnMode === "equipment" && !equipment ? "\uC120\uD0DD \uC7A5\uBE44\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uB0B4 \uC7A5\uBE44\uC5D0\uC11C \uBCF5\uAD6C\uD558\uAC70\uB098 \uC7A5\uBE44\uB97C \uB2E4\uC2DC \uC120\uD0DD\uD558\uC138\uC694." : i.gnMode === "equipment" && i.gn <= 0 ? equipment?.table[String(i.zoom)] === void 0 ? `${fmt(i.zoom)}mm \uC90C\uC758 GN \uC790\uB8CC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4. \uC774 \uC7A5\uBE44\uC758 \uC0AC\uC6A9 \uAC00\uB2A5 \uC90C: ${Object.keys(equipment?.table ?? {}).join(", ")}mm. \uD50C\uB798\uC2DC \uC90C \uB610\uB294 \uC7A5\uBE44 GN \uD45C\uB97C \uD655\uC778\uD558\uC138\uC694.` : i.conditions : !Number.isFinite(i.gn) || i.gn <= 0 ? "\uC218\uB3D9 GN\uC774 \uBE44\uC5C8\uAC70\uB098 0 \uC774\uD558\uC785\uB2C8\uB2E4. ISO100 \uCD5C\uB300 \uCD9C\uB825 GN\uC744 \uC785\uB825\uD558\uC138\uC694." : e instanceof Error ? e.message : String(e), "pfm-error");
       const disabled = node(flashPanel, "button", "\uAD8C\uC7A5 \uCD9C\uB825 \uC801\uC6A9 \uBD88\uAC00");
       disabled.type = "button";
       disabled.disabled = true;
       disabled.dataset.flashApply = "true";
       disabled.className = "pfm-error-action";
-      const fix = node(flashPanel, "button", "\uD50C\uB798\uC2DC \uC870\uAC74 \uD655\uC778");
+      const fix = node(flashPanel, "button", i.gnMode === "equipment" && i.gn <= 0 ? equipment ? "\uC7A5\uBE44 \uC90C\xB7GN \uD655\uC778" : "\uC7A5\uBE44 \uC120\uD0DD \uD655\uC778" : "\uD50C\uB798\uC2DC \uC870\uAC74 \uD655\uC778");
       fix.type = "button";
       fix.className = "pfm-error-action";
-      fix.onclick = () => this.jumpSettings("flash");
+      fix.onclick = () => this.jumpSettings(i.gnMode === "equipment" && !equipment ? "equipment" : "flash");
     }
     if (i.tab === "flash") this.results.append(this.picture);
     else this.results.prepend(this.picture);
@@ -2056,7 +2082,7 @@ var PhotoPlugin = class extends import_obsidian2.Plugin {
     this.state = restore(await this.loadData());
     this.stableInputs = { ...this.state.inputs };
     this.active = true;
-    this.writer = new LatestWriter((data) => this.saveData(data), () => {
+    this.writer = new LatestWriter((data) => verifiedWrite(data, () => this.saveData(data), () => this.app.vault.adapter.read((0, import_obsidian2.normalizePath)(`${this.manifest.dir ?? `${this.app.vault.configDir}/plugins/${this.manifest.id}`}/data.json`))), () => {
       if (this.writer.error && !this.saveError) this.report(this.writer.error);
       this.saveError = this.writer.error ? `\uC124\uC815 \uC800\uC7A5 \uC2E4\uD328: ${this.writer.error instanceof Error ? this.writer.error.message : String(this.writer.error)} \xB7 \uB2E4\uC2DC \uC800\uC7A5\uD558\uC138\uC694.` : "";
       for (const leaf of this.app.workspace.getLeavesOfType(VIEW)) if (leaf.view instanceof PhotoView) leaf.view.updateSaveStatus();

@@ -1,0 +1,2177 @@
+/* Photo Field Mobile — independent mobile adaptation and extension.
+MIT License
+
+Copyright (c) 2026 Jack Herrington
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+See THIRD_PARTY_NOTICES.md for attribution and changes. */
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name2 in all)
+    __defProp(target, name2, { get: all[name2], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/main.ts
+var main_exports = {};
+__export(main_exports, {
+  default: () => PhotoPlugin
+});
+module.exports = __toCommonJS(main_exports);
+var import_obsidian2 = require("obsidian");
+
+// src/model.ts
+var emptyDraft = () => ({ id: "", name: "", conditions: "", source: "", table: "", unit: "m", minDenominator: "256", steps: "1,2,4,8,16,32,64,128,256" });
+var defaults = {
+  gnMode: "manual",
+  equipmentId: "",
+  sensor: "ff",
+  width: 36,
+  height: 24,
+  focal: 50,
+  aperture: 4,
+  iso: 100,
+  cameraDistance: 5,
+  linked: true,
+  flashDistance: 5,
+  cocMode: "estimate",
+  coc: 0.029,
+  gn: 40,
+  gnUnit: "m",
+  gnZoom: 50,
+  zoom: 50,
+  conditions: "\uC5F0\uC2B5\uC6A9 \uAC00\uC0C1 GN \xB7 \uC7A5\uBE44 \uC0AC\uC591 \uC544\uB2D8 \xB7 ISO100\xB7\uCD5C\uB300\uCD9C\uB825\xB7\uC9C1\uC811\uAD11\xB750mm",
+  denominator: 4,
+  loss: 0,
+  tolerance: 1,
+  minDenominator: 256,
+  steps: "1,2,4,8,16,32,64,128,256",
+  coverage: "approx",
+  horizontal: 40,
+  vertical: 27,
+  mode: "manual",
+  diagramMax: 15,
+  tab: "combined",
+  cropBasis: "nominal",
+  zoneFlow: "current",
+  zoneNear: 2,
+  zoneFar: 5,
+  zoneInfinity: false,
+  apertureMin: 1.4,
+  apertureMax: 16,
+  apertureSteps: "1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32"
+};
+var sensors = {
+  ff: { name: "\uD480\uD504\uB808\uC784", width: 36, height: 24 },
+  apsc: { name: "APS-C \uBA85\uBAA9 1.5\xD7 (23.6\xD715.6mm)", width: 23.6, height: 15.6 },
+  apsc16: { name: "APS-C \uBA85\uBAA9 1.6\xD7 (22.3\xD714.9mm)", width: 22.3, height: 14.9 },
+  mft: { name: "Micro Four Thirds", width: 17.3, height: 13 }
+};
+
+// src/units.ts
+var feetToMetres = (v) => v * 0.3048;
+var metresToFeet = (v) => v / 0.3048;
+function parseNumber(v) {
+  return v.trim() === "" ? NaN : Number(v);
+}
+function fmt(v, digits = 2) {
+  if (v === Infinity) return "\u221E";
+  if (!Number.isFinite(v)) return "\u2014";
+  return (Math.abs(v) < 0.5 * 10 ** -digits ? 0 : v).toLocaleString("ko-KR", { maximumFractionDigits: digits });
+}
+function distanceParts(v, digits = 2) {
+  if (v === Infinity) return { value: "\u221E", unit: "" };
+  if (!Number.isFinite(v) || v < 0) return { value: "\u2014", unit: "" };
+  const unit = v <= 1 ? "cm" : "m", scaled = unit === "cm" ? v * 100 : v;
+  const value = scaled > 0 && scaled < 0.5 * 10 ** -digits ? `<${fmt(10 ** -digits, digits)}` : fmt(scaled, digits);
+  return { value, unit };
+}
+function metres(v, digits = 2) {
+  const d = distanceParts(v, digits);
+  return d.unit ? `${d.value} ${d.unit}` : d.value;
+}
+
+// src/engine.ts
+function positive(...values) {
+  if (values.some((v) => !Number.isFinite(v) || v <= 0)) throw Error("\uC591\uC758 \uC720\uD55C\uD55C \uC218\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+}
+function angle(size, focal) {
+  positive(size, focal);
+  const result = 2 * Math.atan(size / focal / 2) * 180 / Math.PI;
+  positive(result);
+  if (result >= 180) throw Error("\uD654\uAC01\uC774 \uC218\uCE58 \uD45C\uD604 \uD55C\uACC4\uC5D0 \uB3C4\uB2EC\uD588\uC2B5\uB2C8\uB2E4. \uC785\uB825 \uADDC\uBAA8\uB97C \uC904\uC774\uC138\uC694.");
+  return result;
+}
+function footprint(r, h, v) {
+  positive(r, h, v);
+  if (h >= 180 || v >= 180) throw Error("\uC870\uC0AC\uAC01\uC740 180\xB0 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+  const width = 2 * r * Math.tan(h * Math.PI / 360), height = 2 * r * Math.tan(v * Math.PI / 360);
+  positive(width, height);
+  return { width, height };
+}
+function optics(i) {
+  positive(i.width, i.height, i.focal, i.aperture, i.cameraDistance);
+  const c = i.cocMode === "estimate" ? Math.hypot(i.width, i.height) / 1500 : i.coc;
+  positive(c);
+  const s = i.cameraDistance * 1e3, f = i.focal;
+  positive(s);
+  if (s <= f) throw Error("\uCE74\uBA54\uB77C \uAC70\uB9AC\uB294 \uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4. (\uBC15\uB9C9\uB80C\uC988 \uBAA8\uB378)");
+  const h0 = f * f / (i.aperture * c), H = h0 + f;
+  positive(h0, H);
+  const near = h0 / (h0 + s - f) * (s / 1e3);
+  const atInfinity = i.cameraDistance >= H / 1e3;
+  const far = atInfinity ? Infinity : h0 / 1e3 / (H / 1e3 - i.cameraDistance) * i.cameraDistance;
+  positive(near);
+  if (!atInfinity) positive(far);
+  const equivalent = f * (Math.hypot(36, 24) / Math.hypot(i.width, i.height)), airy = 2.44 * 55e-5 * i.aperture;
+  positive(equivalent, airy);
+  return {
+    c,
+    hyperfocal: H / 1e3,
+    near,
+    far,
+    total: far - near,
+    horizontal: angle(i.width, f),
+    vertical: angle(i.height, f),
+    diagonal: angle(Math.hypot(i.width, i.height), f),
+    equivalent,
+    airy
+  };
+}
+function effectiveGN(g, p, iso, loss) {
+  positive(g, p, iso);
+  if (p > 1 || !Number.isFinite(loss) || loss < 0) throw Error("\uCD9C\uB825\uC740 0 \uCD08\uACFC 1 \uC774\uD558, \uCD94\uAC00 \uC190\uC2E4\uC740 0 \uC774\uC0C1\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+  const result = g * Math.sqrt(p) * Math.sqrt(iso / 100) * 2 ** (-loss / 2);
+  positive(result);
+  return result;
+}
+function flashDistance(g, p, iso, n, loss = 0) {
+  positive(n);
+  const result = effectiveGN(g, p, iso, loss) / n;
+  positive(result);
+  return result;
+}
+function requiredPower(g, n, r, iso, loss = 0) {
+  positive(n, r);
+  const result = (n * r / effectiveGN(g, 1, iso, loss)) ** 2;
+  positive(result);
+  return result;
+}
+function exposureEV(d, r) {
+  positive(d, r);
+  return 2 * (Math.log2(d) - Math.log2(r));
+}
+function powerSteps(text, minDenominator) {
+  const list = text.split(",").map((v) => Number(v.trim()));
+  if (!list.length || list.some((v) => !Number.isFinite(v) || v < 1 || v > minDenominator) || !list.includes(1) || !list.includes(minDenominator)) throw Error("\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8\uB294 1\uACFC \uCD5C\uC18C \uCD9C\uB825 \uBD84\uBAA8\uB97C \uD3EC\uD568\uD558\uACE0 \uADF8 \uC0AC\uC774\uC758 \uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  return [...new Set(list)].sort((a, b) => a - b);
+}
+function flash(i) {
+  if (i.mode !== "manual") throw Error("\uC120\uD0DD \uC870\uAC74\uC740 \uAE30\uBCF8 GN \uBAA8\uB378\uB85C \uACC4\uC0B0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC2E4\uCE21 \uB610\uB294 \uC804\uC6A9 \uC790\uB8CC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  positive(i.zoom);
+  if (i.gnZoom !== i.zoom) throw Error(`\uC120\uD0DD \uC90C ${i.zoom}mm\uC758 GN \uC790\uB8CC \uC5C6\uC74C. \uD574\uB2F9 \uC90C\uC758 GN\uACFC \uCE21\uC815 \uC90C\uC744 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.`);
+  positive(i.gn, i.gnZoom, i.denominator, i.minDenominator, i.tolerance, i.linked ? i.cameraDistance : i.flashDistance);
+  if (!i.conditions.trim()) throw Error("GN \uCE21\uC815 \uC870\uAC74\uC744 \uC785\uB825\uD558\uC138\uC694.");
+  if (i.denominator < 1) throw Error("\uCD9C\uB825 \uBD84\uBAA8\uB294 1 \uC774\uC0C1\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+  if (i.tolerance > 5) throw Error("\uD5C8\uC6A9 \uBC94\uC704\uB294 0 \uCD08\uACFC 5EV \uC774\uD558\uB85C \uC785\uB825\uD558\uC138\uC694.");
+  const steps = powerSteps(i.steps, i.minDenominator);
+  const g = i.gnUnit === "ft" ? feetToMetres(i.gn) : i.gn;
+  const r = i.linked ? i.cameraDistance : i.flashDistance;
+  const gn = effectiveGN(g, 1 / i.denominator, i.iso, i.loss), d = gn / i.aperture;
+  positive(i.aperture, d);
+  const needed = requiredPower(g, i.aperture, r, i.iso, i.loss);
+  const neededEV = 2 * (Math.log2(i.aperture) + Math.log2(r) - Math.log2(effectiveGN(g, 1, i.iso, i.loss)));
+  const residualFor = (n) => -Math.log2(n) - neededEV;
+  const nearest = steps.reduce((best, v) => Math.abs(residualFor(v)) < Math.abs(residualFor(best)) ? v : best, steps[0]);
+  const low = d / 2 ** (i.tolerance / 2), high = d * 2 ** (i.tolerance / 2), requiredAperture = gn / r;
+  positive(low, high, requiredAperture);
+  return {
+    gn,
+    d,
+    r,
+    g,
+    supported: steps.includes(i.denominator),
+    powerLabel: steps.includes(i.denominator) ? i.gnMode === "equipment" ? "\uC7A5\uBE44 \uC9C0\uC6D0 \uCD9C\uB825" : "\uC218\uB3D9 GN \xB7 \uC785\uB825\uD55C \uC9C0\uC6D0 \uB2E8\uACC4" : "\uC774\uB860\uAC12\xB7\uC7A5\uBE44 \uBBF8\uC9C0\uC6D0 \uCD9C\uB825",
+    nearestDistance: flashDistance(g, 1 / nearest, i.iso, i.aperture, i.loss),
+    ev: exposureEV(d, r),
+    needed,
+    requiredAperture,
+    nearest,
+    residual: residualFor(nearest),
+    low,
+    high,
+    status: needed > 1 ? "\uCD5C\uB300 \uCD9C\uB825\uC73C\uB85C\uB3C4 \uBD80\uC871" : needed < 1 / i.minDenominator ? "\uCD5C\uC18C \uCD9C\uB825\uBCF4\uB2E4 \uB0AE\uC740 \uCD9C\uB825 \uD544\uC694" : "\uC7A5\uBE44 \uCD9C\uB825 \uBC94\uC704 \uC548",
+    steps,
+    distances: steps.map((n) => ({ n, d: flashDistance(g, 1 / n, i.iso, i.aperture, i.loss) }))
+  };
+}
+function coverage(i) {
+  const h = i.coverage === "approx" ? angle(36, i.zoom) : i.horizontal;
+  const v = i.coverage === "approx" ? angle(24, i.zoom) : i.vertical;
+  const r = i.linked ? i.cameraDistance : i.flashDistance;
+  return { h, v, flash: footprint(r, h, v), camera: footprint(i.cameraDistance, angle(i.width, i.focal), angle(i.height, i.focal)), narrow: h < angle(i.width, i.focal) || v < angle(i.height, i.focal) };
+}
+
+// src/presets.ts
+function signature(e) {
+  return JSON.stringify([e.conditions, e.source, e.minDenominator, e.steps, Object.entries(e.table).sort(([a], [b]) => Number(a) - Number(b))]);
+}
+function issue(s, shot) {
+  if (shot.values.gnMode !== "equipment") return "";
+  const e = s.equipment.find((e2) => e2.id === shot.values.equipmentId);
+  return !e ? "\uCC38\uC870 \uC7A5\uBE44 \uC0AD\uC81C\uB428 \xB7 \uB0B4 \uC7A5\uBE44\uC5D0\uC11C \uC0AD\uC81C \uBCF5\uAD6C \uB610\uB294 \uC7A5\uBE44\uB97C \uC120\uD0DD\uD558\uACE0 \uC990\uACA8\uCC3E\uAE30\uB97C \uAC31\uC2E0\uD558\uC138\uC694." : signature(e) !== shot.equipmentSignature ? "\uCC38\uC870 \uC7A5\uBE44 \uC0AC\uC591 \uBCC0\uACBD\uB428 \xB7 \uD604\uC7AC \uC0AC\uC591\uC744 \uD655\uC778\uD558\uACE0 \uC990\uACA8\uCC3E\uAE30\uB97C \uAC31\uC2E0\uD558\uC138\uC694." : "";
+}
+function parseTable(text, unit) {
+  const table = {};
+  for (const row of text.trim().split("\n")) {
+    const parts = row.split(",").map((v) => Number(v.trim()));
+    if (parts.length !== 2) throw Error("\uAC01 \uC904\uC740 \uC90Cmm,GN \uD615\uC2DD\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+    const [zoom, gn] = parts;
+    positive(zoom, gn);
+    if (String(zoom) in table) throw Error("\uC90C \uC704\uCE58\uAC00 \uC911\uBCF5\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
+    table[String(zoom)] = unit === "ft" ? feetToMetres(gn) : gn;
+  }
+  return table;
+}
+function equipmentValid(p) {
+  try {
+    if (!p.name.trim() || !p.conditions.trim() || !p.source.trim() || !Object.keys(p.table).length) return false;
+    for (const [z, g] of Object.entries(p.table)) positive(Number(z), g);
+    positive(p.minDenominator);
+    powerSteps(p.steps, p.minDenominator);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function selectedEquipment(state) {
+  return state.inputs.gnMode === "equipment" ? state.equipment.find((e) => e.id === state.inputs.equipmentId) : void 0;
+}
+function applyEquipment(state) {
+  const i = state.inputs;
+  if (i.gnMode !== "equipment") return;
+  const e = selectedEquipment(state);
+  const active = state.field?.shots.find((s) => s.id === state.field?.activeShotId);
+  const problem = active && active.values.equipmentId === i.equipmentId ? issue(state, active) : "";
+  if (problem) {
+    i.gn = 0;
+    i.gnZoom = 0;
+    i.conditions = problem;
+    i.steps = e?.steps ?? "";
+    if (e) i.minDenominator = e.minDenominator;
+    return;
+  }
+  if (!e) {
+    i.steps = "";
+    i.gn = 0;
+    i.gnZoom = 0;
+    i.conditions = "\uC120\uD0DD \uC7A5\uBE44\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC7A5\uBE44 \uC120\uD0DD \uB610\uB294 \uC218\uB3D9 \uBAA8\uB4DC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.";
+    return;
+  }
+  const g = e.table[String(i.zoom)];
+  Object.assign(i, { gn: g ?? 0, gnUnit: "m", gnZoom: g === void 0 ? 0 : i.zoom, conditions: `${e.conditions} \xB7 \uCD9C\uCC98: ${e.source}`, minDenominator: e.minDenominator, steps: e.steps });
+}
+function equipmentId(equipment) {
+  let id2 = `equipment-${Date.now().toString(36)}`, n = 1;
+  while (equipment.some((e) => e.id === id2)) id2 = `equipment-${Date.now().toString(36)}-${n++}`;
+  return id2;
+}
+function addQ20iii(state) {
+  const spec = {
+    name: "LightPix Labs FlashQ Q20III",
+    conditions: "\uC81C\uC870\uC0AC \uACF5\uCE6D GN20m \xB7 ISO100\xB7\uCD5C\uB300 \uCD9C\uB825 \xB7 \uACE0\uC815 32mm \uCEE4\uBC84\uB9AC\uC9C0 (35mm\uD310). \uC9C1\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870 \uACC4\uC0B0\uC6A9. \uB514\uD4E8\uC800\xB7\uC824 \uC190\uC2E4 \uBBF8\uCE21\uC815, \uC2E4\uCE21\uAC12 \uC544\uB2D8.",
+    source: "LightPix Labs Q20III \uC81C\uD488 \uC0AC\uC591\xB7Quick Manual: https://www.lightpixlabs.com/pages/q20iii",
+    table: { "32": 20 },
+    minDenominator: 64,
+    steps: "1,2,4,8,16,32,64"
+  };
+  let equipment = state.equipment.find((e) => e.name === spec.name && e.source === spec.source && e.conditions === spec.conditions && e.minDenominator === spec.minDenominator && e.steps === spec.steps && Object.keys(e.table).length === 1 && e.table["32"] === 20);
+  if (!equipment) {
+    equipment = { ...spec, id: equipmentId(state.equipment) };
+    state.equipment.push(equipment);
+  }
+  state.inputs.zoom = 32;
+  selectEquipment(state, equipment.id);
+  return equipment;
+}
+function manualFlash(i) {
+  return { gn: i.gn, gnUnit: i.gnUnit, gnZoom: i.gnZoom, conditions: i.conditions, minDenominator: i.minDenominator, steps: i.steps };
+}
+function selectEquipment(state, id2) {
+  if (state.field) delete state.field.activeShotId;
+  if (state.inputs.gnMode === "manual") state.manualFlash = manualFlash(state.inputs);
+  Object.assign(state.inputs, { equipmentId: id2, gnMode: "equipment" });
+  applyEquipment(state);
+}
+function setGnMode(state, mode) {
+  if (mode === state.inputs.gnMode) return;
+  if (mode === "equipment") {
+    state.manualFlash = manualFlash(state.inputs);
+    state.inputs.gnMode = mode;
+    applyEquipment(state);
+  } else {
+    state.inputs.gnMode = mode;
+    if (state.manualFlash) Object.assign(state.inputs, state.manualFlash);
+  }
+}
+
+// src/field.ts
+var shootingKeys = ["sensor", "width", "height", "focal", "aperture", "iso", "gnMode", "equipmentId", "gn", "gnUnit", "gnZoom", "zoom", "conditions", "denominator", "linked", "cocMode", "coc", "coverage", "horizontal", "vertical", "loss", "tolerance", "minDenominator", "steps", "mode"];
+var freshField = () => ({ version: 1, simple: false, shots: [], zones: [], distances: [1, 1.5, 2, 3, 5].map((metres2, n) => ({ id: `distance-${n + 1}`, metres: metres2 })) });
+function field(s) {
+  return s.field ?? (s.field = freshField());
+}
+function id() {
+  return crypto.randomUUID();
+}
+function name(value) {
+  const n = value.trim();
+  if (!n || n.length > 100) throw Error("\uC774\uB984\uC740 1~100\uC790\uB85C \uC785\uB825\uD558\uC138\uC694.");
+  return n;
+}
+function capture(s, label, distances, existingId = id()) {
+  const values = {};
+  for (const k of shootingKeys) Object.assign(values, { [k]: s.inputs[k] });
+  if (distances) Object.assign(values, { cameraDistance: s.inputs.cameraDistance, flashDistance: s.inputs.linked ? s.inputs.cameraDistance : s.inputs.flashDistance });
+  for (const v of Object.values(values)) if (typeof v === "number" && !Number.isFinite(v)) throw Error("\uBE48\uCE78 \uB610\uB294 \uC798\uBABB\uB41C \uC22B\uC790\uAC00 \uC788\uC2B5\uB2C8\uB2E4. \uC785\uB825\uC744 \uC644\uB8CC\uD558\uC138\uC694.");
+  const e = s.equipment.find((e2) => e2.id === values.equipmentId);
+  if (values.gnMode === "equipment" && e) {
+    const normalized = { ...s, inputs: { ...s.inputs }, field: void 0 };
+    applyEquipment(normalized);
+    for (const k of shootingKeys) Object.assign(values, { [k]: normalized.inputs[k] });
+  }
+  if (values.gnMode === "equipment" && !e) throw Error("\uC7A5\uBE44\uB97C \uBA3C\uC800 \uBCF5\uAD6C\uD558\uAC70\uB098 \uC218\uB3D9 GN\uC744 \uC120\uD0DD\uD558\uC138\uC694.");
+  return { id: existingId, name: name(label), values, ...values.gnMode === "equipment" && e ? { equipmentSignature: signature(e) } : {} };
+}
+function patch(i, values) {
+  const before = {}, after = {};
+  for (const k of Object.keys(values)) if (!Object.is(i[k], values[k])) {
+    Object.assign(before, { [k]: i[k] });
+    Object.assign(after, { [k]: values[k] });
+  }
+  Object.assign(i, after);
+  return { before, after };
+}
+function applyShot(s, shot) {
+  if (s.inputs.gnMode === "manual" && shot.values.gnMode === "equipment") s.manualFlash = manualFlash(s.inputs);
+  field(s).activeShotId = shot.id;
+  const values = { ...shot.values };
+  const before = { ...s.inputs };
+  Object.assign(s.inputs, values);
+  if (s.inputs.linked) s.inputs.flashDistance = s.inputs.cameraDistance;
+  applyEquipment(s);
+  const after = { ...s.inputs };
+  Object.assign(s.inputs, before);
+  return patch(s.inputs, after);
+}
+function canUndo(i, p) {
+  return Object.entries(p.after).every(([k, v]) => Object.is(i[k], v));
+}
+function undo(i, p) {
+  if (!canUndo(i, p)) return false;
+  Object.assign(i, p.before);
+  return true;
+}
+function distanceKey(i) {
+  return (i.tab === "flash" || i.tab === "combined") && !i.linked ? "flashDistance" : "cameraDistance";
+}
+function validDistance(value, others = []) {
+  if (!Number.isFinite(value) || value <= 0 || value > 1e6 || others.some((n) => Math.abs(n - value) < 1e-9)) throw Error("\uAC70\uB9AC\uB294 \uC911\uBCF5 \uC5C6\uC774 0 \uCD08\uACFC 1,000,000m \uC774\uD558\uB85C \uC785\uB825\uD558\uC138\uC694.");
+  return value;
+}
+function nextPower(i, direction) {
+  try {
+    const list = powerSteps(i.steps, i.minDenominator);
+    return direction === "weaker" ? list.find((n) => n > i.denominator) : [...list].reverse().find((n) => n < i.denominator);
+  } catch {
+    return void 0;
+  }
+}
+function restoreField(raw) {
+  const f = freshField();
+  if (!raw || typeof raw !== "object") return f;
+  const d = raw;
+  if (typeof d.version === "number" && d.version > 1) throw Error("\uB354 \uC0C8 \uD604\uC7A5 \uC124\uC815 \uC2A4\uD0A4\uB9C8\uC785\uB2C8\uB2E4. \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uB3C4\uB85D \uB85C\uB4DC\uB97C \uC911\uB2E8\uD569\uB2C8\uB2E4.");
+  if (typeof d.activeShotId === "string") f.activeShotId = d.activeShotId;
+  f.simple = d.simple === true;
+  const used = /* @__PURE__ */ new Set();
+  const identity = (x) => {
+    if (!x || typeof x.id !== "string" || !x.id || used.has(x.id)) return false;
+    used.add(x.id);
+    return true;
+  };
+  if (Array.isArray(d.distances)) {
+    f.distances = [];
+    for (const x of d.distances) if (identity(x) && typeof x.metres === "number" && Number.isFinite(x.metres) && x.metres > 0 && x.metres <= 1e6 && !f.distances.some((y) => y.metres === x.metres)) f.distances.push({ id: x.id, metres: x.metres });
+  }
+  if (Array.isArray(d.zones)) {
+    for (const x of d.zones) if (identity(x) && typeof x.name === "string" && x.name.trim() && x.name.length <= 100 && Number.isFinite(x.near) && x.near > 0 && Number.isFinite(x.far) && x.far > 0 && typeof x.infinity === "boolean" && (x.infinity || x.far > x.near)) f.zones.push({ id: x.id, name: x.name, near: x.near, far: x.far, infinity: x.infinity });
+  }
+  if (Array.isArray(d.shots)) for (const x of d.shots) {
+    if (!identity(x) || typeof x.name !== "string" || !x.name.trim() || x.name.length > 100 || !x.values || typeof x.values !== "object") continue;
+    const v = x.values;
+    const good = shootingKeys.every((k) => typeof v[k] === typeof defaults[k] && (typeof v[k] !== "number" || Number.isFinite(v[k]))) && ["manual", "equipment"].includes(v.gnMode) && ["m", "ft"].includes(v.gnUnit) && ["approx", "angles"].includes(v.coverage) && ["estimate", "custom"].includes(v.cocMode) && ["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(v.mode) && ["cameraDistance", "flashDistance"].every((k) => !(k in v) || Number.isFinite(v[k]) && Number(v[k]) > 0);
+    if (!good) continue;
+    const values = {};
+    for (const k of [...shootingKeys, "cameraDistance", "flashDistance"]) if (k in v) Object.assign(values, { [k]: v[k] });
+    f.shots.push({ id: x.id, name: x.name, values, ...typeof x.equipmentSignature === "string" ? { equipmentSignature: x.equipmentSignature } : {} });
+  }
+  return f;
+}
+
+// src/storage.ts
+function restore(data) {
+  const result = { version: 2, inputs: { ...defaults }, equipment: [], field: restoreField(void 0) };
+  if (!data || typeof data !== "object") return result;
+  const d = data;
+  if (typeof d.version === "number" && d.version > 2) throw Error("\uC774 \uB370\uC774\uD130\uB294 \uB354 \uC0C8 \uD50C\uB7EC\uADF8\uC778 \uBC84\uC804\uC5D0\uC11C \uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uB3C4\uB85D \uB85C\uB4DC\uB97C \uC911\uB2E8\uD569\uB2C8\uB2E4.");
+  if (d.version !== 2 || !d.field) result.migrationBackup = JSON.parse(JSON.stringify(data));
+  else if (d.migrationBackup) result.migrationBackup = d.migrationBackup;
+  if (d.inputs && typeof d.inputs === "object") {
+    for (const key of Object.keys(defaults)) {
+      const value = d.inputs[key];
+      if (typeof value === typeof defaults[key] && (typeof value !== "number" || Number.isFinite(value))) Object.assign(result.inputs, { [key]: value });
+    }
+  }
+  const i = result.inputs;
+  if (!["nominal", "dimensions"].includes(i.cropBasis)) i.cropBasis = "nominal";
+  if (!["current", "target"].includes(i.zoneFlow)) i.zoneFlow = "current";
+  if (typeof d.inputs === "object" && d.inputs && !("zoneFlow" in d.inputs) && !result.migrationBackup) result.migrationBackup = JSON.parse(JSON.stringify(data));
+  if (!["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(i.mode)) i.mode = "manual";
+  if (!["flash", "dof", "combined", "zone"].includes(i.tab)) i.tab = "combined";
+  if (!["m", "ft"].includes(i.gnUnit)) i.gnUnit = "m";
+  if (!["approx", "angles"].includes(i.coverage)) i.coverage = "approx";
+  if (!["estimate", "custom"].includes(i.cocMode)) i.cocMode = "estimate";
+  if (Array.isArray(d.equipment)) result.equipment = d.equipment.filter((p) => {
+    if (!p || typeof p !== "object") return false;
+    const e = p;
+    return typeof e.name === "string" && typeof e.conditions === "string" && typeof e.source === "string" && typeof e.steps === "string" && typeof e.minDenominator === "number" && !!e.table && typeof e.table === "object" && equipmentValid(e);
+  });
+  if (!["manual", "equipment"].includes(i.gnMode)) i.gnMode = "manual";
+  const used = /* @__PURE__ */ new Set();
+  result.equipment = result.equipment.map((e, n) => {
+    let id2 = typeof e.id === "string" && e.id ? e.id : `legacy-${n + 1}`;
+    while (used.has(id2)) id2 += "-copy";
+    used.add(id2);
+    return { ...e, table: { ...e.table }, id: id2 };
+  });
+  if (d.draft && typeof d.draft === "object") {
+    const draft = emptyDraft();
+    for (const k of Object.keys(draft)) if (typeof d.draft[k] === "string") Object.assign(draft, { [k]: d.draft[k] });
+    if (draft.unit !== "ft") draft.unit = "m";
+    result.draft = draft;
+  }
+  if (d.deletedEquipment && equipmentValid(d.deletedEquipment.equipment) && typeof d.deletedEquipment.equipment.id === "string") result.deletedEquipment = JSON.parse(JSON.stringify(d.deletedEquipment));
+  if (d.manualFlash && typeof d.manualFlash === "object") {
+    const m = { ...defaults };
+    for (const k of Object.keys(manualFlash(defaults))) {
+      const v = d.manualFlash[k];
+      if (typeof v === typeof defaults[k] && (typeof v !== "number" || Number.isFinite(v))) Object.assign(m, { [k]: v });
+    }
+    result.manualFlash = manualFlash(m);
+  }
+  result.field = restoreField(d.field);
+  applyEquipment(result);
+  return result;
+}
+function snapshot(state, previous) {
+  const inputs = { ...state.inputs };
+  for (const key of Object.keys(inputs)) {
+    const value = inputs[key];
+    if (typeof value === "number" && !Number.isFinite(value)) Object.assign(inputs, { [key]: previous[key] });
+  }
+  const manual = state.manualFlash ? { ...state.manualFlash } : void 0;
+  if (manual) {
+    for (const key of Object.keys(manual)) if (typeof manual[key] === "number" && !Number.isFinite(manual[key])) Object.assign(manual, { [key]: previous[key] });
+  }
+  return JSON.parse(JSON.stringify({ ...state, ...manual ? { manualFlash: manual } : {}, inputs, ...inputs.gnMode === "manual" ? { manualFlash: manualFlash(inputs) } : {} }));
+}
+
+// src/writer.ts
+var LatestWriter = class {
+  constructor(write, status = () => {
+  }) {
+    this.write = write;
+    this.status = status;
+    this.error = null;
+  }
+  request(data) {
+    this.pending = data;
+    if (!this.waiting) {
+      let resolve, reject;
+      const promise = new Promise((a, b) => {
+        resolve = a;
+        reject = b;
+      });
+      this.waiting = { promise, resolve, reject };
+    }
+    if (!this.timer && !this.running) this.timer = setTimeout(() => {
+      this.timer = void 0;
+      void this.flush().catch(() => {
+      });
+    }, 80);
+    return this.waiting.promise;
+  }
+  async flush() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = void 0;
+    }
+    if (this.running) {
+      await this.running;
+      if (this.pending !== void 0) await this.flush();
+      return;
+    }
+    if (this.pending === void 0) return;
+    const data = this.pending, waiting = this.waiting;
+    this.pending = void 0;
+    this.waiting = void 0;
+    this.running = Promise.resolve().then(() => this.write(data)).then(() => {
+      this.error = null;
+      waiting?.resolve();
+    }, (e) => {
+      if (this.pending === void 0) this.pending = data;
+      this.error = e;
+      waiting?.reject(e);
+      throw e;
+    });
+    try {
+      await this.running;
+    } finally {
+      this.running = void 0;
+      this.status();
+    }
+    if (this.pending !== void 0) await this.flush();
+  }
+};
+
+// src/view.ts
+var import_obsidian = require("obsidian");
+
+// src/zone.ts
+function equivalence(i) {
+  positive(i.width, i.height, i.focal, i.aperture);
+  const dimensional = Math.hypot(36, 24) / Math.hypot(i.width, i.height);
+  const nominal = { ff: 1, apsc: 1.5, apsc16: 1.6, mft: 2 };
+  const useNominal = i.cropBasis === "nominal" && i.sensor in nominal;
+  const crop = useNominal ? nominal[i.sensor] : dimensional;
+  const focal = i.focal * crop, aperture = i.aperture * crop;
+  positive(dimensional, crop, focal, aperture);
+  return {
+    crop,
+    dimensional,
+    basis: useNominal ? "\uBA85\uBAA9 \uACC4\uC218" : "\uC2E4\uCE58\uC218 \uB300\uAC01 \uBE44\uC728",
+    focal,
+    aperture,
+    differentAspect: Math.abs(i.width / i.height - 1.5) > 1e-3,
+    comparable: i.cocMode === "estimate"
+  };
+}
+function zoneTarget(i) {
+  positive(i.zoneNear, i.focal);
+  if (i.zoneNear * 1e3 <= i.focal) throw Error("\uBAA9\uD45C \uADFC\uAC70\uB9AC\uB294 \uC2E4\uC81C \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4.");
+  if (!i.zoneInfinity) {
+    positive(i.zoneFar);
+    if (i.zoneNear >= i.zoneFar) throw Error("\uBAA9\uD45C \uADFC\uAC70\uB9AC\uB294 \uC6D0\uAC70\uB9AC\uBCF4\uB2E4 \uC791\uC544\uC57C \uD569\uB2C8\uB2E4.");
+  }
+  return { near: i.zoneNear, far: i.zoneInfinity ? Infinity : i.zoneFar };
+}
+function includesTarget(o, t) {
+  const le = (a, b) => a <= b || Number.isFinite(a) && Number.isFinite(b) && a - b <= 16 * Number.EPSILON * Math.max(Math.abs(a), Math.abs(b));
+  return le(o.near, t.near) && (t.far === Infinity ? o.far === Infinity : le(t.far, o.far));
+}
+function solveZone(i) {
+  const target = zoneTarget(i);
+  positive(i.apertureMin, i.apertureMax);
+  if (i.apertureMin > i.apertureMax) throw Error("\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12\uC740 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12 \uC774\uD558\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  const c = i.cocMode === "estimate" ? Math.hypot(i.width, i.height) / 1500 : i.coc;
+  positive(i.width, i.height, c);
+  const a = target.near * 1e3, b = target.far * 1e3, f = i.focal;
+  positive(a);
+  if (!i.zoneInfinity) positive(b);
+  const focus = target.far === Infinity ? 2 * a : 2 * a / (1 + a / b);
+  const h = target.far === Infinity ? 2 * a - f : (2 * a - f * (1 + a / b)) / (1 - a / b);
+  positive(h, focus);
+  const required = f * f / (c * h);
+  positive(required);
+  const raw = i.apertureSteps.split(",").map((v) => v.trim());
+  if (raw.some((v) => !v || !Number.isFinite(Number(v)) || Number(v) <= 0)) throw Error("\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4\uB97C \uC591\uC218 f\uAC12\uC73C\uB85C \uC785\uB825\uD558\uC138\uC694.");
+  const steps = [...new Set(raw.map(Number))].filter((v) => v >= i.apertureMin && v <= i.apertureMax).sort((a2, b2) => a2 - b2);
+  if (!steps.length) throw Error("\uB80C\uC988 \uBC94\uC704 \uC548\uC5D0 \uC120\uD0DD \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  for (const aperture2 of steps) {
+    const cameraDistance2 = target.far === Infinity ? (f * f / (aperture2 * c) + f) / 1e3 : focus / 1e3;
+    const actual = optics({ ...i, aperture: aperture2, cameraDistance: cameraDistance2 });
+    if (includesTarget(actual, target)) return { possible: true, aperture: aperture2, cameraDistance: cameraDistance2, actual, required, target };
+  }
+  const aperture = steps[steps.length - 1];
+  const cameraDistance = target.far === Infinity ? (f * f / (aperture * c) + f) / 1e3 : focus / 1e3;
+  return { possible: false, aperture, cameraDistance, actual: optics({ ...i, aperture, cameraDistance }), required, target };
+}
+
+// src/diagram.ts
+var ns = "http://www.w3.org/2000/svg";
+var SCENE = { width: 400, start: 54, end: 382 };
+var nextId = 0;
+function sceneDistance(x, max, focal) {
+  return Math.max(focal / 1e3 + 1e-3, Math.min(max, (x - SCENE.start) / (SCENE.end - SCENE.start) * max));
+}
+function diagram(host, i) {
+  host.replaceChildren();
+  if (!Number.isFinite(i.diagramMax) || i.diagramMax <= 0) {
+    const p = document.createElement("p");
+    p.textContent = "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC\uB97C \uC591\uC218\uB85C \uC785\uB825\uD558\uC138\uC694.";
+    host.append(p);
+    return;
+  }
+  const showDof = i.tab !== "flash", showFlash = i.tab !== "dof" && i.tab !== "zone";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 400 ${showFlash ? 260 : 212}`);
+  svg.setAttribute("role", "group");
+  svg.setAttribute("aria-label", "\uCE74\uBA54\uB77C\uC640 \uD53C\uC0AC\uCCB4, \uB80C\uC988 \uD654\uAC01\uACFC \uC2EC\uB3C4\uB97C \uD568\uAED8 \uBCF4\uB294 \uCD2C\uC601 \uC7A5\uBA74");
+  svg.dataset.scene = "true";
+  host.append(svg);
+  function el(tag, attrs, text, parent = svg) {
+    const n = document.createElementNS(ns, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    if (text !== void 0) n.textContent = text;
+    parent.append(n);
+    return n;
+  }
+  const id2 = `pfm-scene-${++nextId}`, defs = el("defs", {}), clip = el("clipPath", { id: id2 + "-clip" }, void 0, defs);
+  el("rect", { x: SCENE.start, y: 24, width: SCENE.end - SCENE.start, height: 140 }, void 0, clip);
+  const pattern = el("pattern", { id: id2 + "-hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse" }, void 0, defs);
+  el("path", { d: "M0 7 L7 0", stroke: "var(--text-accent)", "stroke-width": 1.2 }, void 0, pattern);
+  const x = (d) => SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(d / i.diagramMax, 1));
+  const out = (d) => `${d > i.diagramMax && Number.isFinite(d) ? "\u2192 " : ""}${metres(d)}`;
+  const cone = (degrees, cl) => {
+    const half = (SCENE.end - SCENE.start) * Math.tan(degrees * Math.PI / 360);
+    el("path", { d: `M${SCENE.start} 92 L${SCENE.end} ${92 - half} L${SCENE.end} ${92 + half} Z`, class: cl, "clip-path": `url(#${id2}-clip)` });
+  };
+  try {
+    const o = optics(i);
+    cone(o.vertical, "pfm-camera-cone");
+    if (showDof) {
+      el("rect", { x: x(o.near), y: 24, width: Math.max(0, x(o.far) - x(o.near)), height: 140, class: "pfm-dof-zone" });
+      for (const d of [o.near, o.far]) el("line", { x1: x(d), x2: x(d), y1: 24, y2: 164, class: "pfm-dof-limit" });
+    }
+  } catch {
+    el("text", { x: 70, y: 65 }, "\uB80C\uC988\xB7\uCD08\uC810 \uC785\uB825\uC744 \uD655\uC778\uD558\uC138\uC694.");
+  }
+  if (i.tab === "zone" && i.zoneFlow === "target") try {
+    const t = zoneTarget(i);
+    el("rect", { x: x(t.near), y: 145, width: Math.max(0, x(t.far) - x(t.near)), height: 13, fill: `url(#${id2}-hatch)`, class: "pfm-target-zone" });
+    el("text", { x: SCENE.start, y: 57, class: "pfm-axis-label" }, "\uBAA9\uD45C \uAD6C\uAC04 \xB7 \uBE57\uAE08");
+  } catch {
+  }
+  if (showFlash && i.linked) try {
+    cone(coverage(i).v, "pfm-flash-cone");
+  } catch {
+  }
+  el("line", { x1: 4, x2: 390, y1: 164, y2: 164, class: "pfm-ground" });
+  const photographer = el("g", { class: "pfm-person" });
+  el("circle", { cx: 24, cy: 75, r: 8 }, void 0, photographer);
+  el("path", { d: "M22 88 L15 116 L9 151 M15 116 L31 151 M22 91 L36 99 L42 87", fill: "none", stroke: "currentColor", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, void 0, photographer);
+  el("rect", { x: 35, y: 80, width: 17, height: 13, rx: 2 }, void 0, photographer);
+  el("rect", { x: 49, y: 83, width: 7, height: 7 }, void 0, photographer);
+  el("text", { x: 6, y: 16, class: "pfm-scene-lens" }, `${fmt(i.focal)} mm \xB7 f/${fmt(i.aperture)}`);
+  const subject = x(Number.isFinite(i.cameraDistance) && i.cameraDistance > 0 ? i.cameraDistance : 0);
+  el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-line" });
+  const person = el("g", { transform: `translate(${subject},0)`, class: "pfm-person pfm-subject", "data-pfm-subject": "true", tabindex: 0, role: "slider", "aria-label": "\uD53C\uC0AC\uCCB4 \uAC70\uB9AC \xB7 \uC88C\uC6B0 \uB4DC\uB798\uADF8 \uB610\uB294 \uD654\uC0B4\uD45C \uD0A4\uB85C \uC870\uC808", "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0, "aria-valuemin": Number.isFinite(i.focal) ? i.focal / 1e3 + 1e-3 : 1e-3, "aria-valuemax": Math.max(i.diagramMax, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0), "aria-valuetext": metres(i.cameraDistance) });
+  el("rect", { x: -26, y: 68, width: 52, height: 102, fill: "transparent" }, void 0, person);
+  el("circle", { cx: 0, cy: 82, r: 8 }, void 0, person);
+  el("path", { d: "M0 96 L0 129 M-13 113 L0 100 L13 113 M0 129 L-10 155 M0 129 L10 155", fill: "none", stroke: "currentColor", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, void 0, person);
+  el("circle", { cx: 0, cy: 177, r: 5, class: "pfm-focus-dot" }, void 0, person);
+  el("text", { x: Math.max(92, Math.min(subject, 340)), y: 38, "text-anchor": "middle", class: "pfm-subject-label" }, `${i.tab === "zone" ? "\uCD08\uC810" : "\uD53C\uC0AC\uCCB4"} ${i.cameraDistance > i.diagramMax ? "\u2192 \uADF8\uB9BC \uBC16" : out(i.cameraDistance)}`);
+  el("line", { x1: SCENE.start, x2: SCENE.end, y1: 192, y2: 192, class: "pfm-distance-axis" });
+  for (let n = 0; n <= 4; n++) {
+    const d = i.diagramMax * n / 4;
+    el("line", { x1: x(d), x2: x(d), y1: 189, y2: 195, class: "pfm-distance-axis" });
+    el("text", { x: x(d), y: 208, "text-anchor": n === 4 ? "end" : "middle", class: "pfm-axis-label" }, metres(d, 1));
+  }
+  if (showFlash) try {
+    const f = flash(i);
+    const y = 228;
+    el("rect", { x: SCENE.start, y, width: x(f.low) - SCENE.start, height: 12, class: "pfm-over-zone" });
+    el("rect", { x: x(f.low), y, width: x(f.high) - x(f.low), height: 12, fill: `url(#${id2}-hatch)` });
+    el("rect", { x: x(f.high), y, width: SCENE.end - x(f.high), height: 12, class: "pfm-under-zone" });
+    el("line", { x1: x(f.r), x2: x(f.r), y1: y - 5, y2: y + 17, class: "pfm-flash-marker" });
+    el("text", { x: SCENE.start, y: 257, class: "pfm-axis-label" }, `${i.linked ? "\uD50C\uB798\uC2DC" : "\uD50C\uB798\uC2DC \uB3C5\uB9BD \uAC70\uB9AC \uCD95"} \xB7 \uD5C8\uC6A9 ${out(f.low)} ~ ${out(f.high)}`);
+  } catch {
+    el("text", { x: SCENE.start, y: 243, class: "pfm-axis-label" }, "\uD50C\uB798\uC2DC \uAC70\uB9AC: \uD604\uC7AC \uC870\uAC74\uC5D0\uC11C \uACC4\uC0B0 \uBD88\uAC00");
+  }
+  const legend = document.createElement("figcaption");
+  legend.className = "pfm-scene-legend";
+  const items = [["pfm-key-camera", "\uCE74\uBA54\uB77C \uD654\uAC01"], ...showDof ? [["pfm-key-dof", "\uC2E4\uC81C \uC2EC\uB3C4 \xB7 \uC2E4\uC120"]] : [], ...i.tab === "zone" && i.zoneFlow === "target" ? [["pfm-key-target", "\uBAA9\uD45C \uAD6C\uAC04 \xB7 \uBE57\uAE08"]] : [], ...showFlash && i.linked ? [["pfm-key-flash", "\uD50C\uB798\uC2DC \uC870\uC0AC\uAC01"]] : []];
+  for (const [cls, text] of items) {
+    const label = document.createElement("span");
+    label.className = cls;
+    label.textContent = text;
+    legend.append(label);
+  }
+  host.append(legend);
+  if (i.tab === "zone" && i.zoneFlow === "target") try {
+    const t = zoneTarget(i), p = document.createElement("p");
+    p.className = "pfm-scene-note";
+    p.textContent = `\uBAA9\uD45C \uAD6C\uAC04 \xB7 \uBE57\uAE08 ${out(t.near)} ~ ${out(t.far)} \xB7 \uC2E4\uC81C \uC2EC\uB3C4\uB294 \uC2E4\uC120`;
+    host.append(p);
+  } catch {
+  }
+  const hint = document.createElement("p");
+  hint.className = "pfm-scene-hint";
+  hint.textContent = "\uD53C\uC0AC\uCCB4 \uB4DC\uB798\uADF8 \xB7 \uAC70\uB9AC \uC9C1\uC811 \uC785\uB825";
+  host.append(hint);
+  if (showFlash) {
+    const p = document.createElement("p");
+    p.className = "pfm-scene-note";
+    p.textContent = i.linked ? "\uD50C\uB798\uC2DC \uB760: \uC810\uC120=\uACFC\uB2E4 \xB7 \uBE57\uAE08=\uD5C8\uC6A9 \xB7 \uD30C\uC120=\uBD80\uC871 (\uBC30\uAD11 \uC544\uB2D8)" : "\uC624\uD504\uCE74\uBA54\uB77C: \uC704\uCE58\xB7\uBC29\uD5A5 \uBBF8\uC785\uB825. \uD50C\uB798\uC2DC \uAC70\uB9AC\uC640 \uCE74\uBA54\uB77C \uC7A5\uBA74\uC740 \uB3C5\uB9BD \uACC4\uC0B0\uC785\uB2C8\uB2E4.";
+    host.append(p);
+  }
+  try {
+    const o = optics(i);
+    if (showDof && (o.near > i.diagramMax || o.far > i.diagramMax)) {
+      const p = document.createElement("p");
+      p.className = "pfm-scene-note";
+      p.textContent = `\uADF8\uB9BC \uBC16 \uC2EC\uB3C4: ${out(o.near)} ~ ${out(o.far)}`;
+      host.append(p);
+    }
+  } catch {
+  }
+}
+
+// src/note.ts
+var limitations = "\uC218\uB3D9 \uD50C\uB798\uC2DC\xB7\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870\xB7\uC911\uC2EC\uBD80 \uB178\uCD9C\uC758 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC810\uAD11\uC6D0 \uC5ED\uC81C\uACF1 \uADFC\uC0AC\uC774\uBA70 \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC5D0\uB294 \uBD80\uC801\uC808\uD569\uB2C8\uB2E4. \uC2E4\uC81C \uBC30\uAD11\xB7\uBC18\uC0AC\uC728\xB7\uD658\uACBD\uAD11\xB7\uC7A5\uBE44 \uD3B8\uCC28\uB97C \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. TTL, HSS, \uBC14\uC6B4\uC2A4, \uC18C\uD504\uD2B8\uBC15\uC2A4, \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC740 \uC774 \uAE30\uBCF8 \uBAA8\uB378\uB85C \uD655\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC190\uC2E4 \uBCF4\uC815\uC740 \uCD94\uC815\uC774\uBA70 GN\uC5D0 \uC774\uBBF8 \uD3EC\uD568\uB41C \uC190\uC2E4\uC744 \uC911\uBCF5 \uC801\uC6A9\uD558\uC9C0 \uB9C8\uC138\uC694.";
+function validateNote(i, scope = "all") {
+  if (scope !== "flash") optics(i);
+  if (scope === "zone" && i.zoneFlow === "target") solveZone(i);
+  if (scope !== "dof" && scope !== "zone") flash(i);
+  if (scope === "all" || scope === "combined") coverage(i);
+}
+function note(i, date = /* @__PURE__ */ new Date(), context) {
+  const scope = context?.scope ?? "all";
+  const lines = ["# \uC0AC\uC9C4 \uCD2C\uC601 \uACC4\uC0B0", `
+\uB0A0\uC9DC: ${date.toISOString()} (${date.toLocaleString("ko-KR")}, \uAE30\uAE30 \uD604\uC9C0 \uC2DC\uAC01)`, `
+## \uC785\uB825\uAC12
+`, `| \uD56D\uBAA9 | \uAC12 |`, `| --- | --- |`];
+  lines.push(`\uC800\uC7A5 \uBC94\uC704: ${scope === "zone" ? "\uD604\uC7AC \uD0ED \xB7 \uC874 \uD3EC\uCEE4\uC2F1 (\uD50C\uB798\uC2DC \uC81C\uC678)" : scope === "dof" ? "\uD604\uC7AC \uD0ED \xB7 \uC2EC\uB3C4\xB7\uD654\uAC01 (\uD50C\uB798\uC2DC\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "flash" ? "\uD604\uC7AC \uD0ED \xB7 \uD50C\uB798\uC2DC (\uC2EC\uB3C4\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "combined" ? "\uD604\uC7AC \uD0ED \xB7 \uD1B5\uD569 (\uC804\uCCB4 \uACC4\uC0B0)" : "\uC804\uCCB4 \uACC4\uC0B0"}`);
+  lines.push(`\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804: ${context?.version ?? "\uAC1C\uBC1C/\uBBF8\uC9C0\uC815"}`, `GN \uC785\uB825 \uBAA8\uB4DC: ${i.gnMode === "equipment" ? "\uC7A5\uBE44 \uD45C" : "\uC218\uB3D9 GN"}`, `\uC120\uD0DD \uC7A5\uBE44: ${context?.equipment?.name ?? "\uC5C6\uC74C \xB7 \uC218\uB3D9 GN"}`, `\uC7A5\uBE44 \uCD9C\uCC98: ${context?.equipment?.source ?? "GN \uC870\uAC74 \uCC38\uC870"}`);
+  const labels = { gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44 ID (\uC218\uB3D9 \uBAA8\uB4DC\uC5D0\uC11C\uB294 \uC801\uC6A9 \uC548 \uD568)", sensor: "\uC13C\uC11C \uD504\uB9AC\uC14B", width: "\uC13C\uC11C \uAC00\uB85C mm", height: "\uC13C\uC11C \uC138\uB85C mm", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC mm", aperture: "\uC870\uB9AC\uAC1C f/", iso: "ISO", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC m", linked: "\uC628\uCE74\uBA54\uB77C \uC5F0\uB3D9", flashDistance: "\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC m", cocMode: "CoC \uBC29\uC2DD", coc: "\uC0AC\uC6A9\uC790 CoC mm", gn: "ISO100 \uCD5C\uB300 \uCD9C\uB825 GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C mm", zoom: "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C mm", conditions: "GN \uC870\uAC74", denominator: "\uCD9C\uB825 1/n\uC758 n", loss: "\uCD94\uAC00 \uC190\uC2E4 stop", tolerance: "\uD5C8\uC6A9 \uC624\uCC28 \xB1EV", minDenominator: "\uCD5C\uC18C \uCD9C\uB825 1/n\uC758 n", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coverage: "\uC870\uC0AC\uAC01 \uBC29\uC2DD (approx=\uD480\uD504\uB808\uC784 \uAC00\uC815)", horizontal: "\uC9C1\uC811 \uC785\uB825 \uC218\uD3C9 \uC870\uC0AC\uAC01 \xB0", vertical: "\uC9C1\uC811 \uC785\uB825 \uC218\uC9C1 \uC870\uC0AC\uAC01 \xB0", mode: "\uBC1C\uAD11 \uC870\uAC74", diagramMax: "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC m", tab: "\uD654\uBA74", cropBasis: "\uD658\uC0B0 \uAE30\uC900", zoneFlow: "\uC874 \uD750\uB984", zoneNear: "\uBAA9\uD45C \uADFC\uAC70\uB9AC m", zoneFar: "\uBAA9\uD45C \uC720\uD55C \uC6D0\uAC70\uB9AC m (\uBB34\uD55C\uB300 \uC120\uD0DD \uC2DC \uBBF8\uC0AC\uC6A9)", zoneInfinity: "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300", apertureMin: "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12", apertureMax: "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12", apertureSteps: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC2E4\uC81C \uC870\uB9AC\uAC1C \uB2E8\uACC4" };
+  const opticalKeys = /* @__PURE__ */ new Set(["sensor", "width", "height", "focal", "aperture", "cameraDistance", "cocMode", "coc", "tab", "cropBasis"]);
+  const flashKeys = /* @__PURE__ */ new Set(["gnMode", "equipmentId", "aperture", "iso", "linked", "cameraDistance", "flashDistance", "gn", "gnUnit", "gnZoom", "zoom", "conditions", "denominator", "loss", "tolerance", "minDenominator", "steps", "mode", "tab"]);
+  for (const key of Object.keys(labels)) {
+    if ((scope === "dof" || scope === "zone") && !opticalKeys.has(key) && !["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity", "apertureMin", "apertureMax", "apertureSteps"].includes(key) || scope === "flash" && !flashKeys.has(key)) continue;
+    lines.push(`| ${labels[key]} | ${String(key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode === "estimate" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" ? "\uBBF8\uC0AC\uC6A9" : i[key]).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
+  }
+  lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n", "\uAC70\uB9AC \uACB0\uACFC\uB294 1m \uC774\uD558\uC5D0\uC11C cm\uB85C \uC790\uB3D9 \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uC704 \uC785\uB825\uD45C\uC640 \uB0B4\uBD80 \uC800\uC7A5\uC758 \uAC70\uB9AC\uB294 \uC7AC\uD604\uC744 \uC704\uD574 m\uB97C \uC720\uC9C0\uD569\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD569\uB2C8\uB2E4. \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC774\uBBC0\uB85C \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+  if (scope !== "dof" && scope !== "zone") try {
+    const f = flash(i);
+    lines.push(`- \uC120\uD0DD \uCD9C\uB825 1/${i.denominator}: **${f.powerLabel}**`, `- \uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC: ${metres(f.d)}`, `- \uD50C\uB798\uC2DC\u2013\uD53C\uC0AC\uCCB4 \uAC70\uB9AC: ${metres(f.r)} \xB7 \uB178\uCD9C \uCC28\uC774: ${fmt(f.ev)} EV (${f.ev > 0 ? "\uC608\uC0C1 \uACFC\uB2E4" : f.ev < 0 ? "\uC608\uC0C1 \uBD80\uC871" : "\uAE30\uC900 \uC801\uC815"})`, `- \uC720\uD6A8 GN(m): ${fmt(f.gn)}`, `- \xB1${i.tolerance}EV \uAC70\uB9AC \uAD6C\uAC04: ${metres(f.low)} ~ ${metres(f.high)}`, `- \uD544\uC694\uD55C \uC870\uB9AC\uAC1C f/${fmt(f.requiredAperture)} \xB7 \uD544\uC694 \uCD9C\uB825 ${fmt(f.needed * 100)}% \xB7 ${f.status}`, `- \uAD8C\uC7A5 \uC9C0\uC6D0 \uB2E8\uACC4 1/${f.nearest} \xB7 \uD574\uB2F9 \uB2E8\uACC4 \uC608\uC0C1 \uAC70\uB9AC ${metres(f.nearestDistance)}, \uB0A8\uB294 \uB178\uCD9C \uC624\uCC28 ${fmt(f.residual)} EV`);
+    lines.push("\n### \uCD9C\uB825\uBCC4 \uAC70\uB9AC\n", "| \uCD9C\uB825 | \uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC |", "| --- | --- |", ...f.distances.map((x) => `| 1/${x.n} | ${metres(x.d)} |`));
+  } catch (e) {
+    lines.push(`- \uD50C\uB798\uC2DC \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (scope !== "flash") try {
+    const o = optics(i);
+    lines.push(`
+- \uC2EC\uB3C4 \uADFC\uAC70\uB9AC ${metres(o.near)} / \uC6D0\uAC70\uB9AC ${metres(o.far)} / \uC804\uCCB4 ${metres(o.total)}`, `- \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(o.hyperfocal)} \xB7 CoC ${fmt(o.c, 5)} mm`, `- \uC218\uD3C9/\uC218\uC9C1/\uB300\uAC01 \uD654\uAC01 ${fmt(o.horizontal)}\xB0 / ${fmt(o.vertical)}\xB0 / ${fmt(o.diagonal)}\xB0`, `- \uC2E4\uCE58\uC218 \uB300\uAC01 \uAE30\uC900 \uD480\uD504\uB808\uC784 \uD658\uC0B0 \uCD08\uC810\uAC70\uB9AC ${fmt(o.equivalent)} mm`, `- \uD68C\uC808 Airy \uC9C0\uB984 (\uD30C\uC7A5 550nm) ${fmt(o.airy, 5)} mm, CoC \uB300\uBE44 ${fmt(o.airy / o.c)}\uBC30 (\uADFC\uC0AC)`);
+  } catch (e) {
+    lines.push(`- \uAD11\uD559 \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (scope !== "flash") try {
+    const e = equivalence(i);
+    lines.push(`
+## \uD480\uD504\uB808\uC784 \uD658\uC0B0
+- ${e.basis} ${fmt(e.crop, 4)}\xD7 \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7`, `- \uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)} \u2192 \uD654\uAC01 \uD658\uC0B0 ${fmt(e.focal)}mm \xB7 \uC2EC\uB3C4 \uB300\uC751 \uC57D f/${fmt(e.aperture)}`, "- \uC2E4\uC81C \uB178\uCD9C \uC870\uB9AC\uAC1C\uB294 \uADF8\uB300\uB85C\uC785\uB2C8\uB2E4. \uAC19\uC740 \uC704\uCE58\xB7\uAD6C\uB3C4\xB7\uBE44\uAD50 \uAC10\uC0C1 \uC870\uAC74\uC758 \uADFC\uC0AC\uC774\uBA70 \uADFC\uC811 \uCD2C\uC601\xB7\uBE0C\uB9AC\uB529\xB7\uD654\uBA74\uBE44 \uCC28\uC774\uB294 \uBBF8\uBC18\uC601.", i.cocMode === "custom" ? "- \uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC: \uC815\uD655\uD55C \uC2EC\uB3C4 \uC77C\uCE58 \uC544\uB2D8." : "- CoC\uB294 \uC13C\uC11C \uB300\uAC01/1500. \uD480\uD504\uB808\uC784 CoC\uB3C4 \uB300\uC751\uC2DC\uCF1C \uBE44\uAD50\uD574\uC57C \uD569\uB2C8\uB2E4. \uBA85\uBAA9/\uC2E4\uCE58\uC218 \uCC28\uC774 \uC874\uC7AC.");
+    if (i.zoneFlow === "target") {
+      const r = solveZone(i);
+      lines.push("\n## \uC874 \uD3EC\uCEE4\uC2F1 \uC5ED\uC0B0", `- \uBAA9\uD45C ${metres(r.target.near)} ~ ${metres(r.target.far)}`, `- ${r.possible ? "\uC81C\uC548 \uAC00\uB2A5" : "\uB2EC\uC131 \uBD88\uAC00 \xB7 \uC870\uB9AC\uAC1C \uC81C\uD55C"}: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(r.cameraDistance)}, \uC2E4\uC81C f/${fmt(r.aperture)}`, `- \uC81C\uC548 \uAC80\uC0B0 ${metres(r.actual.near)} ~ ${metres(r.actual.far)} \xB7 \uC774\uB860 \uD544\uC694 f/${fmt(r.required, 4)}`);
+    }
+    lines.push("- \uC5ED\uC0B0 \uAC00\uC815: \uC720\uD55C \uAD6C\uAC04 a,b\uC5D0\uC11C s=2ab/(a+b), h=(2ab\u2212f(a+b))/(b\u2212a), N=f\xB2/(c\xB7h). \uBB34\uD55C\uB300\uB294 H\u22642a, \uC801\uC6A9 \uCD08\uC810=H. \uC2E4\uC81C \uC0AC\uC6A9 \uB2E8\uACC4 \uC911 \uAC00\uC7A5 \uAC1C\uBC29\uB41C \uC870\uB9AC\uAC1C\uBD80\uD130 \uAE30\uC874 \uC2EC\uB3C4 \uC5D4\uC9C4\uC73C\uB85C \uC7AC\uAC80\uC0B0. CoC \uD5C8\uC6A9 \uBC94\uC704\uC774\uBA70 \uC808\uB300 \uC120\uBA85\uB3C4 \uACBD\uACC4 \uC544\uB2D8.");
+  } catch (e) {
+    lines.push(`- \uC874/\uD658\uC0B0 \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (scope === "all" || scope === "combined") try {
+    const c = coverage(i);
+    lines.push(`- \uCE74\uBA54\uB77C \uD504\uB808\uC784 ${metres(c.camera.width)} \xD7 ${metres(c.camera.height)} (\uCE74\uBA54\uB77C \uAC70\uB9AC \uD3C9\uBA74)`, `- \uD50C\uB798\uC2DC \uC870\uC0AC \uBC94\uC704 ${metres(c.flash.width)} \xD7 ${metres(c.flash.height)} (\uD50C\uB798\uC2DC \uAC70\uB9AC \uD3C9\uBA74)`, `- \uC870\uC0AC\uAC01 ${fmt(c.h)}\xB0 \xD7 ${fmt(c.v)}\xB0 \xB7 ${i.coverage === "approx" ? "\uD480\uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815, \uC81C\uC870\uC0AC \uC0AC\uC591 \uC544\uB2D8" : "\uC218\uB3D9 \uC785\uB825 \uC870\uC0AC\uAC01"}`, `- ${i.linked ? c.narrow ? "\uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131" : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815\uC758 \uBC94\uC704 \uBE44\uAD50" : "\uC624\uD504\uCE74\uBA54\uB77C: \uC704\uCE58\xB7\uBC29\uD5A5 \uBBF8\uC785\uB825, \uACF5\uAC04 \uC911\uCCA9 \uBE44\uAD50 \uBD88\uAC00"}`);
+  } catch (e) {
+    lines.push(`- \uC870\uC0AC \uBC94\uC704 \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  lines.push(
+    "\n## \uC870\uAC74\uACFC \uD55C\uACC4\n",
+    limitations,
+    "\uBE5B\uC740 \uC608\uC0C1 \uAC70\uB9AC\uC5D0\uC11C \uB05D\uB098\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uAC00\uAE4C\uC6B0\uBA74 \uACFC\uB2E4 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4. CoC=\uC13C\uC11C \uB300\uAC01/1500\uC740 \uAC10\uC0C1 \uD06C\uAE30\xB7\uC2DC\uB825\xB7\uD655\uB300\uC728\uC5D0 \uC758\uC874\uD558\uB294 \uACBD\uD5D8\uC801 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC9C1\uC120\uD22C\uC601 \uBC15\uB9C9\uB80C\uC988 \uBAA8\uB378\uC774\uBA70 \uADFC\uC811 \uCD2C\uC601\xB7\uD3EC\uCEE4\uC2A4 \uBE0C\uB9AC\uB529\xB7\uB3D9\uACF5 \uBC30\uC728\uC740 \uBC18\uC601\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+    "\n## \uACF5\uC2DD\n",
+    "\uC720\uD6A8 GN = G\u221Ap\u221A(ISO/100) \xD7 2^(\u2212L/2), d = \uC720\uD6A8 GN/N, \uD544\uC694 p = (Nr/G)\xB2(100/ISO)2^L, EV = 2log\u2082(d/r).",
+    "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f, Dnear=h\xB7s/(h+s\u2212f), Dfar=h\xB7s/(h\u2212s+f); s\u2265H\uC774\uBA74 \uC6D0\uAC70\uB9AC \u221E. \uAD11\uD559 \uAE38\uC774\uB294 mm\uB85C \uD1B5\uC77C \uD6C4 m\uB85C \uD45C\uC2DC. s\uB294 \uBC15\uB9C9\uB80C\uC988 \uC8FC\uD3C9\uBA74\uC5D0\uC11C \uD53C\uC0AC\uCCB4\uAE4C\uC9C0\uC758 \uAC70\uB9AC\uC774\uBA70 \uCE74\uBA54\uB77C \uC13C\uC11C\uBA74 \uAC70\uB9AC\uC640 \uB2E4\uB985\uB2C8\uB2E4. \uD654\uAC01\xB7\uD504\uB808\uC784\uC740 \uBB34\uD55C\uB300 \uCD08\uC810\uC758 \uC9C1\uC120\uD22C\uC601 \uADFC\uC0AC\uB85C \uADFC\uC811 \uCD2C\uC601\uC758 \uBC30\uC728 \uBCC0\uD654\uB294 \uBBF8\uBC18\uC601\uD569\uB2C8\uB2E4.",
+    "\n## \uCD9C\uCC98\n",
+    "\uC2EC\uB3C4\xB7\uD654\uAC01 \uD45C\uD604\uC758 \uAE30\uBC18: [depth-of-field](https://github.com/jherr/depth-of-field), Jack Herrington, Copyright (c) 2026 Jack Herrington, MIT. \uCC38\uACE0 SHA c75dd6d40e4a96e96fd38e57657fe4b9737bf776. \uBAA8\uBC14\uC77C\uC6A9 \uC7AC\uAD6C\uD604\xB7\uC218\uC815 \uBC0F \uD50C\uB798\uC2DC \uD655\uC7A5. \uACF5\uC2DD\xB7\uD6C4\uC6D0 \uD50C\uB7EC\uADF8\uC778\uC774 \uC544\uB2D9\uB2C8\uB2E4.",
+    "[\uB80C\uC988 \uACB0\uC0C1\xB7\uCC29\uB780\uC6D0 MIT](https://people.csail.mit.edu/fredo/comp-photo-book/02-fundamentals-03-lens-image-formation.html) \xB7 [\uD654\uAC01 Edmund Optics](https://www.edmundoptics.com/knowledge-center/application-notes/imaging/understanding-focal-length-and-field-of-view/) \xB7 [Airy \uC9C0\uB984 Edmund Optics](https://www.edmundoptics.com/knowledge-center/application-notes/imaging/limitations-on-resolution-and-contrast-the-airy-disk/) \xB7 [GN \uAE30\uBCF8 \uAD00\uACC4 Nikon](https://download.nikonimglib.com/archive2/rOYAB007rd7k028ePIg11W7lyc97/SB-500_CH%28En%2904.pdf)"
+  );
+  return lines.join("\n") + "\n";
+}
+
+// src/view.ts
+var VIEW = "photo-field-mobile";
+var nextControlId = 0;
+function node(parent, tag, text, cls) {
+  const e = document.createElement(tag);
+  if (text !== void 0) e.textContent = text;
+  if (cls) e.className = cls;
+  parent.append(e);
+  return e;
+}
+var PhotoView = class extends import_obsidian.ItemView {
+  constructor(leaf, plugin) {
+    super(leaf);
+    this.plugin = plugin;
+    this.aborters = [];
+    this.gnDisplayUnit = "m";
+    this.detailState = /* @__PURE__ */ new Map();
+    this.shotChanges = "";
+    this.fieldMessage = "";
+    this.numeric = /* @__PURE__ */ new Map();
+  }
+  fieldButton(parent, text, fn) {
+    const b = node(parent, "button", text);
+    b.type = "button";
+    b.onclick = fn;
+    return b;
+  }
+  closeFieldManager() {
+    const d = this.fieldExtras?.querySelector("details");
+    if (d) d.open = false;
+    this.detailState.set("\uC990\uACA8\uCC3E\uAE30\xB7\uB0B4 \uAC70\uB9AC \uAD00\uB9AC", false);
+  }
+  fieldAction(fn) {
+    try {
+      fn();
+      this.changed();
+      this.render();
+    } catch (e) {
+      this.plugin.report(e);
+    }
+  }
+  fieldPanel() {
+    const s = this.plugin.state, f = field(s), i = s.inputs;
+    const bar = node(this.root, "nav", void 0, "pfm-field-viewbar");
+    const mode = this.fieldButton(bar, f.simple ? "\uC0C1\uC138 \uD654\uBA74\uC73C\uB85C" : "\uD604\uC7A5 \uAC04\uD3B8 \uD654\uBA74\uC73C\uB85C", () => this.fieldAction(() => {
+      f.simple = !f.simple;
+      if (f.simple) this.closeFieldManager();
+    }));
+    mode.dataset.fieldMode = "true";
+    this.fieldButton(bar, "\uC990\uACA8\uCC3E\uAE30\xB7\uAC70\uB9AC \uAD00\uB9AC", () => {
+      const d = this.fieldExtras.querySelector("details");
+      if (d) {
+        d.open = true;
+        d.scrollIntoView({ block: "start" });
+        d.querySelector("summary")?.focus({ preventScroll: true });
+      }
+    });
+    this.fieldHost = node(this.root, "section", void 0, "pfm-field-tools");
+  }
+  paintField() {
+    const s = this.plugin.state, f = field(s), i = s.inputs, h = this.fieldHost;
+    this.distanceButtons?.remove();
+    h.replaceChildren();
+    this.fieldExtras.replaceChildren();
+    this.root.dataset.simple = String(f.simple);
+    const mode = this.root.querySelector("[data-field-mode]");
+    if (mode) mode.textContent = f.simple ? "\uC0C1\uC138 \uD654\uBA74\uC73C\uB85C" : "\uD604\uC7A5 \uAC04\uD3B8 \uD654\uBA74\uC73C\uB85C";
+    const active = f.shots.find((x) => x.id === f.activeShotId);
+    this.fieldStorage = node(h, "div");
+    const status = node(this.fieldStorage, "p", this.plugin.saveError, "pfm-error");
+    status.setAttribute("role", "status");
+    this.fieldButton(this.fieldStorage, "\uC800\uC7A5 \uC7AC\uC2DC\uB3C4", () => {
+      void this.plugin.persist().then(() => this.plugin.flush()).catch((e) => this.plugin.reportSaveError(e));
+    });
+    this.fieldStorage.hidden = !this.plugin.saveError;
+    if (this.shotUndo && !canUndo(i, this.shotUndo)) {
+      this.shotUndo = void 0;
+      this.fieldMessage = "\uCD2C\uC601 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC \xB7 \uC801\uC6A9 \uD56D\uBAA9\uC774 \uC774\uD6C4 \uBCC0\uACBD\uB418\uC5C8\uC2B5\uB2C8\uB2E4.";
+    }
+    const shotHeading = node(h, "strong", active ? `${active.name} \xB7 ${Object.entries(active.values).every(([k, v]) => Object.is(i[k], v)) ? "\uC801\uC6A9\uB428" : "\uC774\uD6C4 \uC218\uC815\uB428"}` : "\uCD2C\uC601 \uC990\uACA8\uCC3E\uAE30 \xB7 \uC870\uAC74 \uBB36\uC74C");
+    shotHeading.className = "pfm-shot-heading";
+    const shots = node(h, "div", void 0, "pfm-field-buttons pfm-shot-buttons");
+    for (const shot of f.shots) {
+      const b = this.fieldButton(shots, shot.name, () => this.fieldAction(() => {
+        this.closeFieldManager();
+        const expired = !!this.outputUndo;
+        this.outputUndo = void 0;
+        this.previousShotId = f.activeShotId;
+        const applied = applyShot(s, shot);
+        this.shotUndo = Object.keys(applied.after).length ? applied : void 0;
+        this.shotChanges = Object.entries(applied.after).map(([k, v]) => `${this.fieldLabel(k)}: ${this.fieldValue(k, applied.before[k])} \u2192 ${this.fieldValue(k, v)}`).join(" / ") || "\uBCC0\uACBD \uC5C6\uC74C";
+        this.fieldMessage = `${shot.name} \uC801\uC6A9 \xB7 ${"cameraDistance" in shot.values ? "\uCE74\uBA54\uB77C\xB7\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC \uD3EC\uD568" : "\uD604\uC7AC \uAC70\uB9AC \uC720\uC9C0"}${expired ? " \xB7 \uC774\uC804 \uCD9C\uB825 \uCDE8\uC18C \uB9CC\uB8CC" : ""}`;
+        if (!this.shotUndo && !expired) this.fieldMessage = "";
+      }));
+      b.dataset.shotId = shot.id;
+    }
+    if (active) {
+      const problem = issue(s, active);
+      if (problem) node(h, "p", `\uBD88\uC644\uC804\uD55C \uCD2C\uC601 \uC870\uAC74 \xB7 ${problem}`, "pfm-error");
+    }
+    if (this.shotUndo) {
+      const b = this.fieldButton(h, "\uCD2C\uC601 \uC801\uC6A9 \uD55C \uBC88 \uCDE8\uC18C \xB7 \uBCC0\uACBD \uD56D\uBAA9\uB9CC", () => this.fieldAction(() => {
+        if (this.shotUndo) undo(i, this.shotUndo);
+        this.shotUndo = void 0;
+        f.activeShotId = this.previousShotId;
+        applyEquipment(s);
+        this.fieldMessage = "\uCD2C\uC601 \uC870\uAC74 \uC801\uC6A9 \uCDE8\uC18C\uB428 \xB7 \uC0AD\uC81C \uBCF5\uAD6C\uC640 \uBCC4\uAC1C";
+      }));
+      b.className = "pfm-shot-undo";
+    }
+    let review;
+    if (this.fieldMessage) {
+      review = node(h, "details", void 0, "pfm-field-review");
+      node(review, "summary", this.fieldMessage.includes(" \uC801\uC6A9 \xB7 ") ? "\uCD2C\uC601 \uC801\uC6A9 \uB0B4\uC5ED \uD655\uC778" : this.fieldMessage);
+      node(review, "p", this.fieldMessage);
+      if (this.shotChanges) node(review, "p", this.shotChanges, "pfm-field-status");
+    }
+    const distance = node(h, "div", void 0, "pfm-distance-buttons");
+    this.distanceButtons = distance;
+    const key = distanceKey(i);
+    node(distance, "p", key === "flashDistance" ? `\uB0B4 \uAC70\uB9AC \xB7 \uD50C\uB798\uC2DC \u2192 \uD53C\uC0AC\uCCB4 ${metres(i.flashDistance)} (\uCE74\uBA54\uB77C \uCD08\uC810 \uC720\uC9C0)` : `\uB0B4 \uAC70\uB9AC \xB7 \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(i.cameraDistance)}${i.linked && (i.tab === "flash" || i.tab === "combined") ? " \xB7 \uD50C\uB798\uC2DC \uC5F0\uB3D9" : ""}`);
+    const addDistances = (parent, start, end) => {
+      for (const d of f.distances.slice(start, end)) {
+        const b = this.fieldButton(parent, metres(d.metres), () => this.fieldAction(() => {
+          this.plugin.update(key, d.metres);
+        }));
+        b.dataset.distanceId = d.id;
+      }
+    };
+    addDistances(distance, 0, 5);
+    if (f.distances.length > 5) {
+      const more = node(distance, "details");
+      node(more, "summary", "\uAC70\uB9AC \uB354\uBCF4\uAE30");
+      addDistances(more, 5, f.distances.length);
+    }
+    const actions = this.powerAdjust;
+    actions.replaceChildren();
+    for (const [dir, label2] of [["weaker", "\uCD9C\uB825 \uC57D\uD558\uAC8C"], ["stronger", "\uCD9C\uB825 \uAC15\uD558\uAC8C"]]) {
+      const n = nextPower(i, dir);
+      const b = this.fieldButton(actions, label2, () => this.fieldAction(() => {
+        if (n !== void 0) this.plugin.update("denominator", n);
+      }));
+      b.disabled = n === void 0;
+      b.dataset.powerDirection = dir;
+    }
+    actions.classList.add("pfm-field-power", "pfm-field-buttons");
+    if (f.simple && (i.tab === "flash" || i.tab === "combined")) {
+      const action = this.root.querySelector(".pfm-output-action");
+      if (action) action.append(actions);
+      else this.root.querySelector(".pfm-quick")?.prepend(actions);
+      if (review && this.fieldMessage.startsWith("\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC")) action?.append(review);
+    }
+    const manage = node(this.fieldExtras, "details", void 0, "pfm-field-manage");
+    node(manage, "summary", "\uC990\uACA8\uCC3E\uAE30\xB7\uB0B4 \uAC70\uB9AC \uAD00\uB9AC");
+    node(manage, "p", "\uC7A5\uBE44 \uD504\uB9AC\uC14B\uC740 \uC0AC\uC591, \uCD2C\uC601 \uC990\uACA8\uCC3E\uAE30\uB294 \uC870\uAC74 \uBB36\uC74C, \uC874 \uC990\uACA8\uCC3E\uAE30\uB294 \uBAA9\uD45C \uAD6C\uAC04\uC785\uB2C8\uB2E4.");
+    const label = this.text(manage, "\uCD2C\uC601 \uC990\uACA8\uCC3E\uAE30 \uC774\uB984", "");
+    label.maxLength = 100;
+    const check = node(manage, "label", void 0, "pfm-check"), include = node(check, "input");
+    include.type = "checkbox";
+    node(check, "span", "\uAC70\uB9AC\uB3C4 \uC800\uC7A5 \xB7 \uCE74\uBA54\uB77C \uCD08\uC810 \uAC70\uB9AC + \uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC (\uC628\uCE74\uBA54\uB77C: \uC5F0\uB3D9 \uAC70\uB9AC)");
+    this.fieldButton(manage, "\uD604\uC7AC \uCD2C\uC601 \uC870\uAC74 \uC0C8\uB85C \uC800\uC7A5", () => this.fieldAction(() => {
+      f.shots.push(capture(s, label.value, include.checked));
+    }));
+    const editShot = (shot) => {
+      const row = node(manage, "div", void 0, "pfm-field-row"), n = this.text(row, "\uCD2C\uC601 \uC774\uB984", shot.name);
+      n.maxLength = 100;
+      this.fieldButton(row, "\uC774\uB984 \uBCC0\uACBD", () => this.fieldAction(() => {
+        shot.name = name(n.value);
+      }));
+      this.fieldButton(row, `\uD604\uC7AC \uC124\uC815\uC73C\uB85C \uAC31\uC2E0 \xB7 ${"cameraDistance" in shot.values ? "\uAC70\uB9AC \uD3EC\uD568" : "\uAC70\uB9AC \uC81C\uC678"}`, () => this.fieldAction(() => {
+        Object.assign(shot, capture(s, n.value, "cameraDistance" in shot.values, shot.id));
+        applyEquipment(s);
+      }));
+      this.fieldButton(row, "\uCD2C\uC601 \uC0AD\uC81C", () => this.fieldAction(() => {
+        const index = f.shots.indexOf(shot);
+        this.deletedField = { kind: "shots", value: shot, index };
+        f.shots.splice(index, 1);
+      }));
+    };
+    f.shots.forEach(editShot);
+    const newDistance = this.text(manage, "\uC0C8 \uB0B4 \uAC70\uB9AC (m)", "");
+    newDistance.inputMode = "decimal";
+    this.fieldButton(manage, "\uAC70\uB9AC \uCD94\uAC00", () => this.fieldAction(() => {
+      f.distances.push({ id: id(), metres: validDistance(parseNumber(newDistance.value), f.distances.map((d) => d.metres)) });
+    }));
+    f.distances.forEach((d, index) => {
+      const row = node(manage, "div", void 0, "pfm-field-row");
+      const input = this.text(row, "\uB0B4 \uAC70\uB9AC \uD3B8\uC9D1 (m)", String(d.metres));
+      input.inputMode = "decimal";
+      this.fieldButton(row, "\uAC70\uB9AC \uC218\uC815", () => this.fieldAction(() => {
+        d.metres = validDistance(parseNumber(input.value), f.distances.filter((x) => x !== d).map((x) => x.metres));
+      }));
+      for (const [offset, label2] of [[-1, "\uC55E\uC73C\uB85C"], [1, "\uB4A4\uB85C"]]) {
+        const b = this.fieldButton(row, label2, () => this.fieldAction(() => {
+          [f.distances[index], f.distances[index + offset]] = [f.distances[index + offset], d];
+        }));
+        b.disabled = index + offset < 0 || index + offset >= f.distances.length;
+      }
+      this.fieldButton(row, "\uAC70\uB9AC \uC0AD\uC81C", () => this.fieldAction(() => {
+        f.distances.splice(index, 1);
+      }));
+    });
+    const zones = node(h, "div", void 0, "pfm-zone-favorites");
+    node(zones, "strong", "\uC874 \uBAA9\uD45C \uC990\uACA8\uCC3E\uAE30 \xB7 \uBAA9\uD45C\uB9CC \uBCC0\uACBD");
+    for (const z of f.zones) {
+      const b = this.fieldButton(zones, `${z.name} \xB7 ${metres(z.near)}~${z.infinity ? "\u221E" : metres(z.far)}`, () => this.fieldAction(() => {
+        this.closeFieldManager();
+        Object.assign(i, { zoneNear: z.near, zoneFar: z.far, zoneInfinity: z.infinity, zoneFlow: "target" });
+      }));
+      b.dataset.zoneFavorite = z.id;
+    }
+    const zoneName = this.text(manage, "\uC874 \uBAA9\uD45C \uC774\uB984", "");
+    zoneName.maxLength = 100;
+    this.fieldButton(manage, "\uD604\uC7AC \uC874 \uBAA9\uD45C \uC0C8\uB85C \uC800\uC7A5", () => this.fieldAction(() => {
+      solveZone(i);
+      f.zones.push({ id: id(), name: name(zoneName.value), near: i.zoneNear, far: i.zoneFar, infinity: i.zoneInfinity });
+    }));
+    for (const z of f.zones) {
+      const row = node(manage, "div", void 0, "pfm-field-row"), n = this.text(row, "\uC874 \uC774\uB984", z.name), near = this.text(row, "\uBAA9\uD45C \uADFC\uAC70\uB9AC (m)", String(z.near)), far = this.text(row, "\uBAA9\uD45C \uC6D0\uAC70\uB9AC (m)", String(z.far)), label2 = node(row, "label", void 0, "pfm-check"), inf = node(label2, "input");
+      inf.type = "checkbox";
+      inf.checked = z.infinity;
+      node(label2, "span", "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300");
+      this.fieldButton(row, "\uC874 \uC774\uB984\xB7\uAD6C\uAC04 \uC800\uC7A5", () => this.fieldAction(() => {
+        const a = validDistance(parseNumber(near.value)), b = inf.checked ? z.far : validDistance(parseNumber(far.value));
+        if (!inf.checked && b <= a) throw Error("\uC6D0\uAC70\uB9AC\uB294 \uADFC\uAC70\uB9AC\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4.");
+        Object.assign(z, { name: name(n.value), near: a, far: b, infinity: inf.checked });
+      }));
+      this.fieldButton(row, "\uC874 \uC0AD\uC81C", () => this.fieldAction(() => {
+        const index = f.zones.indexOf(z);
+        this.deletedField = { kind: "zones", value: z, index };
+        f.zones.splice(index, 1);
+      }));
+    }
+    if (this.deletedField) this.fieldButton(manage, `${this.deletedField.kind === "shots" ? "\uCD2C\uC601" : "\uC874"} \uC990\uACA8\uCC3E\uAE30 \uC0AD\uC81C \uBCF5\uAD6C`, () => this.fieldAction(() => {
+      const d = this.deletedField;
+      if (d.kind === "shots") f.shots.splice(d.index, 0, d.value);
+      else f.zones.splice(d.index, 0, d.value);
+      this.deletedField = void 0;
+    }));
+  }
+  fieldLabel(k) {
+    return { sensor: "\uC13C\uC11C", width: "\uC13C\uC11C \uAC00\uB85C(mm)", height: "\uC13C\uC11C \uC138\uB85C(mm)", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C", iso: "ISO", denominator: "\uCD9C\uB825", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC", flashDistance: "\uD50C\uB798\uC2DC \uAC70\uB9AC", linked: "\uAC70\uB9AC \uC5F0\uB3D9", gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44", gn: "GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C(mm)", zoom: "\uD50C\uB798\uC2DC \uC90C(mm)", conditions: "\uCE21\uC815 \uC870\uAC74", loss: "\uC190\uC2E4(stop)", tolerance: "\uD5C8\uC6A9 \uC624\uCC28(EV)", minDenominator: "\uCD5C\uC18C \uCD9C\uB825", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coc: "CoC(mm)", cocMode: "CoC \uAE30\uC900", coverage: "\uC870\uC0AC\uAC01 \uAE30\uC900", horizontal: "\uC218\uD3C9 \uC870\uC0AC\uAC01(\uB3C4)", vertical: "\uC218\uC9C1 \uC870\uC0AC\uAC01(\uB3C4)", mode: "\uB3D9\uC870\xB7\uBC1C\uAD11 \uC870\uAC74" }[k] ?? k;
+  }
+  fieldValue(k, value) {
+    if (typeof value === "number") {
+      if (k === "denominator" || k === "minDenominator") return `1/${value}`;
+      if (k === "cameraDistance" || k === "flashDistance") return metres(value);
+      if (k === "aperture") return `f/${fmt(value)}`;
+      return String(value);
+    }
+    if (k === "linked") return value ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C";
+    if (k === "equipmentId") return this.plugin.state.equipment.find((e) => e.id === value)?.name ?? (value ? "\uCC38\uC870 \uC7A5\uBE44 \uC5C6\uC74C" : "\uC120\uD0DD \uC5C6\uC74C");
+    if (k === "sensor") return sensors[String(value)]?.name ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C";
+    const labels = { gnMode: { manual: "\uC218\uB3D9 GN", equipment: "\uC7A5\uBE44" }, cocMode: { estimate: "\uC13C\uC11C \uB300\uAC01 \uAE30\uC900", custom: "\uC0AC\uC6A9\uC790 CoC" }, coverage: { approx: "\uC90C \uAE30\uBC18 \uADFC\uC0AC", angles: "\uC9C1\uC811 \uC870\uC0AC\uAC01" }, mode: { manual: "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870", ttl: "TTL", hss: "HSS", bounce: "\uBC14\uC6B4\uC2A4", modifier: "\uAD11\uC9C8 \uC870\uC808 \uB3C4\uAD6C", near: "\uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0" } };
+    return labels[k]?.[String(value)] ?? String(value);
+  }
+  getViewType() {
+    return VIEW;
+  }
+  getDisplayText() {
+    return "\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8";
+  }
+  getIcon() {
+    return "camera";
+  }
+  async onOpen() {
+    this.containerEl.dataset.ignoreSwipe = "true";
+    this.render();
+  }
+  async onClose() {
+    delete this.containerEl.dataset.ignoreSwipe;
+    this.clean();
+    this.contentEl.replaceChildren();
+    await this.plugin.flush().catch((e) => this.plugin.reportSaveError(e));
+  }
+  clean() {
+    for (const a of this.aborters) a.abort();
+    this.aborters.length = 0;
+    this.numeric.clear();
+    this.power = void 0;
+  }
+  listen(el, event, fn) {
+    const a = new AbortController();
+    el.addEventListener(event, fn, { signal: a.signal });
+    this.aborters.push(a);
+  }
+  focusHyperfocal() {
+    try {
+      this.plugin.update("cameraDistance", optics(this.plugin.state.inputs).hyperfocal);
+      this.syncNumeric("cameraDistance");
+      this.changed();
+    } catch (e) {
+      this.plugin.report(e);
+    }
+  }
+  sceneControls() {
+    let dragging = null, offset = 0;
+    const update = (x) => {
+      this.plugin.update("cameraDistance", sceneDistance(x, this.plugin.state.inputs.diagramMax, this.plugin.state.inputs.focal));
+      this.syncNumeric("cameraDistance");
+      this.changed();
+    };
+    const coordinate = (e) => {
+      const r = this.picture.querySelector("svg")?.getBoundingClientRect();
+      return r && r.width > 0 ? (e.clientX - r.left) / r.width * SCENE.width : null;
+    };
+    this.listen(this.contentEl, "pointerdown", (event) => {
+      if (!(event instanceof PointerEvent) || !(event.target instanceof Element) || !event.target.closest("[data-pfm-subject]")) return;
+      const x = coordinate(event);
+      if (x === null) return;
+      const i = this.plugin.state.inputs;
+      offset = x - (SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(1, (Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0) / i.diagramMax)));
+      dragging = event.pointerId;
+      this.contentEl.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+    this.listen(this.contentEl, "pointermove", (event) => {
+      if (!(event instanceof PointerEvent) || event.pointerId !== dragging) return;
+      const x = coordinate(event);
+      if (x !== null) {
+        event.preventDefault();
+        update(x - offset);
+      }
+    });
+    for (const kind of ["pointerup", "pointercancel"]) this.listen(this.contentEl, kind, (event) => {
+      if (!(event instanceof PointerEvent) || event.pointerId !== dragging) return;
+      dragging = null;
+      if (this.contentEl.hasPointerCapture(event.pointerId)) this.contentEl.releasePointerCapture(event.pointerId);
+      void this.plugin.flush().catch((e) => this.plugin.reportSaveError(e));
+    });
+    this.listen(this.contentEl, "click", (event) => {
+      if (event.target instanceof Element && event.target.closest("[data-pfm-hyperfocal]")) this.focusHyperfocal();
+    });
+    this.listen(this.contentEl, "keydown", (event) => {
+      if (!(event instanceof KeyboardEvent) || !(event.target instanceof Element) || !event.target.closest("[data-pfm-subject]")) return;
+      const i = this.plugin.state.inputs;
+      let distance;
+      if (event.key === "ArrowLeft") distance = i.cameraDistance - 0.1;
+      else if (event.key === "ArrowRight") distance = i.cameraDistance + 0.1;
+      else return;
+      event.preventDefault();
+      this.plugin.update("cameraDistance", Math.max(i.focal / 1e3 + 1e-3, distance));
+      this.syncNumeric("cameraDistance");
+      this.changed();
+      this.picture.querySelector("[data-pfm-subject]")?.focus();
+    });
+  }
+  changed() {
+    if (this.plugin.state.inputs.linked) {
+      this.plugin.update("flashDistance", this.plugin.state.inputs.cameraDistance);
+      this.syncNumeric("flashDistance");
+    }
+    this.paint();
+    void this.plugin.persist().catch((e) => this.plugin.reportSaveError(e));
+    this.plugin.refresh(this);
+  }
+  button(parent, text, fn) {
+    const b = node(parent, "button", text);
+    b.type = "button";
+    this.listen(b, "click", fn);
+    return b;
+  }
+  rangeProgress(range) {
+    const percent = (Number(range.value) - Number(range.min)) / (Number(range.max) - Number(range.min)) * 100;
+    range.style.setProperty("--pfm-range-progress", `${percent}%`);
+  }
+  number(parent, label, key, options) {
+    const wrap = node(parent, "div", void 0, "pfm-field");
+    wrap.dataset.field = key;
+    const compact = { cameraDistance: "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC (m)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C (f/)", focal: "\uCD08\uC810\uAC70\uB9AC (mm)" };
+    const caption = node(wrap, "label", compact[key] ?? label);
+    const entry = node(wrap, "div", void 0, "pfm-number-entry");
+    const input = node(wrap, "input");
+    input.type = "number";
+    input.inputMode = "decimal";
+    input.step = "any";
+    input.value = Number.isFinite(this.plugin.state.inputs[key]) ? String(this.plugin.state.inputs[key]) : "";
+    input.dataset.key = key;
+    input.setAttribute("aria-label", label);
+    input.id = `pfm-control-${++nextControlId}`;
+    caption.htmlFor = input.id;
+    const isDistance = ["cameraDistance", "flashDistance", "zoneNear", "zoneFar", "diagramMax"].includes(key);
+    let scale = 1;
+    let range;
+    if (options) {
+      wrap.classList.add("pfm-range-field");
+      input.min = String(options.min);
+      range = node(wrap, "input");
+      range.type = "range";
+      range.min = String(options.min);
+      range.max = String(options.max);
+      range.step = String(options.step);
+      range.value = input.value;
+      this.rangeProgress(range);
+      range.setAttribute("aria-label", `${label} \uBE60\uB978 \uC870\uC808`);
+      range.dataset.range = key;
+      const r = range;
+      this.listen(r, "input", () => {
+        this.plugin.update(key, Number(r.value));
+        sync();
+        input.setAttribute("aria-invalid", "false");
+        this.changed();
+      });
+    }
+    if (key === "flashDistance") wrap.classList.add("pfm-flash-distance");
+    if (key === "denominator") wrap.classList.add("pfm-custom-power");
+    const sync = () => {
+      const value = this.plugin.state.inputs[key];
+      if (isDistance && Number.isFinite(value) && value >= 0) scale = value <= 1 ? 100 : 1;
+      const unit = scale === 100 ? "cm" : "m";
+      if (isDistance) {
+        caption.textContent = (compact[key] ?? label).replace("(m)", `(${unit})`);
+        input.setAttribute("aria-label", label.replace("(m)", `(${unit})`));
+        input.dataset.displayUnit = unit;
+        if (options) input.min = String(options.min * scale);
+      }
+      input.value = Number.isFinite(value) ? String(scale === 100 ? Number((value * scale).toPrecision(15)) : value) : "";
+      if (range) {
+        range.value = String(value);
+        this.rangeProgress(range);
+      }
+    };
+    const apply = (value) => {
+      if (input.disabled) return;
+      this.plugin.update(key, value);
+      sync();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    const choices = { aperture: [0.7, 1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32], apertureMin: [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32], apertureMax: [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32], iso: [50, 100, 200, 400, 800, 1600, 3200, 6400], focal: [14, 24, 28, 35, 50, 85, 135, 200], cameraDistance: [0.3, 0.5, 1, 2, 3, 5, 10], flashDistance: [0.3, 0.5, 1, 2, 3, 5, 10], zoneNear: [0.3, 0.5, 1, 2, 3, 5], zoneFar: [1, 2, 3, 5, 10, 20], loss: [0, 0.5, 1, 2, 3], tolerance: [0.3, 0.5, 1, 2], diagramMax: [1, 3, 5, 10, 15, 30] };
+    const candidate = (direction) => {
+      const value = this.plugin.state.inputs[key];
+      if (input.disabled || !Number.isFinite(value)) return;
+      let steps = choices[key];
+      if (key === "denominator") try {
+        steps = powerSteps(this.plugin.state.inputs.steps, this.plugin.state.inputs.minDenominator);
+      } catch {
+        return;
+      }
+      if (steps && !isDistance && key !== "loss" && key !== "tolerance") {
+        const next = direction > 0 ? steps.find((n) => n > value) : [...steps].reverse().find((n) => n < value);
+        return next;
+      }
+      const increment = isDistance ? value < 2 ? 0.01 : value < 10 ? 0.1 : 1 : key === "coc" ? 1e-3 : ["width", "height", "loss", "tolerance", "apertureMin", "apertureMax"].includes(key) ? 0.1 : 1;
+      const minimum = key === "loss" ? 0 : ["cameraDistance", "zoneNear"].includes(key) ? this.plugin.state.inputs.focal / 1e3 + 1e-3 : isDistance ? 0.01 : key === "coc" ? 1e-3 : increment;
+      const result = Math.min(key === "tolerance" ? 5 : Infinity, Math.max(minimum, Number((value + direction * increment).toPrecision(15))));
+      if ((key === "horizontal" || key === "vertical") && result >= 180) return;
+      return (result - value) * direction > 0 ? result : void 0;
+    };
+    const adjust = (direction) => {
+      const value = candidate(direction);
+      if (value !== void 0) apply(value);
+    };
+    const minus = this.button(entry, "\u2212", () => adjust(-1));
+    minus.dataset.step = "down";
+    minus.setAttribute("aria-label", `${label} \uC904\uC774\uAE30`);
+    entry.append(input);
+    const plus = this.button(entry, "+", () => adjust(1));
+    plus.dataset.step = "up";
+    plus.setAttribute("aria-label", `${label} \uB298\uB9AC\uAE30`);
+    let picker;
+    if (choices[key]) {
+      picker = node(wrap, "select", void 0, "pfm-value-picker");
+      picker.dataset.preset = key;
+      picker.setAttribute("aria-label", `${label} \uC790\uC8FC \uC4F0\uB294 \uAC12`);
+      const placeholder = node(picker, "option", "\uC790\uC8FC \uC4F0\uB294 \uAC12 \uC120\uD0DD\u2026");
+      placeholder.value = "";
+      for (const value of choices[key]) {
+        const option = node(picker, "option", isDistance ? metres(value) : key === "aperture" ? `f/${value}` : key === "focal" ? `${value} mm` : String(value));
+        option.value = String(value);
+      }
+      const control = picker;
+      this.listen(control, "change", () => {
+        if (control.value !== "") apply(Number(control.value));
+        control.value = "";
+      });
+    }
+    const updateControls = () => {
+      minus.disabled = candidate(-1) === void 0;
+      plus.disabled = candidate(1) === void 0;
+      if (picker) picker.disabled = input.disabled;
+    };
+    this.numeric.set(key, { input, range, sync, updateControls });
+    sync();
+    this.listen(input, "input", () => {
+      const v = parseNumber(input.value) / scale;
+      this.plugin.update(key, v);
+      if (key === "denominator") this.syncPower();
+      if (range && Number.isFinite(v)) {
+        range.value = String(v);
+        this.rangeProgress(range);
+      }
+      input.setAttribute("aria-invalid", String(!Number.isFinite(v) || v < 0 || v === 0 && key !== "loss"));
+      this.changed();
+    });
+    if (isDistance) this.listen(input, "blur", sync);
+  }
+  select(parent, label, key, values, after) {
+    const l = node(parent, "label", void 0, "pfm-field");
+    l.dataset.field = key;
+    node(l, "span", label);
+    const s = node(l, "select");
+    s.setAttribute("aria-label", label);
+    s.dataset.key = key;
+    for (const [v, t] of Object.entries(values)) {
+      const o = node(s, "option", t);
+      o.value = v;
+    }
+    s.value = String(this.plugin.state.inputs[key]);
+    this.listen(s, "change", () => {
+      this.plugin.update(key, s.value);
+      after?.();
+      this.changed();
+    });
+    return s;
+  }
+  text(parent, label, value) {
+    const l = node(parent, "label", void 0, "pfm-field");
+    node(l, "span", label);
+    const t = node(l, "input");
+    t.type = "text";
+    t.value = value;
+    return t;
+  }
+  jumpSettings(target) {
+    if (field(this.plugin.state).simple) {
+      field(this.plugin.state).simple = false;
+      this.root.dataset.simple = "false";
+      void this.plugin.persist().catch((e) => this.plugin.reportSaveError(e));
+    }
+    const section = this.root.querySelector(`[data-pfm-settings=${target}]`);
+    if (section) {
+      section.open = true;
+      section.scrollIntoView({ block: "start" });
+      section.querySelector("summary")?.focus({ preventScroll: true });
+    }
+  }
+  returnToResults() {
+    this.root.querySelector(".pfm-tabs [aria-pressed=true]")?.focus({ preventScroll: true });
+    this.contentEl.scrollTop = 0;
+  }
+  details(label, id2) {
+    const d = node(this.root, "details");
+    if (id2) d.dataset.pfmSettings = id2;
+    node(d, "summary", label);
+    const body = node(d, "div", void 0, "pfm-settings");
+    if (id2) {
+      const b = this.button(body, "\uACB0\uACFC\uB85C \uB3CC\uC544\uAC00\uAE30", () => this.returnToResults());
+      b.dataset.resultsReturn = "true";
+    }
+    return body;
+  }
+  async saveResult(scope) {
+    this.lastNote = await this.plugin.saveNote(scope);
+    const open = this.root.querySelector("[data-open-note]");
+    if (open) {
+      open.hidden = false;
+      open.textContent = "\uC800\uC7A5\uD55C \uB178\uD2B8 \uC5F4\uAE30";
+    }
+  }
+  rememberDetails() {
+    if (!this.root) return;
+    for (const d of this.root.querySelectorAll("details")) {
+      const label = d.querySelector("summary")?.textContent;
+      if (label) this.detailState.set(label, d.open);
+    }
+  }
+  restoreDetails() {
+    for (const d of this.root.querySelectorAll("details")) {
+      const label = d.querySelector("summary")?.textContent;
+      if (label) d.open = this.detailState.get(label) ?? false;
+    }
+  }
+  updateSaveStatus() {
+    if (this.fieldStorage) {
+      this.fieldStorage.hidden = !this.plugin.saveError;
+      const p = this.fieldStorage.querySelector("p");
+      if (p) p.textContent = this.plugin.saveError;
+    }
+    if (this.saveStatus) {
+      this.saveStatus.textContent = this.plugin.saveError;
+      this.saveStatus.hidden = !this.plugin.saveError;
+    }
+  }
+  flushOnEnd() {
+    for (const event of ["change", "focusout"]) this.listen(this.contentEl, event, () => {
+      void this.plugin.flush().catch((e) => this.plugin.reportSaveError(e));
+    });
+  }
+  syncPower() {
+    if (!this.power) return;
+    this.power.replaceChildren();
+    const i = this.plugin.state.inputs;
+    let steps = [];
+    try {
+      steps = flash({ ...i, denominator: 1 }).steps;
+    } catch {
+      try {
+        steps = powerSteps(i.steps, i.minDenominator);
+      } catch {
+      }
+    }
+    for (const n of steps) {
+      const o = node(this.power, "option", `1/${n}`);
+      o.value = String(n);
+    }
+    const value = i.denominator;
+    if (Number.isFinite(value) && !steps.includes(value)) {
+      const option = node(this.power, "option", `\uC774\uB860\uAC12\xB7\uC7A5\uBE44 \uBBF8\uC9C0\uC6D0 \uCD9C\uB825 1/${value}`);
+      option.value = String(value);
+      option.dataset.custom = "true";
+    }
+    this.power.value = Number.isFinite(value) ? String(value) : "";
+  }
+  syncNumeric(key) {
+    this.numeric.get(key)?.sync();
+    if (key === "denominator") this.syncPower();
+  }
+  render() {
+    this.rememberDetails();
+    this.clean();
+    this.contentEl.replaceChildren();
+    this.contentEl.addClass("pfm-container");
+    this.root = node(this.contentEl, "div", void 0, "pfm-root");
+    const i = this.plugin.state.inputs;
+    const header = node(this.root, "header");
+    node(header, "h1", "\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8");
+    node(header, "p", "\uC870\uB9AC\uAC1C \uD558\uB098\uB85C, \uBE5B\uACFC \uC2EC\uB3C4\uB97C \uD568\uAED8.");
+    const version = node(this.root, "p", `v${this.plugin.manifest.version}`, "pfm-version");
+    version.setAttribute("aria-label", `\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804 ${this.plugin.manifest.version}`);
+    const tabs = node(this.root, "nav", void 0, "pfm-tabs");
+    tabs.setAttribute("aria-label", "\uACC4\uC0B0 \uD654\uBA74");
+    for (const [v, t] of Object.entries({ flash: "\uD50C\uB798\uC2DC", dof: "\uC2EC\uB3C4\xB7\uD654\uAC01", combined: "\uD1B5\uD569", zone: "\uC874 \uD3EC\uCEE4\uC2F1" })) {
+      const b = this.button(tabs, t, () => {
+        this.plugin.update("tab", v);
+        this.changed();
+        for (const btn of tabs.querySelectorAll("button")) btn.setAttribute("aria-pressed", String(btn === b));
+      });
+      b.setAttribute("aria-pressed", String(i.tab === v));
+    }
+    this.fieldPanel();
+    this.context = node(this.root, "p", void 0, "pfm-context");
+    this.results = node(this.root, "section", void 0, "pfm-results");
+    this.results.setAttribute("aria-live", "polite");
+    this.picture = node(this.results, "figure", void 0, "pfm-diagram");
+    this.sceneControls();
+    this.flushOnEnd();
+    const quick = node(this.root, "section", void 0, "pfm-quick");
+    node(quick, "h2", "\uBE60\uB978 \uC870\uC808");
+    this.powerAdjust = node(quick, "div", void 0, "pfm-field-power");
+    const shortcuts = node(quick, "nav", void 0, "pfm-settings-shortcuts");
+    shortcuts.setAttribute("aria-label", "\uC0C1\uC138 \uC124\uC815 \uBC14\uB85C\uAC00\uAE30");
+    for (const [target, text] of [["camera", "\uCE74\uBA54\uB77C \uC124\uC815"], ["flash", "\uD50C\uB798\uC2DC \uC124\uC815"], ["equipment", "\uB0B4 \uC7A5\uBE44"]]) {
+      const b = this.button(shortcuts, text, () => {
+        this.jumpSettings(target);
+      });
+      b.dataset.settingsJump = target;
+    }
+    this.number(quick, "\uCE74\uBA54\uB77C \u2192 \uD53C\uC0AC\uCCB4 \uAC70\uB9AC (m)", "cameraDistance", { min: 0.1, max: 30, step: 0.1 });
+    this.number(quick, "\uC870\uB9AC\uAC1C f-number", "aperture", { min: 0.7, max: 32, step: 0.1 });
+    const power = this.select(quick, "\uCD9C\uB825 \uC120\uD0DD", "denominator", {}, () => {
+      this.plugin.update("denominator", Number(power.value));
+      this.syncNumeric("denominator");
+    });
+    this.power = power;
+    this.syncPower();
+    this.number(quick, "\uC0AC\uC6A9\uC790 \uCD9C\uB825 1/n \xB7 n", "denominator");
+    const linked = node(quick, "label", void 0, "pfm-check");
+    const check = node(linked, "input");
+    check.type = "checkbox";
+    check.checked = i.linked;
+    node(linked, "span", "\uC628\uCE74\uBA54\uB77C: \uAC19\uC740 \uC704\uCE58\xB7\uBC29\uD5A5, \uAC70\uB9AC \uC5F0\uB3D9");
+    this.listen(check, "change", () => {
+      this.plugin.update("linked", check.checked);
+      this.numeric.get("flashDistance").input.disabled = check.checked;
+      this.changed();
+    });
+    this.number(quick, "\uD50C\uB798\uC2DC \u2192 \uD53C\uC0AC\uCCB4 \uAC70\uB9AC (m)", "flashDistance", { min: 0.1, max: 30, step: 0.1 });
+    this.numeric.get("flashDistance").input.disabled = i.linked;
+    const flashRange = this.numeric.get("flashDistance").range;
+    if (flashRange) flashRange.disabled = i.linked;
+    this.listen(check, "change", () => {
+      const r = this.numeric.get("flashDistance")?.range;
+      if (r) r.disabled = check.checked;
+    });
+    this.equivalent = node(quick, "div", void 0, "pfm-equivalence");
+    this.zonePanel();
+    const zone = this.root.querySelector(".pfm-zone-panel");
+    if (zone) quick.before(zone);
+    this.resultDetails = node(this.root, "section", void 0, "pfm-result-details");
+    const camera = this.details("\uCE74\uBA54\uB77C\xB7\uB80C\uC988\xB7CoC", "camera");
+    node(camera, "p", "\uC13C\uC11C\uB294 \uD504\uB9AC\uC14B\uC73C\uB85C \uAC04\uB2E8\uD788 \uC120\uD0DD\uD558\uC138\uC694. \uCE58\uC218\uB97C \uC9C1\uC811 \uC218\uC815\uD558\uBA74 \uC0AC\uC6A9\uC790 \uC13C\uC11C\uB85C \uC804\uD658\uB429\uB2C8\uB2E4.");
+    this.select(quick, "\uC13C\uC11C \uD504\uB9AC\uC14B", "sensor", { ...Object.fromEntries(Object.entries(sensors).map(([k, v]) => [k, v.name])), custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815" }, () => {
+      const preset = sensors[this.plugin.state.inputs.sensor];
+      if (preset) {
+        this.plugin.update("width", preset.width);
+        this.plugin.update("height", preset.height);
+        this.syncNumeric("width");
+        this.syncNumeric("height");
+      }
+    });
+    this.select(camera, "\uD480\uD504\uB808\uC784 \uD658\uC0B0 \uAE30\uC900", "cropBasis", { nominal: "\uD504\uB9AC\uC14B \uBA85\uBAA9 \uACC4\uC218 (\uC0AC\uC6A9\uC790 \uC13C\uC11C\uB294 \uC2E4\uCE58\uC218)", dimensions: "\uC13C\uC11C \uC2E4\uCE58\uC218 \uB300\uAC01 \uBE44\uC728" });
+    this.number(camera, "\uC13C\uC11C \uAC00\uB85C (mm)", "width");
+    this.number(camera, "\uC13C\uC11C \uC138\uB85C (mm)", "height");
+    for (const key of ["width", "height"]) this.listen(this.numeric.get(key).input, "input", () => {
+      this.plugin.update("sensor", "custom");
+      const s = this.root.querySelector("select[data-key=sensor]");
+      if (s) s.value = "custom";
+      this.changed();
+    });
+    this.number(quick, "ISO", "iso");
+    this.number(quick, "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC (mm)", "focal", { min: 8, max: 200, step: 1 });
+    for (const selector of ["[data-field=cameraDistance]", "[data-field=aperture]", "label[data-field=denominator]:not(.pfm-custom-power)", "[data-field=iso]", "[data-field=focal]", "[data-field=sensor]", ".pfm-check", ".pfm-flash-distance", ".pfm-custom-power"]) {
+      const field2 = quick.querySelector(selector);
+      if (field2) quick.append(field2);
+    }
+    this.select(camera, "CoC \uBC29\uC2DD", "cocMode", { estimate: "\uC13C\uC11C \uB300\uAC01 \xF71500 \uCD94\uC815", custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 mm" });
+    this.number(camera, "\uC0AC\uC6A9\uC790 CoC (mm)", "coc");
+    node(camera, "p", "CoC\uB294 \uAC10\uC0C1 \uD06C\uAE30\xB7\uC2DC\uB825\xB7\uD655\uB300\uC728\uC5D0 \uB530\uB978 \uD5C8\uC6A9 \uCC29\uB780\uC6D0\uC785\uB2C8\uB2E4. \uB300\uAC01/1500\uC740 \uACBD\uD5D8\uC801 \uAE30\uBCF8\uAC12\uC774\uBA70 \uD53D\uC140 \uB2E8\uC704 \uC120\uBA85\uB3C4\uB97C \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. APS-C \uD06C\uAE30\uB294 \uC81C\uC870\uC0AC\uB9C8\uB2E4 \uB2E4\uB985\uB2C8\uB2E4.");
+    const fl = this.details("\uD50C\uB798\uC2DC\xB7GN \uC870\uAC74\xB7\uC870\uC0AC\uAC01", "flash");
+    node(fl, "h3", "\uBC1C\uAD11 \uC870\uAC74");
+    this.select(fl, "\uBC1C\uAD11 \uC870\uAC74", "mode", { manual: "\uC218\uB3D9 \xB7 \uC9C1\uC811\uAD11 \xB7 \uC77C\uBC18 \uB3D9\uC870", ttl: "TTL (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", hss: "HSS (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", bounce: "\uBC14\uC6B4\uC2A4 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", modifier: "\uC18C\uD504\uD2B8\uBC15\uC2A4 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", near: "\uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)" });
+    this.select(fl, "GN \uC785\uB825 \uBAA8\uB4DC", "gnMode", { manual: "\uC218\uB3D9 GN", equipment: "\uC120\uD0DD \uC7A5\uBE44 \uD45C" }, () => {
+      applyEquipment(this.plugin.state);
+      this.syncNumeric("gn");
+      this.syncNumeric("gnZoom");
+    });
+    this.number(fl, "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C (mm)", "zoom");
+    node(fl, "h3", "\uAC00\uC774\uB4DC \uB118\uBC84 \uAE30\uC900");
+    this.number(fl, "ISO100 \xB7 \uCD5C\uB300 \uCD9C\uB825 GN", "gn");
+    this.gnDisplayUnit = i.gnUnit;
+    this.select(fl, "GN \uB2E8\uC704", "gnUnit", { m: "m \uAE30\uC900", ft: "ft \uAE30\uC900" }, () => {
+      const unit = this.plugin.state.inputs.gnUnit;
+      const value = this.plugin.state.inputs.gn;
+      if (unit !== this.gnDisplayUnit) {
+        Object.assign(this.plugin.state.inputs, { gn: unit === "ft" ? metresToFeet(value) : feetToMetres(value) });
+        this.syncNumeric("gn");
+        this.gnDisplayUnit = unit;
+      }
+    });
+    this.number(fl, "GN\uC774 \uCE21\uC815\uB41C \uC90C (mm)", "gnZoom");
+    const cond = this.text(fl, "GN \uCE21\uC815 \uC870\uAC74\xB7\uCD9C\uCC98 (ISO100 \uCD5C\uB300 \uCD9C\uB825)", i.conditions);
+    cond.dataset.key = "conditions";
+    this.listen(cond, "input", () => {
+      this.plugin.update("conditions", cond.value);
+      this.changed();
+    });
+    this.number(fl, "\uCD94\uAC00 \uAD11\uB7C9 \uC190\uC2E4 L (stop, \uAE30\uBCF8 0)", "loss");
+    node(fl, "p", "GN\uC5D0 \uC774\uBBF8 \uD3EC\uD568\uB41C \uC190\uC2E4\uC744 \uC911\uBCF5 \uC801\uC6A9\uD558\uC9C0 \uB9C8\uC138\uC694. \uC190\uC2E4 \uBCF4\uC815\uC740 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC90C \uBCC0\uACBD \uC2DC \uD574\uB2F9 \uC90C\uC758 GN \uC790\uB8CC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    const powerSettings = node(fl, "details", void 0, "pfm-power-settings");
+    node(powerSettings, "summary", "\uCD9C\uB825 \uB2E8\uACC4 \uC9C1\uC811 \uC124\uC815");
+    const powerFields = node(powerSettings, "div", void 0, "pfm-settings");
+    const customPower = quick.querySelector(".pfm-custom-power");
+    if (customPower) powerFields.append(customPower);
+    this.number(powerFields, "\uC7A5\uBE44 \uCD5C\uC18C \uCD9C\uB825 1/n \xB7 n", "minDenominator");
+    const steps = this.text(powerFields, "\uC7A5\uBE44 \uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8 (\uC27C\uD45C \uAD6C\uBD84)", i.steps);
+    steps.dataset.key = "steps";
+    this.listen(steps, "input", () => {
+      this.plugin.update("steps", steps.value);
+      this.changed();
+    });
+    node(fl, "h3", "\uC870\uC0AC \uBC94\uC704");
+    this.select(fl, "\uC870\uC0AC\uAC01 \uC785\uB825 \uBC29\uC2DD", "coverage", { approx: "\uD480\uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815 (\uADFC\uC0AC)", angles: "\uC218\uD3C9\xB7\uC218\uC9C1 \uC870\uC0AC\uAC01 \uC9C1\uC811 \uC785\uB825" });
+    this.number(fl, "\uC218\uD3C9 \uC870\uC0AC\uAC01 (\xB0)", "horizontal");
+    this.number(fl, "\uC218\uC9C1 \uC870\uC0AC\uAC01 (\xB0)", "vertical");
+    node(fl, "p", "\uC90C mm \uADFC\uC0AC \uBAA8\uB4DC\uB294 36\xD724mm \uC9C1\uC120\uD22C\uC601 \uD654\uAC01\uC744 \uAC00\uC815\uD569\uB2C8\uB2E4. \uC81C\uC870\uC0AC \uAE30\uC900 \uD3EC\uB9F7\uC744 \uD655\uC778\uD55C \uC2E4\uCE21 \uC870\uC0AC\uAC01\uC774 \uC788\uC73C\uBA74 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.");
+    this.equipmentPanel();
+    const advanced = this.details("\uD5C8\uC6A9 \uBC94\uC704\xB7\uADF8\uB9BC \uBC94\uC704\xB7\uACC4\uC0B0 \uADFC\uAC70", "advanced");
+    this.number(advanced, "\uC801\uC815 \uB178\uCD9C \uD5C8\uC6A9 \uBC94\uC704 \xB1EV", "tolerance");
+    this.number(advanced, "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC (m)", "diagramMax");
+    const hyper = this.button(advanced, "\uACFC\uCD08\uC810\uAC70\uB9AC\uC5D0 \uCD08\uC810 \uB9DE\uCD94\uAE30", () => this.focusHyperfocal());
+    hyper.className = "pfm-wide";
+    node(advanced, "p", "\uC720\uD6A8 GN=G\u221Ap\u221A(ISO/100)\xD72^(\u2212L/2), \uC801\uC815 \uAC70\uB9AC=GN/f-number. \uD544\uC694 \uCD9C\uB825=(Nr/G)\xB2(100/ISO)2^L. \uB178\uCD9C \uCC28\uC774=2log\u2082(d/r). \uC591\uC218=\uC608\uC0C1 \uACFC\uB2E4, \uC74C\uC218=\uC608\uC0C1 \uBD80\uC871. \uBE5B\uC774 \uC774 \uAC70\uB9AC\uC5D0\uC11C \uB05D\uB098\uB294 \uAC83\uC740 \uC544\uB2D9\uB2C8\uB2E4.");
+    node(advanced, "p", "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f. \uADFC\uAC70\uB9AC=hs/(h+s\u2212f), \uC6D0\uAC70\uB9AC=hs/(h\u2212s+f). s\u2265H\uC774\uBA74 \u221E. \uAD11\uD559\uC740 mm, \uCD9C\uB825\uC740 m. \uC9C1\uC120\uD22C\uC601 \uD654\uAC01=2atan(\uC13C\uC11C \uAE38\uC774/2f). \uC870\uC0AC \uBC94\uC704=2r\xB7tan(\uAC01/2).");
+    node(advanced, "p", "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC\uB294 \uBC15\uB9C9\uB80C\uC988 \uC8FC\uD3C9\uBA74 \uAE30\uC900\uC774\uBA70 \uC13C\uC11C\uBA74 \uAE30\uC900 \uAC70\uB9AC\uC640 \uB2E4\uB985\uB2C8\uB2E4. \uD654\uAC01\xB7\uD504\uB808\uC784\uC740 \uBB34\uD55C\uB300 \uCD08\uC810\uC758 \uC9C1\uC120\uD22C\uC601 \uADFC\uC0AC\uB85C \uADFC\uC811 \uCD2C\uC601 \uBC30\uC728 \uBCC0\uD654\uB294 \uBBF8\uBC18\uC601\uD569\uB2C8\uB2E4.");
+    node(advanced, "p", limitations);
+    const about = this.details("\uD50C\uB7EC\uADF8\uC778 \uC815\uBCF4\xB7\uC6D0\uBCF8 \uC800\uC791\uAD8C");
+    node(about, "p", `\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8 ${this.plugin.manifest.version} \xB7 depth-of-field\uC758 \uC2EC\uB3C4\xB7\uD654\uAC01 \uC2DC\uAC01\uD654\uB97C \uBAA8\uBC14\uC77C Obsidian\uC6A9\uC73C\uB85C \uC218\uC815\xB7\uC7AC\uAD6C\uD604\uD558\uACE0 \uC218\uB3D9 \uD50C\uB798\uC2DC \uACC4\uC0B0\uC744 \uD655\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uC6D0\uC791\uC790\uC758 \uACF5\uC2DD \uB610\uB294 \uD6C4\uC6D0 \uD50C\uB7EC\uADF8\uC778\uC774 \uC544\uB2D9\uB2C8\uB2E4.`);
+    const a = node(about, "a", "\uC6D0\uBCF8: Jack Herrington \xB7 depth-of-field");
+    a.href = "https://github.com/jherr/depth-of-field";
+    node(about, "p", "Copyright (c) 2026 Jack Herrington \xB7 MIT. \uCC38\uACE0 SHA c75dd6d40e4a96e96fd38e57657fe4b9737bf776. MIT \uC804\uBB38: main.js \uB0B4 \uACE0\uC9C0 \uBC0F \uBC30\uD3EC ZIP\uC758 vendor/depth-of-field-LICENSE.txt. \uC7AC\uC0AC\uC6A9 \uB0B4\uC5ED: GitHub\uC758 THIRD_PARTY_NOTICES.md.");
+    for (const section of this.root.querySelectorAll("[data-pfm-settings] > .pfm-settings")) {
+      const back = section.querySelector("[data-results-return]");
+      if (back) section.append(back);
+    }
+    this.fieldExtras = node(this.root, "section", void 0, "pfm-field-extras");
+    const footer = node(this.root, "footer");
+    this.saveStatus = node(footer, "p", void 0, "pfm-error");
+    this.saveStatus.setAttribute("role", "status");
+    this.updateSaveStatus();
+    const retry = this.button(footer, "\uC124\uC815 \uB2E4\uC2DC \uC800\uC7A5", () => {
+      void this.plugin.persist().then(() => this.plugin.flush()).catch((e) => this.plugin.reportSaveError(e));
+    });
+    retry.className = "pfm-retry";
+    const tabSave = this.button(footer, "\uD604\uC7AC \uD0ED \uACB0\uACFC \uC800\uC7A5", () => {
+      tabSave.disabled = true;
+      void this.saveResult(this.plugin.state.inputs.tab).catch((e) => this.plugin.report(e)).finally(() => {
+        tabSave.disabled = false;
+      });
+    });
+    tabSave.className = "pfm-tab-save";
+    const save = this.button(footer, "\uC804\uCCB4 \uACC4\uC0B0\uC744 \uB178\uD2B8\uB85C \uC800\uC7A5", () => {
+      save.disabled = true;
+      void this.saveResult("all").catch((e) => this.plugin.report(e)).finally(() => {
+        save.disabled = false;
+      });
+    });
+    save.className = "pfm-save";
+    const openNote = this.button(footer, "\uC800\uC7A5\uD55C \uB178\uD2B8 \uC5F4\uAE30", () => {
+      if (this.lastNote) void this.app.workspace.openLinkText(this.lastNote, "", true).catch((e) => this.plugin.report(e));
+    });
+    openNote.dataset.openNote = "true";
+    openNote.hidden = !this.lastNote;
+    node(footer, "p", "1m \uC774\uD558 \uAC70\uB9AC\uB294 cm\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uAC70\uB9AC \uC785\uB825\uC740 \uC785\uB825\uCE78\uC758 \uB2E8\uC704\uB97C \uB530\uB974\uBA70 \uD3B8\uC9D1\uC744 \uB9C8\uCE58\uBA74 \uB2E8\uC704\uAC00 \uC790\uB3D9 \uC804\uD658\uB429\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD558\uBA70 \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC785\uB2C8\uB2E4. \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    node(footer, "p", "\uD604\uC7AC \uD0ED: \uC2EC\uB3C4\xB7\uD654\uAC01 \uB610\uB294 \uD50C\uB798\uC2DC \uACB0\uACFC\uB9CC \uC800\uC7A5 \xB7 \uD1B5\uD569/\uC804\uCCB4: \uBAA8\uB4E0 \uACC4\uC0B0 \uC870\uAC74 \uD544\uC694 \xB7 \uC77C\uBC18 Markdown \xB7 \uC0C8 \uB178\uD2B8 \uC0DD\uC131 \xB7 \uC624\uD504\uB77C\uC778");
+    this.paint(false);
+  }
+  zonePanel() {
+    const section = node(this.root, "section", void 0, "pfm-zone-panel");
+    node(section, "h2", "\uC874 \uD3EC\uCEE4\uC2F1");
+    this.select(section, "\uC874 \uD3EC\uCEE4\uC2F1 \uD750\uB984", "zoneFlow", { current: "\uC9C0\uAE08 \uC124\uC815\uC73C\uB85C \uC5B4\uB514\uAE4C\uC9C0 \uC120\uBA85\uD55C\uAC00?", target: "\uC5B4\uB514\uBD80\uD130 \uC5B4\uB514\uAE4C\uC9C0 \uB2F4\uACE0 \uC2F6\uC740\uAC00?" });
+    const target = node(section, "div", void 0, "pfm-zone-target");
+    this.number(target, "\uBAA9\uD45C \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uAC70\uB9AC (m)", "zoneNear");
+    this.number(target, "\uBAA9\uD45C \uAC00\uC7A5 \uBA3C \uAC70\uB9AC (m)", "zoneFar");
+    const wrap = node(target, "label", void 0, "pfm-check");
+    const infinity = node(wrap, "input");
+    infinity.type = "checkbox";
+    infinity.checked = this.plugin.state.inputs.zoneInfinity;
+    infinity.dataset.key = "zoneInfinity";
+    node(wrap, "span", "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300");
+    this.listen(infinity, "change", () => {
+      this.plugin.update("zoneInfinity", infinity.checked);
+      this.changed();
+    });
+    const limits = node(target, "details", void 0, "pfm-zone-limits");
+    limits.dataset.zoneLimits = "true";
+    node(limits, "summary", "\uB80C\uC988 \uC870\uB9AC\uAC1C \uD55C\uACC4\xB7\uC0AC\uC6A9 \uAC00\uB2A5 \uB2E8\uACC4");
+    const lens = node(limits, "div");
+    this.number(lens, "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12 (\uD558\uD55C)", "apertureMin");
+    this.number(lens, "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12 (\uC0C1\uD55C)", "apertureMax");
+    const steps = this.text(lens, "\uC2E4\uC81C \uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4 (\uC27C\uD45C \uAD6C\uBD84)", this.plugin.state.inputs.apertureSteps);
+    steps.dataset.key = "apertureSteps";
+    this.listen(steps, "input", () => {
+      this.plugin.update("apertureSteps", steps.value);
+      this.changed();
+    });
+    this.zoneResult = node(section, "div", void 0, "pfm-zone-result");
+    this.zoneResult.setAttribute("aria-live", "polite");
+    target.after(this.zoneResult);
+    this.zoneResult.after(limits);
+    const coc = this.button(lens, "CoC \uC124\uC815\uC73C\uB85C \uC774\uB3D9", () => this.jumpSettings("camera"));
+    coc.dataset.zoneCoc = "true";
+    node(section, "p", "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC(m)\uB294 \uB80C\uC988\uC758 \uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)\uC640 \uB2E4\uB985\uB2C8\uB2E4. CoC \uAE30\uC900\uC758 \uD5C8\uC6A9 \uBC94\uC704\uC774\uBA70 \uC808\uB300\uC801\uC778 \uC120\uBA85\xB7\uD750\uB9BC \uACBD\uACC4\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uC774 \uB3C4\uAD6C\uB294 \uCD2C\uC601 \uCC38\uACE0\uC6A9 \uACC4\uC0B0\uC774\uBA70 \uCE74\uBA54\uB77C\xB7\uB80C\uC988\uB97C \uC81C\uC5B4\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  }
+  paintEquivalence() {
+    const i = this.plugin.state.inputs;
+    this.equivalent.replaceChildren();
+    try {
+      const e = equivalence(i);
+      node(this.equivalent, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)} \u2192 \uD480\uD504\uB808\uC784 \uD654\uAC01 ${fmt(e.focal, 2)}mm / \uC2EC\uB3C4 \uC57D f/${fmt(e.aperture, 2)}`);
+      node(this.equivalent, "p", `\uB178\uCD9C\xB7\uD50C\uB798\uC2DC \uACC4\uC0B0\uC740 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(i.aperture)} \uC0AC\uC6A9`);
+      const detailText = `\uC2E4\uC81C \uC13C\uC11C ${fmt(i.width)}\xD7${fmt(i.height)}mm \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7. \uD654\uAC01\xB7\uC2E4\uC81C \uC2EC\uB3C4\uB294 \uC774 \uCE58\uC218\uB85C \uACC4\uC0B0\uD569\uB2C8\uB2E4. ${e.differentAspect ? "\uD654\uBA74\uBE44\uAC00 \uB2E4\uB974\uBBC0\uB85C \uB300\uAC01 \uAE30\uC900 \uD658\uC0B0\uC785\uB2C8\uB2E4. " : ""}\uC2E4\uC81C \uC870\uB9AC\uAC1C\uC640 \uB178\uCD9C\uC740 f/${fmt(i.aperture)}\uC774\uBA70 ISO\xB7\uD50C\uB798\uC2DC \uCD9C\uB825\uC740 \uBC14\uB00C\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`;
+      if (i.cocMode === "custom") node(this.equivalent, "p", "\uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC \xB7 \uC2EC\uB3C4 \uB300\uC751\uAC12\uC740 \uC815\uD655\uD55C \uC77C\uCE58\uAC00 \uC544\uB2D9\uB2C8\uB2E4.", "pfm-equivalence-caveat");
+      const details = node(this.equivalent, "details");
+      node(details, "summary", "\uC2EC\uB3C4 \uB300\uC751 \uC870\uAC74\xB7\uD654\uAC01");
+      node(details, "small", `${sensors[i.sensor]?.name ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 ${e.basis} ${fmt(e.crop, 3)}\xD7. ${detailText}`);
+      node(details, "p", "\uAC19\uC740 \uCD2C\uC601 \uC704\uCE58\xB7\uAD6C\uB3C4\uC640 \uBE44\uAD50 \uAC00\uB2A5\uD55C \uAC10\uC0C1 \uC870\uAC74\uC5D0\uC11C\uC758 \uADFC\uC0AC\uC785\uB2C8\uB2E4. \uADFC\uC811 \uCD2C\uC601\xB7\uD3EC\uCEE4\uC2A4 \uBE0C\uB9AC\uB529\xB7\uC11C\uB85C \uB2E4\uB978 \uD654\uBA74\uBE44\uC5D0\uC11C\uB294 \uC644\uC804 \uC77C\uCE58\uB97C \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      node(details, "p", i.cocMode === "custom" ? "\uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC: \uBE44\uAD50 \uAC10\uC0C1 \uC870\uAC74\uC774 \uB2EC\uB77C \uAE30\uBCF8 \uC2EC\uB3C4 \uD658\uC0B0\uC744 \uC815\uD655\uD55C \uC77C\uCE58\uB85C \uBCFC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." : "\uAE30\uBCF8 CoC\uB294 \uC13C\uC11C \uB300\uAC01/1500. \uBE44\uAD50\uD560 \uD480\uD504\uB808\uC784 CoC\uB3C4 \uAC19\uC740 \uAC10\uC0C1 \uAE30\uC900\uC73C\uB85C \uB300\uC751\uD574\uC57C \uD569\uB2C8\uB2E4. \uBA85\uBAA9 \uACC4\uC218\uC640 \uC2E4\uCE58\uC218 \uACC4\uC218 \uCC28\uC774\uAC00 \uC788\uC5B4 \uC815\uD655\uD55C \uC2EC\uB3C4 \uC77C\uCE58\uB97C \uB73B\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      const o = optics(i);
+      node(details, "p", `\uC2E4\uC81C \uD654\uAC01 \uC218\uD3C9 ${fmt(o.horizontal, 1)}\xB0 \xB7 \uC218\uC9C1 ${fmt(o.vertical, 1)}\xB0 \xB7 \uB300\uAC01 ${fmt(o.diagonal, 1)}\xB0`);
+    } catch (e) {
+      node(this.equivalent, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+    }
+  }
+  paintZone() {
+    const i = this.plugin.state.inputs;
+    this.root.dataset.zoneFlow = i.zoneFlow;
+    const far = this.numeric.get("zoneFar");
+    if (far) far.input.disabled = i.zoneInfinity;
+    this.zoneResult.replaceChildren();
+    try {
+      const current = optics(i);
+      if (i.zoneFlow === "current") {
+        node(this.zoneResult, "p", `${metres(i.cameraDistance)}\uC5D0 \uCD08\uC810\uC744 \uB9DE\uCD94\uBA74 \uC57D ${metres(current.near)} ~ ${metres(current.far)} \uBC94\uC704\uAC00 \uD5C8\uC6A9 \uC120\uBA85\uB3C4 \uC548\uC5D0 \uB4E4\uC5B4\uC635\uB2C8\uB2E4.`);
+        node(this.zoneResult, "p", `\uC804\uCCB4 \uC2EC\uB3C4 ${metres(current.total)} \xB7 \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(current.hyperfocal)}`);
+      }
+      if (i.zoneFlow === "target") {
+        const r = solveZone(i);
+        const included = includesTarget(current, r.target);
+        node(this.zoneResult, "strong", !r.possible ? "\uB2EC\uC131 \uBD88\uAC00 \xB7 \uB80C\uC988 \uC870\uB9AC\uAC1C \uC81C\uD55C" : included ? "\uBAA9\uD45C \uAD6C\uAC04 \uD3EC\uD568" : "\uC77C\uBD80 \uBD80\uC871 \xB7 \uC81C\uC548 \uC124\uC815\uC744 \uC801\uC6A9\uD558\uC138\uC694", "pfm-zone-status");
+        node(this.zoneResult, "p", `\uBAA9\uD45C ${metres(r.target.near)} ~ ${metres(r.target.far)} \xB7 \uC774\uB860 \uD544\uC694 f/${fmt(r.required, 3)}`);
+        node(this.zoneResult, "p", `${r.possible ? "\uC81C\uC548" : "\uB80C\uC988 \uD55C\uACC4\uC5D0\uC11C \uB300\uC548"}: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(r.aperture)} \u2192 ${metres(r.actual.near)} ~ ${metres(r.actual.far)}`);
+        if (r.possible) {
+          node(this.zoneResult, "p", `\uC801\uC6A9 \uC804 \uD655\uC778: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(i.cameraDistance)} \u2192 ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(i.aperture)} \u2192 f/${fmt(r.aperture)}`);
+          const b = node(this.zoneResult, "button", "\uC5ED\uC0B0 \uACB0\uACFC\uB97C \uD604\uC7AC \uC124\uC815\uC5D0 \uC801\uC6A9");
+          b.type = "button";
+          b.dataset.zoneApply = "true";
+          b.onclick = () => {
+            const scrollTop = this.contentEl.scrollTop;
+            this.plugin.update("cameraDistance", r.cameraDistance);
+            this.plugin.update("aperture", r.aperture);
+            this.syncNumeric("cameraDistance");
+            this.syncNumeric("aperture");
+            this.changed();
+            this.contentEl.scrollTop = scrollTop;
+            this.root.querySelector("[data-zone-apply]")?.focus({ preventScroll: true });
+          };
+        } else {
+          const edit = node(this.zoneResult, "button", "\uB80C\uC988 \uC870\uB9AC\uAC1C \uD55C\uACC4 \uD655\uC778");
+          edit.type = "button";
+          edit.dataset.zoneLimitsJump = "true";
+          edit.onclick = () => {
+            const limits = this.root.querySelector("[data-zone-limits]");
+            if (limits) {
+              limits.open = true;
+              limits.scrollIntoView({ block: "start" });
+              limits.querySelector("summary")?.focus({ preventScroll: true });
+            }
+          };
+          node(this.zoneResult, "p", "\uC9C0\uC6D0\uD558\uB294 \uC870\uB9AC\uAC1C \uB2E8\uACC4\uB85C \uBAA9\uD45C \uC804\uCCB4\uB97C \uD3EC\uD568\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uBAA9\uD45C \uADFC\uAC70\uB9AC\uB97C \uB354 \uBA40\uB9AC \uD558\uAC70\uB098 \uC6D0\uAC70\uB9AC\uB97C \uC904\uC774\uAC70\uB098 \uC2E4\uC81C \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC(mm)\uB97C \uC9E7\uAC8C \uD574 \uB2E4\uC2DC \uACC4\uC0B0\uD558\uC138\uC694. \uC704 \uB300\uC548\uC740 \uC804\uCCB4 \uD3EC\uD568\uC744 \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.", "pfm-error");
+        }
+      }
+    } catch (e) {
+      node(this.zoneResult, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+    }
+  }
+  equipmentPanel() {
+    const p = this.details("\uB0B4 \uC7A5\uBE44 \uD504\uB9AC\uC14B \xB7 \uC90C\uBCC4 GN \uD45C", "equipment");
+    node(p, "p", "Q20III \uACF5\uC2DD \uC0AC\uC591\uC744 \uBD88\uB7EC\uC624\uAC70\uB098, \uC124\uBA85\uC11C/\uC2E4\uCE21\uC758 ISO100\xB7\uCD5C\uB300 \uCD9C\uB825 GN\uACFC \uC9C0\uC6D0 \uCD9C\uB825\uC744 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.");
+    const state = this.plugin.state;
+    this.button(p, "FlashQ Q20III \uCD94\uAC00\xB7\uC120\uD0DD", () => {
+      addQ20iii(state);
+      this.changed();
+      this.render();
+      void this.plugin.flush().then(() => new import_obsidian.Notice("Q20III \uC120\uD0DD \xB7 \uACE0\uC815 32mm \uCEE4\uBC84\uB9AC\uC9C0 \xB7 \uC81C\uC870\uC0AC \uACF5\uCE6D GN20m")).catch((e) => this.plugin.reportSaveError(e));
+    });
+    node(p, "p", "Q20III: ISO100 GN20m \xB7 1/1~1/64\uC758 7\uB2E8\uACC4. 32mm\uB294 \uD50C\uB798\uC2DC\uC758 \uACE0\uC815 \uCEE4\uBC84\uB9AC\uC9C0\uC774\uBA70 \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC\uC640 \uBCC4\uAC1C\uC785\uB2C8\uB2E4. \uB514\uD4E8\uC800\xB7\uC824\xB7\uBC14\uC6B4\uC2A4 \uC190\uC2E4\uC740 \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    const list = node(p, "select");
+    list.setAttribute("aria-label", "\uC800\uC7A5\uB41C \uC7A5\uBE44");
+    const placeholder = node(list, "option", "\uC7A5\uBE44 \uC120\uD0DD");
+    placeholder.value = "";
+    for (const e of state.equipment) {
+      const o = node(list, "option", e.name);
+      o.value = e.id;
+    }
+    list.value = state.inputs.equipmentId;
+    const apply = () => {
+      if (!list.value) {
+        new import_obsidian.Notice("\uC7A5\uBE44\uB97C \uC120\uD0DD\uD558\uC138\uC694.");
+        return;
+      }
+      selectEquipment(state, list.value);
+      this.changed();
+      this.render();
+    };
+    this.listen(list, "change", apply);
+    this.button(p, "\uC120\uD0DD \uC7A5\uBE44\uC758 \uD604\uC7AC \uC90C GN \uC801\uC6A9", apply);
+    this.button(p, "\uC120\uD0DD \uC7A5\uBE44 \uD3B8\uC9D1", () => {
+      const e = state.equipment.find((e2) => e2.id === list.value);
+      if (!e) return;
+      if (state.draft && (state.draft.name || state.draft.table) && state.draft.id !== e.id) {
+        new import_obsidian.Notice("\uC791\uC131 \uC911\uC778 \uD504\uB9AC\uC14B\uC744 \uBA3C\uC800 \uC800\uC7A5\uD558\uAC70\uB098 \uD3B8\uC9D1 \uCDE8\uC18C\uD558\uC138\uC694.");
+        return;
+      }
+      state.draft = { id: e.id, name: e.name, conditions: e.conditions, source: e.source, unit: "m", table: Object.entries(e.table).map(([z, g]) => `${z},${g}`).join("\n"), minDenominator: String(e.minDenominator), steps: e.steps };
+      this.changed();
+      this.render();
+    });
+    this.button(p, "\uC120\uD0DD \uC7A5\uBE44 \uC0AD\uC81C", () => {
+      const index = state.equipment.findIndex((e) => e.id === list.value);
+      if (index < 0) return;
+      state.deletedEquipment = { equipment: state.equipment[index], index };
+      state.equipment.splice(index, 1);
+      applyEquipment(state);
+      this.changed();
+      this.render();
+      new import_obsidian.Notice("\uC7A5\uBE44 \uC0AD\uC81C\uB428 \xB7 \uC0AD\uC81C \uB418\uB3CC\uB9AC\uAE30\uB85C \uBCF5\uAD6C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    });
+    if (state.deletedEquipment) this.button(p, "\uC0AD\uC81C \uB418\uB3CC\uB9AC\uAE30", () => {
+      const deleted = state.deletedEquipment;
+      if (!state.equipment.some((e) => e.id === deleted.equipment.id)) state.equipment.splice(deleted.index, 0, deleted.equipment);
+      delete state.deletedEquipment;
+      applyEquipment(state);
+      this.changed();
+      this.render();
+    });
+    const draft = state.draft ?? { ...emptyDraft(), unit: state.inputs.gnUnit, minDenominator: String(state.inputs.minDenominator), steps: state.inputs.steps };
+    node(p, "p", draft.id ? "\uAE30\uC874 \uC7A5\uBE44 \uD3B8\uC9D1 \uC911 \xB7 \uC800\uC7A5 \uC2DC \uAC19\uC740 ID \uC720\uC9C0" : "\uC0C8 \uC7A5\uBE44 \uC791\uC131 \xB7 \uC791\uC131 \uC911 \uB0B4\uC6A9 \uC790\uB3D9 \uBCF4\uC874");
+    const saveDraft = () => {
+      state.draft = draft;
+      void this.plugin.persist().catch((e) => this.plugin.reportSaveError(e));
+    };
+    for (const [key, label] of [["name", draft.id ? "\uC7A5\uBE44 \uC774\uB984" : "\uC0C8 \uC7A5\uBE44 \uC774\uB984"], ["conditions", "\uCE21\uC815 \uC870\uAC74 (ISO100\xB7\uCD5C\uB300 \uCD9C\uB825\xB7\uC9C1\uC811\uAD11 \uB4F1)"], ["source", "\uCD9C\uCC98 URL\xB7\uC124\uBA85\uC11C \uD398\uC774\uC9C0 \uB610\uB294 \uC2E4\uCE21 \uBC29\uBC95"], ["minDenominator", "\uD504\uB9AC\uC14B \uCD5C\uC18C \uCD9C\uB825 \uBD84\uBAA8"], ["steps", "\uD504\uB9AC\uC14B \uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8"]]) {
+      const t = this.text(p, label, draft[key]);
+      this.listen(t, "input", () => {
+        draft[key] = t.value;
+        saveDraft();
+      });
+    }
+    const unit = node(p, "select");
+    unit.setAttribute("aria-label", "\uD504\uB9AC\uC14B GN \uB2E8\uC704");
+    for (const u of ["m", "ft"]) {
+      const o = node(unit, "option", u);
+      o.value = u;
+    }
+    unit.value = draft.unit;
+    this.listen(unit, "change", () => {
+      draft.unit = unit.value === "ft" ? "ft" : "m";
+      saveDraft();
+    });
+    const l = node(p, "label", void 0, "pfm-field");
+    node(l, "span", "\uC90Cmm,GN \xB7 \uD55C \uC904\uC5D0 \uD55C \uCE21\uC815\uAC12");
+    const table = node(l, "textarea");
+    table.placeholder = "\uC90Cmm,GN";
+    table.rows = 5;
+    table.value = draft.table;
+    this.listen(table, "input", () => {
+      draft.table = table.value;
+      saveDraft();
+    });
+    this.button(p, draft.id ? "\uC7A5\uBE44 \uBCC0\uACBD \uC800\uC7A5" : "\uC0C8 \uC7A5\uBE44 \uD504\uB9AC\uC14B \uC800\uC7A5", () => {
+      try {
+        const e = { id: draft.id || equipmentId(state.equipment), name: draft.name.trim(), conditions: draft.conditions.trim(), source: draft.source.trim(), table: parseTable(draft.table, draft.unit), minDenominator: parseNumber(draft.minDenominator), steps: draft.steps };
+        if (!equipmentValid(e)) throw Error("\uC774\uB984\xB7\uCE21\uC815 \uC870\uAC74\xB7\uCD9C\uCC98\xB7\uC720\uD6A8\uD55C GN \uD45C\uC640 \uC9C0\uC6D0 \uCD9C\uB825\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+        const index = state.equipment.findIndex((v) => v.id === e.id);
+        if (index < 0) state.equipment.push(e);
+        else state.equipment[index] = e;
+        delete state.draft;
+        applyEquipment(state);
+        this.changed();
+        void this.plugin.flush().then(() => new import_obsidian.Notice("\uC7A5\uBE44 \uC800\uC7A5 \uC644\uB8CC")).catch((e2) => this.plugin.reportSaveError(e2));
+        this.render();
+      } catch (e) {
+        this.plugin.report(e);
+      }
+    });
+    this.button(p, "\uD3B8\uC9D1 \uCDE8\uC18C \xB7 \uCD08\uC548 \uBE44\uC6B0\uAE30", () => {
+      delete state.draft;
+      this.changed();
+      this.render();
+    });
+  }
+  paint(remember = true) {
+    if (remember) this.rememberDetails();
+    const inputs = this.plugin.state.inputs;
+    this.root.dataset.cocMode = inputs.cocMode;
+    this.root.dataset.coverage = inputs.coverage;
+    for (const key of ["coc", "horizontal", "vertical"]) {
+      const pair = this.numeric.get(key);
+      if (pair) pair.input.disabled = key === "coc" ? inputs.cocMode === "estimate" : inputs.coverage === "approx";
+    }
+    const i = this.plugin.state.inputs;
+    const selected = selectedEquipment(this.plugin.state);
+    const compactFlash = field(this.plugin.state).simple && (i.tab === "flash" || i.tab === "combined");
+    this.context.textContent = compactFlash ? `\uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"}${i.mode === "manual" ? "" : " \xB7 GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : `${sensors[i.sensor]?.name.split(" (")[0] ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 \uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)}${i.tab === "zone" ? "" : ` \xB7 ISO ${fmt(i.iso, 0)}`}${i.tab === "flash" || i.tab === "combined" ? ` / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"} \xB7 ${i.mode === "manual" ? "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870" : "GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : ""}`;
+    const tabSave = this.root.querySelector(".pfm-tab-save");
+    if (tabSave) tabSave.textContent = `${{ flash: "\uD50C\uB798\uC2DC", dof: "\uC2EC\uB3C4\xB7\uD654\uAC01", combined: "\uD1B5\uD569", zone: "\uC874 \uD3EC\uCEE4\uC2F1" }[i.tab]} \uACB0\uACFC \uC800\uC7A5`;
+    if (this.outputUndo && this.outputUndo.applied !== i.denominator) {
+      this.outputUndo = void 0;
+      this.fieldMessage = "\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \uB9CC\uB8CC \xB7 \uC774\uD6C4 \uCD9C\uB825 \uBCC0\uACBD\uC744 \uBCF4\uC874\uD569\uB2C8\uB2E4.";
+    }
+    this.syncPower();
+    for (const key of ["gn", "gnZoom", "minDenominator"]) if (document.activeElement !== this.numeric.get(key)?.input) this.syncNumeric(key);
+    const mode = this.root.querySelector("select[data-key=gnMode]");
+    if (mode) mode.value = i.gnMode;
+    this.gnDisplayUnit = i.gnUnit;
+    const unit = this.root.querySelector("select[data-key=gnUnit]");
+    if (unit) unit.value = i.gnUnit;
+    for (const key of ["conditions", "steps"]) {
+      const field2 = this.root.querySelector(`input[data-key=${key}]`);
+      if (field2 && document.activeElement !== field2) field2.value = i[key];
+    }
+    this.results.replaceChildren();
+    this.resultDetails.replaceChildren();
+    this.root.dataset.tab = i.tab;
+    this.root.dataset.linked = String(i.linked);
+    const flashPanel = node(this.results, "div", void 0, "pfm-flash-results");
+    const equipment = selectedEquipment(this.plugin.state);
+    if (i.gnMode === "equipment") node(flashPanel, "small", equipment ? `${equipment.name} \xB7 \uC0AC\uC6A9 \uAC00\uB2A5 \uC90C ${Object.keys(equipment.table).join(", ")}mm` : "\uC120\uD0DD \uC7A5\uBE44 \uC5C6\uC74C \xB7 \uC7A5\uBE44\uB97C \uC120\uD0DD\uD558\uAC70\uB098 \uC218\uB3D9 GN\uC73C\uB85C \uC804\uD658\uD558\uC138\uC694.");
+    try {
+      const f = flash(i);
+      if (!f.supported) node(flashPanel, "p", f.powerLabel, "pfm-warning");
+      node(flashPanel, "p", "\uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC", "pfm-eyebrow");
+      const hero = node(flashPanel, "div", void 0, "pfm-hero");
+      const display = distanceParts(f.d);
+      node(hero, "span", display.value, "pfm-value");
+      hero.append(document.createTextNode(" "));
+      node(hero, "span", display.unit, "pfm-unit");
+      node(flashPanel, "p", field(this.plugin.state).simple ? `\uCD9C\uB825 1/${i.denominator} \xB7 GN ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300)` : `1/${i.denominator} \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} \xB7 GN ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300)`);
+      if (i.conditions.includes("\uC5F0\uC2B5\uC6A9 \uAC00\uC0C1 GN")) node(flashPanel, "small", "\uC5F0\uC2B5\uC6A9 GN \xB7 \uC2E4\uC81C \uC7A5\uBE44 \uC0AC\uC591 \uC544\uB2D8", "pfm-model-note");
+      const label = f.ev > i.tolerance ? "\uC608\uC0C1 \uACFC\uB2E4 \uB178\uCD9C" : f.ev < -i.tolerance ? "\uC608\uC0C1 \uBD80\uC871 \uB178\uCD9C" : "\uD5C8\uC6A9 \uBC94\uC704 \uB0B4";
+      node(flashPanel, "p", `${metres(f.r)}\uC5D0\uC11C ${f.ev > 0 ? "+" : ""}${fmt(f.ev)} EV \xB7 ${label}`, "pfm-ev");
+      const action = node(flashPanel, "div", void 0, "pfm-output-action");
+      node(action, "p", `\uAD8C\uC7A5 \uC9C0\uC6D0 \uCD9C\uB825 1/${f.nearest} \xB7 \uC801\uC6A9 \uD6C4 \uB0A8\uB294 \uC624\uCC28 ${f.residual > 0 ? "+" : ""}${fmt(f.residual)} EV${f.status === "\uC7A5\uBE44 \uCD9C\uB825 \uBC94\uC704 \uC548" ? "" : ` \xB7 ${f.status}`}`);
+      const apply = node(action, "button", i.denominator === f.nearest ? "\uAD8C\uC7A5 \uCD9C\uB825\uACFC \uAC19\uC74C" : `\uAD8C\uC7A5 \uCD9C\uB825 1/${f.nearest} \uC801\uC6A9`);
+      apply.type = "button";
+      apply.dataset.flashApply = "true";
+      apply.disabled = i.denominator === f.nearest;
+      apply.onclick = () => {
+        this.outputUndo = { before: i.denominator, applied: f.nearest };
+        this.plugin.update("denominator", f.nearest);
+        this.syncNumeric("denominator");
+        this.changed();
+        this.root.querySelector("[data-flash-undo]")?.focus({ preventScroll: true });
+      };
+      if (this.outputUndo) {
+        const before = this.outputUndo.before;
+        const undo2 = node(action, "button", `\uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \xB7 1/${before}\uB85C`);
+        undo2.type = "button";
+        undo2.dataset.flashUndo = "true";
+        undo2.onclick = () => {
+          this.outputUndo = void 0;
+          this.plugin.update("denominator", before);
+          this.syncNumeric("denominator");
+          this.changed();
+          this.root.querySelector("[data-flash-apply]")?.focus({ preventScroll: true });
+        };
+      }
+      const d = node(this.resultDetails, "details", void 0, "pfm-flash-details");
+      node(d, "summary", "\uD544\uC694 \uCD9C\uB825\xB7\uC870\uB9AC\uAC1C\xB7\uAC70\uB9AC\uBCC4 \uD45C");
+      node(d, "p", `${f.powerLabel} \xB7 ${i.gnMode === "equipment" ? "\uC7A5\uBE44 \uD45C" : "\uC218\uB3D9 GN"}`);
+      node(d, "p", i.conditions);
+      node(d, "p", `\xB1${fmt(i.tolerance)}EV: ${metres(f.low)} ~ ${metres(f.high)}. \uAC00\uAE4C\uC6B0\uBA74 \uACFC\uB2E4 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.`);
+      node(d, "p", `\uD544\uC694 \uC870\uB9AC\uAC1C f/${fmt(f.requiredAperture)} \xB7 \uD544\uC694 \uCD9C\uB825 ${fmt(f.needed * 100)}% \xB7 ${f.status}`);
+      this.table(d, ["\uCD9C\uB825", "\uC608\uC0C1 \uAC70\uB9AC"], f.distances.map((x) => [`1/${x.n}`, metres(x.d)]));
+      this.table(d, ["\uD50C\uB798\uC2DC \uAC70\uB9AC", "\uB178\uCD9C \uCC28\uC774"], [0.5, 0.70710678, 1, 1.41421356, 2].map((v) => [metres(f.d * v), `${fmt(exposureEV(f.d, f.d * v))} EV \xB7 ${v < 1 ? "\uACFC\uB2E4" : v > 1 ? "\uBD80\uC871" : "\uAE30\uC900 \uC801\uC815"}`]));
+    } catch (e) {
+      node(flashPanel, "p", "\uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC", "pfm-eyebrow");
+      node(flashPanel, "div", "\u2014", "pfm-hero");
+      node(flashPanel, "p", !Number.isFinite(i.gn) || i.gn <= 0 ? "GN\uC774 \uBE44\uC5C8\uAC70\uB098 0 \uC774\uD558\uC785\uB2C8\uB2E4. \uD50C\uB798\uC2DC \uC870\uAC74\uC5D0\uC11C ISO100 \uCD5C\uB300 \uCD9C\uB825 GN\uC744 \uC785\uB825\uD558\uC138\uC694." : e instanceof Error ? e.message : String(e), "pfm-error");
+      const disabled = node(flashPanel, "button", "\uAD8C\uC7A5 \uCD9C\uB825 \uC801\uC6A9 \uBD88\uAC00");
+      disabled.type = "button";
+      disabled.disabled = true;
+      disabled.dataset.flashApply = "true";
+      disabled.className = "pfm-error-action";
+      const fix = node(flashPanel, "button", "\uD50C\uB798\uC2DC \uC870\uAC74 \uD655\uC778");
+      fix.type = "button";
+      fix.className = "pfm-error-action";
+      fix.onclick = () => this.jumpSettings("flash");
+    }
+    if (i.tab === "flash") this.results.append(this.picture);
+    else this.results.prepend(this.picture);
+    const dof = node(this.results, "div", void 0, "pfm-dof-results");
+    try {
+      const o = optics(i);
+      node(dof, "h2", "\uC2EC\uB3C4\xB7\uD654\uAC01");
+      const grid = node(dof, "div", void 0, "pfm-stat-grid");
+      for (const [key, label, value] of [["near", "\uADFC\uAC70\uB9AC", o.near], ["far", "\uC6D0\uAC70\uB9AC", o.far], ["total", "\uC804\uCCB4 \uC2EC\uB3C4", o.total], ["hyperfocal", "\uACFC\uCD08\uC810", o.hyperfocal]]) {
+        const card = node(grid, "div", void 0, "pfm-stat");
+        card.dataset.stat = key;
+        node(card, "span", label);
+        node(card, "strong", metres(value));
+      }
+      const bar = node(dof, "div", void 0, "pfm-dof-bar");
+      node(bar, "span", o.total < 0.1524 ? "\uC811\uC0AC\xB7\uC81C\uD488 \uCC38\uACE0" : o.total < 0.6096 ? "\uC778\uBB3C \uCC38\uACE0" : o.total < 3.048 ? "\uADF8\uB8F9\xB7\uD589\uC0AC \uCC38\uACE0" : o.total < 9.144 ? "\uAC70\uB9AC\xB7\uAC74\uCD95 \uCC38\uACE0" : "\uD48D\uACBD \uCC38\uACE0", "pfm-dof-badge");
+      const focus = node(bar, "button", "\uACFC\uCD08\uC810 \uB9DE\uCD94\uAE30");
+      focus.type = "button";
+      focus.dataset.pfmHyperfocal = "true";
+      const od = node(this.resultDetails, "details", void 0, "pfm-dof-details");
+      node(od, "summary", "\uC804\uCCB4 \uC2EC\uB3C4\xB7\uACFC\uCD08\uC810\xB7\uD654\uAC01\xB7\uD68C\uC808");
+      node(od, "p", `\uADFC\uAC70\uB9AC ${metres(o.near)} \xB7 \uC6D0\uAC70\uB9AC ${metres(o.far)} \xB7 \uC804\uCCB4 ${metres(o.total)} \xB7 \uACFC\uCD08\uC810 ${metres(o.hyperfocal)}`);
+      node(od, "p", `\uD654\uAC01 \uC218\uD3C9 ${fmt(o.horizontal, 1)}\xB0 / \uC218\uC9C1 ${fmt(o.vertical, 1)}\xB0 / \uB300\uAC01 ${fmt(o.diagonal, 1)}\xB0`);
+      node(od, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm \u2192 \uC2E4\uCE58\uC218 \uB300\uAC01 \uAE30\uC900 \uD658\uC0B0 ${fmt(o.equivalent, 1)}mm \xB7 CoC ${fmt(o.c, 5)}mm`);
+      node(od, "p", `\uD68C\uC808 \uADFC\uC0AC: \uD30C\uC7A5 550nm, Airy \uC9C0\uB984 ${fmt(o.airy, 5)}mm (${fmt(o.airy / o.c)}\xD7CoC). ${o.airy > o.c ? "CoC\uBCF4\uB2E4 \uCEE4\uC9C8 \uC218 \uC788\uC74C." : "CoC \uC774\uD558."} \uC808\uB300 \uC120\uBA85\uB3C4 \uD310\uC815\uC774 \uC544\uB2D9\uB2C8\uB2E4.`);
+    } catch (e) {
+      node(dof, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+    }
+    try {
+      const c = coverage(i);
+      const p = node(this.resultDetails, "details", void 0, "pfm-coverage-results");
+      node(p, "summary", "\uD504\uB808\uC784\xB7\uC870\uC0AC \uBC94\uC704 \uBE44\uAD50");
+      node(p, "p", `\uD504\uB808\uC784 ${metres(c.camera.width)} \xD7 ${metres(c.camera.height)} \xB7 \uC870\uC0AC \uBC94\uC704 ${metres(c.flash.width)} \xD7 ${metres(c.flash.height)}`);
+      node(p, "p", i.linked ? c.narrow ? "\uC8FC\uC758: \uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815. \uC2E4\uC81C \uBC30\uAD11\uC740 \uADE0\uC77C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." : "\uC624\uD504\uCE74\uBA54\uB77C: \uAC01\uAC01\uC758 \uAC70\uB9AC \uD3C9\uBA74 \uBC94\uC704\uC785\uB2C8\uB2E4. \uC704\uCE58\xB7\uBC29\uD5A5\uC744 \uC785\uB825\uD558\uC9C0 \uC54A\uC544 \uACF5\uAC04 \uC911\uCCA9\uC744 \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    } catch (e) {
+      node(this.resultDetails, "p", `\uD504\uB808\uC784\xB7\uC870\uC0AC \uBC94\uC704 \uBE44\uAD50: ${e instanceof Error ? e.message : String(e)}`, "pfm-error pfm-coverage-results");
+    }
+    if (i.loss > 0) node(this.resultDetails, "p", "\uCD94\uAC00 \uC190\uC2E4\uC744 \uC801\uC6A9\uD55C \uCD94\uC815. GN\uC5D0 \uD3EC\uD568\uB41C \uC190\uC2E4\uC758 \uC911\uBCF5 \uBCF4\uC815\uC5D0 \uC8FC\uC758\uD558\uC138\uC694.");
+    this.paintEquivalence();
+    this.paintZone();
+    this.paintField();
+    for (const pair of this.numeric.values()) pair.updateControls();
+    this.restoreDetails();
+    diagram(this.picture, i);
+    if (field(this.plugin.state).simple) {
+      this.root.querySelector(".pfm-quick")?.after(this.picture);
+      if (i.tab === "zone") {
+        const panel = this.zoneResult.closest(".pfm-zone-panel");
+        if (panel) {
+          this.results.before(panel);
+          if (this.distanceButtons) panel.after(this.distanceButtons);
+        }
+      }
+    }
+  }
+  table(parent, headers, rows) {
+    const t = node(parent, "table");
+    const h = node(node(t, "thead"), "tr");
+    headers.forEach((x) => node(h, "th", x));
+    const body = node(t, "tbody");
+    for (const row of rows) {
+      const tr = node(body, "tr");
+      row.forEach((x) => node(tr, "td", x));
+    }
+  }
+};
+
+// src/main.ts
+var PhotoPlugin = class extends import_obsidian2.Plugin {
+  constructor() {
+    super(...arguments);
+    this.notes = Promise.resolve();
+    this.saveError = "";
+    this.active = false;
+    this.opening = null;
+  }
+  async onload() {
+    this.state = restore(await this.loadData());
+    this.stableInputs = { ...this.state.inputs };
+    this.active = true;
+    this.writer = new LatestWriter((data) => this.saveData(data), () => {
+      if (this.writer.error && !this.saveError) this.report(this.writer.error);
+      this.saveError = this.writer.error ? `\uC124\uC815 \uC800\uC7A5 \uC2E4\uD328: ${this.writer.error instanceof Error ? this.writer.error.message : String(this.writer.error)} \xB7 \uB2E4\uC2DC \uC800\uC7A5\uD558\uC138\uC694.` : "";
+      for (const leaf of this.app.workspace.getLeavesOfType(VIEW)) if (leaf.view instanceof PhotoView) leaf.view.updateSaveStatus();
+    });
+    const flush = () => {
+      void this.flush().catch((e) => this.reportSaveError(e));
+    };
+    this.registerDomEvent(document, "visibilitychange", () => {
+      if (document.visibilityState === "hidden") flush();
+    });
+    this.registerDomEvent(window, "pagehide", flush);
+    this.registerView(VIEW, (leaf) => new PhotoView(leaf, this));
+    this.addCommand({ id: "open", name: "\uCD2C\uC601 \uACC4\uC0B0 \uC5F4\uAE30", icon: "camera", callback: () => {
+      void this.open().catch((e) => this.report(e));
+    } });
+    this.addCommand({ id: "save-note", name: "\uC804\uCCB4 \uACC4\uC0B0\uC744 \uB178\uD2B8\uB85C \uC800\uC7A5", callback: () => {
+      void this.saveNote().catch((e) => this.report(e));
+    } });
+    this.addCommand({ id: "save-tab-note", name: "\uD604\uC7AC \uD0ED \uACB0\uACFC \uC800\uC7A5", callback: () => {
+      void this.saveNote(this.state.inputs.tab).catch((e) => this.report(e));
+    } });
+    this.addRibbonIcon("camera", "\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8 \uC5F4\uAE30", () => {
+      void this.open().catch((e) => this.report(e));
+    });
+  }
+  report(e) {
+    console.error("Photo Field Mobile", e);
+    new import_obsidian2.Notice(`\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  open() {
+    if (this.opening) return this.opening;
+    this.opening = this.openView().finally(() => {
+      this.opening = null;
+    });
+    return this.opening;
+  }
+  async openView() {
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    if (!this.active) return;
+    let leaf = this.app.workspace.getLeavesOfType(VIEW)[0];
+    if (!leaf) {
+      leaf = this.app.workspace.getLeaf(false);
+      await leaf.setViewState({ type: VIEW, active: true });
+    }
+    if (this.active) await this.app.workspace.revealLeaf(leaf);
+  }
+  persist() {
+    const data = snapshot(this.state, this.stableInputs);
+    this.stableInputs = { ...data.inputs };
+    return this.writer.request(data);
+  }
+  async flush() {
+    if (this.writer) await this.writer.flush();
+  }
+  reportSaveError(e) {
+    if (!this.saveError) {
+      this.saveError = "\uC124\uC815 \uC800\uC7A5 \uC2E4\uD328 \xB7 \uB2E4\uC2DC \uC800\uC7A5\uD558\uC138\uC694.";
+      this.report(e);
+    }
+    for (const leaf of this.app.workspace.getLeavesOfType(VIEW)) if (leaf.view instanceof PhotoView) leaf.view.updateSaveStatus();
+  }
+  refresh(source) {
+    for (const leaf of this.app.workspace.getLeavesOfType(VIEW)) if (leaf.view instanceof PhotoView && leaf.view !== source) leaf.view.render();
+  }
+  saveNote(scope = "all") {
+    const i = { ...this.state.inputs }, equipment = selectedEquipment(this.state);
+    let content;
+    try {
+      validateNote(i, scope);
+      content = note(i, /* @__PURE__ */ new Date(), { version: this.manifest.version, equipment, scope });
+    } catch (e) {
+      return Promise.reject(e);
+    }
+    const task = this.notes.catch(() => void 0).then(async () => {
+      const folder = (0, import_obsidian2.normalizePath)("\uC0AC\uC9C4 \uCD2C\uC601 \uACC4\uC0B0");
+      if (!this.app.vault.getAbstractFileByPath(folder)) try {
+        await this.app.vault.createFolder(folder);
+      } catch (e) {
+        if (!(this.app.vault.getAbstractFileByPath(folder) instanceof import_obsidian2.TFolder)) throw e;
+      }
+      if (!(this.app.vault.getAbstractFileByPath(folder) instanceof import_obsidian2.TFolder)) throw Error("\uC800\uC7A5 \uD3F4\uB354 \uACBD\uB85C\uC5D0 \uD30C\uC77C\uC774 \uC788\uC2B5\uB2C8\uB2E4. \uB2E4\uB978 \uC774\uB984\uC73C\uB85C \uC62E\uACA8\uC8FC\uC138\uC694.");
+      const base = `${folder}/\uCD2C\uC601 \uACC4\uC0B0 ${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}`;
+      for (let n = 0; n < 1e3; n++) {
+        const path = `${base}${n ? "-" + n : ""}.md`;
+        if (this.app.vault.getAbstractFileByPath(path)) continue;
+        try {
+          await this.app.vault.create(path, content);
+          this.noteNotice?.hide();
+          this.noteNotice = new import_obsidian2.Notice(`\uC800\uC7A5 \uC644\uB8CC: ${path}`, 2500);
+          return path;
+        } catch (e) {
+          if (!this.app.vault.getAbstractFileByPath(path)) throw e;
+        }
+      }
+      throw Error("\uC0C8 \uB178\uD2B8 \uC774\uB984\uC744 \uD655\uBCF4\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC800\uC7A5\uD558\uC138\uC694.");
+    });
+    this.notes = task;
+    return task;
+  }
+  update(key, value) {
+    if ((key === "gnMode" || key === "equipmentId") && this.state.field) delete this.state.field.activeShotId;
+    if (key === "gnMode") {
+      setGnMode(this.state, value);
+      return;
+    }
+    this.state.inputs[key] = value;
+    if (key === "zoom") applyEquipment(this.state);
+    if (["gn", "gnZoom", "conditions", "steps", "minDenominator"].includes(key) && this.state.inputs.gnMode === "equipment") {
+      this.state.inputs.gnMode = "manual";
+    }
+  }
+  onunload() {
+    this.active = false;
+    this.noteNotice?.hide();
+    void this.flush().catch((e) => this.reportSaveError(e));
+    this.app.workspace.detachLeavesOfType(VIEW);
+  }
+};

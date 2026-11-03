@@ -1,0 +1,176 @@
+{
+  "version": 2,
+  "inputs": {
+    "gnMode": "equipment",
+    "equipmentId": "equipment-mw02z4gt",
+    "sensor": "ff",
+    "width": 36,
+    "height": 24,
+    "focal": 35,
+    "aperture": 4,
+    "iso": 400,
+    "cameraDistance": 1,
+    "linked": true,
+    "flashDistance": 1,
+    "cocMode": "estimate",
+    "coc": 0.029,
+    "gn": 20,
+    "gnUnit": "m",
+    "gnZoom": 32,
+    "zoom": 32,
+    "conditions": "제조사 공칭 GN20m · ISO100·최대 출력 · 고정 32mm 커버리지 (35mm판). 직광·일반 동조 계산용. 디퓨저·젤 손실 미측정, 실측값 아님. · 출처: LightPix Labs Q20III 제품 사양·Quick Manual: https://www.lightpixlabs.com/pages/q20iii",
+    "denominator": 16,
+    "loss": 0,
+    "tolerance": 1,
+    "minDenominator": 64,
+    "steps": "1,2,4,8,16,32,64",
+    "coverage": "approx",
+    "horizontal": 40,
+    "vertical": 27,
+    "mode": "manual",
+    "diagramMax": 15,
+    "tab": "flash",
+    "cropBasis": "nominal",
+    "zoneFlow": "target",
+    "zoneNear": 2,
+    "zoneFar": 5,
+    "zoneInfinity": false,
+    "apertureMin": 1.4,
+    "apertureMax": 16,
+    "apertureSteps": "1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32"
+  },
+  "equipment": [
+    {
+      "name": "LightPix Labs FlashQ Q20III",
+      "conditions": "제조사 공칭 GN20m · ISO100·최대 출력 · 고정 32mm 커버리지 (35mm판). 직광·일반 동조 계산용. 디퓨저·젤 손실 미측정, 실측값 아님.",
+      "source": "LightPix Labs Q20III 제품 사양·Quick Manual: https://www.lightpixlabs.com/pages/q20iii",
+      "table": {
+        "32": 20
+      },
+      "minDenominator": 64,
+      "steps": "1,2,4,8,16,32,64",
+      "id": "equipment-mw02z4gt"
+    }
+  ],
+  "field": {
+    "version": 1,
+    "simple": true,
+    "shots": [
+      {
+        "id": "walk-night",
+        "name": "야간 스냅 · 가상 촬영 조건",
+        "values": {
+          "sensor": "ff",
+          "width": 36,
+          "height": 24,
+          "focal": 35,
+          "aperture": 4,
+          "iso": 400,
+          "gnMode": "equipment",
+          "equipmentId": "equipment-mw02z4gt",
+          "gn": 20,
+          "gnUnit": "m",
+          "gnZoom": 32,
+          "zoom": 32,
+          "conditions": "제조사 공칭 GN20m · ISO100·최대 출력 · 고정 32mm 커버리지 (35mm판). 직광·일반 동조 계산용. 디퓨저·젤 손실 미측정, 실측값 아님. · 출처: LightPix Labs Q20III 제품 사양·Quick Manual: https://www.lightpixlabs.com/pages/q20iii",
+          "denominator": 16,
+          "linked": true,
+          "cocMode": "estimate",
+          "coc": 0.029,
+          "coverage": "approx",
+          "horizontal": 40,
+          "vertical": 27,
+          "loss": 0,
+          "tolerance": 1,
+          "minDenominator": 64,
+          "steps": "1,2,4,8,16,32,64",
+          "mode": "manual"
+        },
+        "equipmentSignature": "[\"제조사 공칭 GN20m · ISO100·최대 출력 · 고정 32mm 커버리지 (35mm판). 직광·일반 동조 계산용. 디퓨저·젤 손실 미측정, 실측값 아님.\",\"LightPix Labs Q20III 제품 사양·Quick Manual: https://www.lightpixlabs.com/pages/q20iii\",64,\"1,2,4,8,16,32,64\",[[\"32\",20]]]"
+      },
+      {
+        "id": "walk-day",
+        "name": "주간 스냅 · 가상 촬영 조건",
+        "values": {
+          "sensor": "ff",
+          "width": 36,
+          "height": 24,
+          "focal": 35,
+          "aperture": 5.6,
+          "iso": 100,
+          "gnMode": "equipment",
+          "equipmentId": "equipment-mw02z4gt",
+          "gn": 20,
+          "gnUnit": "m",
+          "gnZoom": 32,
+          "zoom": 32,
+          "conditions": "제조사 공칭 GN20m · ISO100·최대 출력 · 고정 32mm 커버리지 (35mm판). 직광·일반 동조 계산용. 디퓨저·젤 손실 미측정, 실측값 아님. · 출처: LightPix Labs Q20III 제품 사양·Quick Manual: https://www.lightpixlabs.com/pages/q20iii",
+          "denominator": 4,
+          "linked": true,
+          "cocMode": "estimate",
+          "coc": 0.029,
+          "coverage": "approx",
+          "horizontal": 40,
+          "vertical": 27,
+          "loss": 0,
+          "tolerance": 1,
+          "minDenominator": 64,
+          "steps": "1,2,4,8,16,32,64",
+          "mode": "manual"
+        },
+        "equipmentSignature": "[\"제조사 공칭 GN20m · ISO100·최대 출력 · 고정 32mm 커버리지 (35mm판). 직광·일반 동조 계산용. 디퓨저·젤 손실 미측정, 실측값 아님.\",\"LightPix Labs Q20III 제품 사양·Quick Manual: https://www.lightpixlabs.com/pages/q20iii\",64,\"1,2,4,8,16,32,64\",[[\"32\",20]]]"
+      }
+    ],
+    "zones": [
+      {
+        "id": "walk-zone",
+        "name": "주간 2~5m",
+        "near": 2,
+        "far": 5,
+        "infinity": false
+      },
+      {
+        "id": "walk-infinity",
+        "name": "주간 3m~무한대",
+        "near": 3,
+        "far": 5,
+        "infinity": true
+      }
+    ],
+    "distances": [
+      {
+        "id": "walk-1",
+        "metres": 1
+      },
+      {
+        "id": "walk-2",
+        "metres": 2
+      },
+      {
+        "id": "walk-3",
+        "metres": 3
+      },
+      {
+        "id": "walk-05",
+        "metres": 0.5
+      },
+      {
+        "id": "walk-08",
+        "metres": 0.8
+      },
+      {
+        "id": "walk-12",
+        "metres": 1.2
+      }
+    ],
+    "activeShotId": "walk-night"
+  },
+  "manualFlash": {
+    "gn": 40,
+    "gnUnit": "m",
+    "gnZoom": 50,
+    "conditions": "연습용 가상 GN · 장비 사양 아님 · ISO100·최대출력·직접광·50mm",
+    "minDenominator": 256,
+    "steps": "1,2,4,8,16,32,64,128,256"
+  }
+}

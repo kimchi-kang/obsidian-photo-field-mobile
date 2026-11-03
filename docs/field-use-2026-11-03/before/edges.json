@@ -1,0 +1,102 @@
+{
+  "checks": [
+    {
+      "name": "missing exact equipment zoom GN blocks calculation",
+      "passed": true,
+      "display": "LightPix Labs FlashQ Q20III · 사용 가능 줌 32mm\n\n적정 노출 예상 거리\n\n—\n\nGN이 비었거나 0 이하입니다. 플래시 조건에서 ISO100 최대 출력 GN을 입력하세요.\n\n권장 출력 적용 불가\n플래시 조건 확인"
+    },
+    {
+      "name": "theoretical output visibly classified and recovered by one real stage",
+      "passed": true
+    },
+    {
+      "name": "unsupported HSS blocks results and direct flash UI restores",
+      "passed": true
+    }
+  ],
+  "events": [
+    {
+      "kind": "tap",
+      "label": "상세"
+    },
+    {
+      "kind": "tap",
+      "label": "플래시 설정"
+    },
+    {
+      "kind": "tap",
+      "label": "zoom"
+    },
+    {
+      "kind": "keyboard",
+      "label": "zoom"
+    },
+    {
+      "kind": "tap",
+      "label": "간편"
+    },
+    {
+      "kind": "tap",
+      "label": "GN 해결 동작"
+    },
+    {
+      "kind": "tap",
+      "label": "zoom"
+    },
+    {
+      "kind": "keyboard",
+      "label": "zoom"
+    },
+    {
+      "kind": "tap",
+      "label": "denominator"
+    },
+    {
+      "kind": "keyboard",
+      "label": "denominator"
+    },
+    {
+      "kind": "tap",
+      "label": "간편"
+    },
+    {
+      "kind": "tap",
+      "label": "실제 지원 출력으로 약하게"
+    },
+    {
+      "kind": "tap",
+      "label": "상세"
+    },
+    {
+      "kind": "tap",
+      "label": "미지원 발광 조건 확인"
+    },
+    {
+      "kind": "selection",
+      "label": "HSS"
+    },
+    {
+      "kind": "tap",
+      "label": "간편"
+    },
+    {
+      "kind": "tap",
+      "label": "미지원 조건 해결"
+    },
+    {
+      "kind": "selection",
+      "label": "직접광 일반동조 복구"
+    },
+    {
+      "kind": "tap",
+      "label": "간편"
+    },
+    {
+      "kind": "tap",
+      "label": "저장 실패 조건에서 거리 변경"
+    }
+  ],
+  "errors": [],
+  "consoleErrors": [],
+  "environmentFault": "QA data.json temporarily replaced by an empty directory to force EISDIR; original file restored before UI retry; no internal state or save method override"
+}

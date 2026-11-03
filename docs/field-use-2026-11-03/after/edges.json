@@ -1,0 +1,124 @@
+{
+  "checks": [
+    {
+      "name": "missing exact equipment zoom GN blocks calculation",
+      "passed": true,
+      "display": "LightPix Labs FlashQ Q20III · 사용 가능 줌 32mm\n\n적정 노출 예상 거리\n\n—\n\n50mm 줌의 GN 자료가 없습니다. 이 장비의 사용 가능 줌: 32mm. 플래시 줌 또는 장비 GN 표를 확인하세요.\n\n권장 출력 적용 불가\n장비 줌·GN 확인"
+    },
+    {
+      "name": "theoretical output visibly classified and recovered by one real stage",
+      "passed": true
+    },
+    {
+      "name": "unsupported HSS blocks results and direct flash UI restores",
+      "passed": true
+    },
+    {
+      "name": "real filesystem path failure displayed and UI retry saves latest inputs",
+      "passed": true
+    },
+    {
+      "name": "current-tab Markdown saved current Q20III output and conditions",
+      "passed": true
+    }
+  ],
+  "events": [
+    {
+      "kind": "tap",
+      "label": "플래시로 계속"
+    },
+    {
+      "kind": "tap",
+      "label": "상세"
+    },
+    {
+      "kind": "tap",
+      "label": "플래시 설정"
+    },
+    {
+      "kind": "tap",
+      "label": "zoom"
+    },
+    {
+      "kind": "keyboard",
+      "label": "zoom"
+    },
+    {
+      "kind": "tap",
+      "label": "간편"
+    },
+    {
+      "kind": "tap",
+      "label": "GN 해결 동작"
+    },
+    {
+      "kind": "tap",
+      "label": "zoom"
+    },
+    {
+      "kind": "keyboard",
+      "label": "zoom"
+    },
+    {
+      "kind": "tap",
+      "label": "denominator"
+    },
+    {
+      "kind": "keyboard",
+      "label": "denominator"
+    },
+    {
+      "kind": "tap",
+      "label": "간편"
+    },
+    {
+      "kind": "tap",
+      "label": "실제 지원 출력으로 약하게"
+    },
+    {
+      "kind": "tap",
+      "label": "상세"
+    },
+    {
+      "kind": "tap",
+      "label": "미지원 발광 조건 확인"
+    },
+    {
+      "kind": "selection",
+      "label": "HSS"
+    },
+    {
+      "kind": "tap",
+      "label": "간편"
+    },
+    {
+      "kind": "tap",
+      "label": "미지원 조건 해결"
+    },
+    {
+      "kind": "selection",
+      "label": "직접광 일반동조 복구"
+    },
+    {
+      "kind": "tap",
+      "label": "간편"
+    },
+    {
+      "kind": "tap",
+      "label": "저장 실패 조건에서 거리 변경"
+    },
+    {
+      "kind": "tap",
+      "label": "테스트 저장 경로 복구 후 재시도"
+    },
+    {
+      "kind": "tap",
+      "label": "현재 탭 Markdown 저장"
+    }
+  ],
+  "errors": [],
+  "consoleErrors": [
+    "Photo Field Mobile Error: 저장 파일을 다시 읽을 수 없습니다. 저장 위치·권한을 확인하세요.\n    at verifiedWrite (plugin:photo-field-mobile:524:25)\n    at async LatestWriter.flush (plugin:photo-field-mobile:578:7)"
+  ],
+  "environmentFault": "QA data.json temporarily replaced by an empty directory to force EISDIR; original file restored before UI retry; no internal state or save method override"
+}

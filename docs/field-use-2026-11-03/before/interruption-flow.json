@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "events": [
+    {
+      "kind": "tap",
+      "label": "탭 목록"
+    },
+    {
+      "kind": "tap",
+      "label": "촬영 화면 닫기"
+    },
+    {
+      "kind": "tap",
+      "label": "탭 목록 완료"
+    },
+    {
+      "kind": "tap",
+      "label": "모바일 메뉴"
+    },
+    {
+      "kind": "tap",
+      "label": "사진 촬영 도우미 열기"
+    },
+    {
+      "kind": "tap",
+      "label": "일반 노트 찾기"
+    },
+    {
+      "kind": "keyboard",
+      "label": "일반 노트 검색"
+    },
+    {
+      "kind": "tap",
+      "label": "일반 노트 열기"
+    },
+    {
+      "kind": "tap",
+      "label": "모바일 메뉴"
+    },
+    {
+      "kind": "tap",
+      "label": "사진 촬영 도우미 열기"
+    }
+  ]
+}

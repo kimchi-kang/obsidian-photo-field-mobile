@@ -1,0 +1,759 @@
+{
+  "phase": "before",
+  "stories": [
+    {
+      "name": "1 야간 플래시 스냅",
+      "events": [
+        {
+          "kind": "tap",
+          "label": "야간 촬영 조건",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "1m",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "2m",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "3m",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "권장 출력 적용",
+          "reachScroll": 336.5,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "조금 어둡게",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "반대 단계로 복구",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "다른 촬영 조건",
+          "reachScroll": -336.5,
+          "automaticScroll": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "2 주간 존 포커싱",
+      "events": [
+        {
+          "kind": "tap",
+          "label": "존 포커싱",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "2~5m 목표",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "2~5m 적용",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "3m~무한대 목표",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "무한대 목표 적용",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "상세 화면",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "입력 focal",
+          "reachScroll": 1627.5,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "keyboard",
+          "label": "focal",
+          "valueEntered": "50",
+          "unit": null
+        },
+        {
+          "kind": "tap",
+          "label": "간편 화면",
+          "reachScroll": -1605,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "같은 2~5m 재계산",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "새 렌즈 제안 적용",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "상세 화면",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "입력 focal",
+          "reachScroll": 1625,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "keyboard",
+          "label": "focal",
+          "valueEntered": "85",
+          "unit": null
+        },
+        {
+          "kind": "tap",
+          "label": "간편 화면",
+          "reachScroll": -1674,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "달성 불가 2~5m",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "렌즈 조리개 한계 확인",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "상세 화면",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "선택 zoneFlow",
+          "reachScroll": 733.5,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "selection",
+          "label": "zoneFlow",
+          "value": "target"
+        },
+        {
+          "kind": "tap",
+          "label": "입력 focal",
+          "reachScroll": 1312.5,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "keyboard",
+          "label": "focal",
+          "valueEntered": "28",
+          "unit": null
+        },
+        {
+          "kind": "tap",
+          "label": "간편 화면",
+          "reachScroll": -2020,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "적절한 렌즈로 복구",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "복구 설정 적용",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "3 가까운 피사체",
+      "events": [
+        {
+          "kind": "tap",
+          "label": "통합",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "50cm",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "80cm",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "거리 더보기",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "1.2m",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "상세 화면",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "입력 cameraDistance",
+          "reachScroll": 1101.5,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "keyboard",
+          "label": "cameraDistance",
+          "valueEntered": "0.55",
+          "unit": "m"
+        },
+        {
+          "kind": "tap",
+          "label": "입력 cameraDistance",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "keyboard",
+          "label": "cameraDistance",
+          "valueEntered": "5",
+          "unit": "cm"
+        },
+        {
+          "kind": "tap",
+          "label": "입력 cameraDistance",
+          "reachScroll": -1102,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "keyboard",
+          "label": "cameraDistance",
+          "valueEntered": "2",
+          "unit": "cm"
+        },
+        {
+          "kind": "tap",
+          "label": "50cm로 복구",
+          "reachScroll": -1089.5,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "간편 화면",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "4 오프카메라",
+      "events": [
+        {
+          "kind": "tap",
+          "label": "플래시",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "상세 화면",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "온카메라 연동 해제",
+          "reachScroll": 1519.5,
+          "automaticScroll": 19
+        },
+        {
+          "kind": "tap",
+          "label": "입력 flashDistance",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "keyboard",
+          "label": "flashDistance",
+          "valueEntered": "150",
+          "unit": "cm"
+        },
+        {
+          "kind": "tap",
+          "label": "간편 화면",
+          "reachScroll": -1570,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "플래시만 2m",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "상세 화면",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "간편 화면",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "상세 화면",
+          "reachScroll": 0,
+          "automaticScroll": 0
+        },
+        {
+          "kind": "tap",
+          "label": "온카메라 연동 복귀",
+          "reachScroll": 1570.5,
+          "automaticScroll": 1.5
+        },
+        {
+          "kind": "tap",
+          "label": "간편 화면",
+          "reachScroll": -1572,
+          "automaticScroll": 0
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "events": [
+    {
+      "kind": "tap",
+      "label": "야간 촬영 조건",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "1m",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "2m",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "3m",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "권장 출력 적용",
+      "reachScroll": 336.5,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "조금 어둡게",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "반대 단계로 복구",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "다른 촬영 조건",
+      "reachScroll": -336.5,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "존 포커싱",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "2~5m 목표",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "2~5m 적용",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "3m~무한대 목표",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "무한대 목표 적용",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "상세 화면",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "입력 focal",
+      "reachScroll": 1627.5,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "keyboard",
+      "label": "focal",
+      "valueEntered": "50",
+      "unit": null
+    },
+    {
+      "kind": "tap",
+      "label": "간편 화면",
+      "reachScroll": -1605,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "같은 2~5m 재계산",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "새 렌즈 제안 적용",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "상세 화면",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "입력 focal",
+      "reachScroll": 1625,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "keyboard",
+      "label": "focal",
+      "valueEntered": "85",
+      "unit": null
+    },
+    {
+      "kind": "tap",
+      "label": "간편 화면",
+      "reachScroll": -1674,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "달성 불가 2~5m",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "렌즈 조리개 한계 확인",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "상세 화면",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "선택 zoneFlow",
+      "reachScroll": 733.5,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "selection",
+      "label": "zoneFlow",
+      "value": "target"
+    },
+    {
+      "kind": "tap",
+      "label": "입력 focal",
+      "reachScroll": 1312.5,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "keyboard",
+      "label": "focal",
+      "valueEntered": "28",
+      "unit": null
+    },
+    {
+      "kind": "tap",
+      "label": "간편 화면",
+      "reachScroll": -2020,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "적절한 렌즈로 복구",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "복구 설정 적용",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "통합",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "50cm",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "80cm",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "거리 더보기",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "1.2m",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "상세 화면",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "입력 cameraDistance",
+      "reachScroll": 1101.5,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "keyboard",
+      "label": "cameraDistance",
+      "valueEntered": "0.55",
+      "unit": "m"
+    },
+    {
+      "kind": "tap",
+      "label": "입력 cameraDistance",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "keyboard",
+      "label": "cameraDistance",
+      "valueEntered": "5",
+      "unit": "cm"
+    },
+    {
+      "kind": "tap",
+      "label": "입력 cameraDistance",
+      "reachScroll": -1102,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "keyboard",
+      "label": "cameraDistance",
+      "valueEntered": "2",
+      "unit": "cm"
+    },
+    {
+      "kind": "tap",
+      "label": "50cm로 복구",
+      "reachScroll": -1089.5,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "간편 화면",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "플래시",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "상세 화면",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "온카메라 연동 해제",
+      "reachScroll": 1519.5,
+      "automaticScroll": 19
+    },
+    {
+      "kind": "tap",
+      "label": "입력 flashDistance",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "keyboard",
+      "label": "flashDistance",
+      "valueEntered": "150",
+      "unit": "cm"
+    },
+    {
+      "kind": "tap",
+      "label": "간편 화면",
+      "reachScroll": -1570,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "플래시만 2m",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "상세 화면",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "간편 화면",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "상세 화면",
+      "reachScroll": 0,
+      "automaticScroll": 0
+    },
+    {
+      "kind": "tap",
+      "label": "온카메라 연동 복귀",
+      "reachScroll": 1570.5,
+      "automaticScroll": 1.5
+    },
+    {
+      "kind": "tap",
+      "label": "간편 화면",
+      "reachScroll": -1572,
+      "automaticScroll": 0
+    }
+  ],
+  "findings": [
+    {
+      "id": "undo-scope",
+      "screen": "02-night-step.png",
+      "observation": "출력 단계 조절 뒤 권장 적용 취소가 만료됨. 역방향 출력 버튼으로 단계 복구 가능하나 취소 대상 문구가 넓게 읽힘."
+    },
+    {
+      "id": "hidden-zone-limits",
+      "screen": "05-zone-limits-click.png",
+      "observation": "간편 화면의 달성 불가 안내에서 한계 확인을 눌러도 조리개 한계가 숨겨져 있음."
+    }
+  ],
+  "errors": [],
+  "fingerprints": {
+    "main.js": "b9c405ea87dc7fff4fe2d9032c5761ebd5dbcba61ace0944bd8846d7f06ff1e2",
+    "manifest.json": "235b7678e7215f730569587ab2cb49a4832c81d97518aa6518c6f0d5cf36adc4",
+    "styles.css": "8eff3c7a796da40c6690f409203dd7bb643b9a4c776f21ed0b852b313719bb2f"
+  },
+  "ownershipSource": "docs/q20iii/REPORT.md",
+  "equipment": "Q20III manufacturer nominal specification from project; camera/lens/scenes synthetic; no production vault copied",
+  "actualIOS": false,
+  "actualAndroid": false
+}
