@@ -15,3 +15,11 @@
 승인된 후보의 실행 파일은 변경하지 않는다. 공개 ZIP에는 배포용 설치·복구 안내와 라이선스를 포함하며 사용자 데이터는 제외한다. main.js·manifest.json·styles.css·라이선스·서드파티 고지·설치 ZIP·1.4.0 복구 ZIP·SHA256 목록을 첨부한다. 현재 작업과 무관하게 이미 존재하던 미커밋 테스트 수정과 BRAT/이전 배포 기록은 이번 커밋에 포함하지 않는다.
 
 첨부 파일·태그·실사용 설치본의 최종 일치 확인 결과는 publication.json에 기록한다.
+
+## 완료 확인
+
+- 공개 릴리스: https://github.com/kimchi-kang/obsidian-photo-field-mobile/releases/tag/1.4.1
+- 태그: 9e5f325a88905beb229cf9ffe71550c6945df4e7. Latest 1.4.1, draft=false, prerelease=false.
+- 첨부 8개를 다시 내려받아 로컬 파일 및 공개 첨부 digest와 일치함을 확인했다. 공개 manifest는 인증 없이 다운로드해 확인했다.
+- 설치 후 최종 재확인에서도 실사용 data.json은 설치 전과 바이트 단위로 동일했다. 공개 실행 파일·설치본·승인된 QA 실행 파일은 같다.
+- 이전 1.4.0 릴리스·복구 ZIP·비공개 전체 백업을 유지했다. BRAT latest로 다른 기기에서 업데이트할 수 있다.
