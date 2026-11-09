@@ -680,11 +680,14 @@ function diagram(host, i) {
   el("rect", { x: SCENE.start, y: 24, width: SCENE.end - SCENE.start, height: 140 }, void 0, clip);
   const pattern = el("pattern", { id: id2 + "-hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse" }, void 0, defs);
   el("path", { d: "M0 7 L7 0", stroke: "var(--text-accent)", "stroke-width": 1.2 }, void 0, pattern);
+  const coneFill = el("linearGradient", { id: id2 + "-cone", x1: 0, x2: 1, y1: 0, y2: 0 }, void 0, defs);
+  el("stop", { offset: 0, class: "pfm-cone-stop-near" }, void 0, coneFill);
+  el("stop", { offset: 1, class: "pfm-cone-stop-far" }, void 0, coneFill);
   const x = (d) => SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(d / i.diagramMax, 1));
   const out = (d) => `${d > i.diagramMax && Number.isFinite(d) ? "\u2192 " : ""}${metres(d)}`;
   const cone = (degrees, cl) => {
     const half = (SCENE.end - SCENE.start) * Math.tan(degrees * Math.PI / 360);
-    el("path", { d: `M${SCENE.start} 92 L${SCENE.end} ${92 - half} L${SCENE.end} ${92 + half} Z`, class: cl, "clip-path": `url(#${id2}-clip)` });
+    el("path", { d: `M${SCENE.start} 92 L${SCENE.end} ${92 - half} L${SCENE.end} ${92 + half} Z`, class: cl, "clip-path": `url(#${id2}-clip)`, ...cl === "pfm-camera-cone" ? { fill: `url(#${id2}-cone)` } : {} });
   };
   try {
     const o = optics(i);
@@ -707,18 +710,44 @@ function diagram(host, i) {
   } catch {
   }
   el("line", { x1: 4, x2: 390, y1: 164, y2: 164, class: "pfm-ground" });
-  const photographer = el("g", { class: "pfm-person" });
-  el("circle", { cx: 24, cy: 75, r: 8 }, void 0, photographer);
-  el("path", { d: "M22 88 L15 116 L9 151 M15 116 L31 151 M22 91 L36 99 L42 87", fill: "none", stroke: "currentColor", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, void 0, photographer);
-  el("rect", { x: 35, y: 80, width: 17, height: 13, rx: 2 }, void 0, photographer);
-  el("rect", { x: 49, y: 83, width: 7, height: 7 }, void 0, photographer);
+  const fig = (d, parent, cls = "") => el("path", { d, ...cls ? { class: cls } : {} }, void 0, parent);
+  const limb = (d, width, parent, cls = "") => el("path", { d, fill: "none", stroke: "currentColor", "stroke-width": width, "stroke-linecap": "round", "stroke-linejoin": "round", ...cls ? { class: cls } : {} }, void 0, parent);
+  el("ellipse", { cx: 25, cy: 165, rx: 20, ry: 3, class: "pfm-shadow" });
+  const photographer = el("g", { class: "pfm-person pfm-photographer" });
+  limb("M29 96 L34 110 L51 100", 5.5, photographer, "pfm-figure-far");
+  limb("M20 122 L17 142 L14 158", 8, photographer, "pfm-figure-pants");
+  limb("M29 122 L33 142 L33 158", 8, photographer, "pfm-figure-pants");
+  fig("M8 164 Q8 158 14 158 L18 158 Q21 158 21 161 L21 164 Z", photographer);
+  fig("M30 164 Q30 158 35 158 L38 158 Q42 159 42 164 Z", photographer);
+  fig("M19 93 C20 89 25 88 30 90 L35 93 C37 95 37 98 36 101 L32 125 L17 125 C15 113 16 101 19 93 Z", photographer);
+  el("rect", { x: 24, y: 85, width: 6, height: 6, rx: 2 }, void 0, photographer);
+  el("circle", { cx: 27, cy: 80, r: 7.5, class: "pfm-figure-skin" }, void 0, photographer);
+  fig("M19.5 79 C19.5 72 24 70 28 70.5 C32 71 34.5 74 34 78 L27 76 Z", photographer, "pfm-figure-hair");
+  limb("M32 95 L37 108 L44 99", 6, photographer);
+  const cam = el("g", { class: "pfm-camera-body" }, void 0, photographer);
+  el("rect", { x: 31, y: 83, width: 18, height: 15, rx: 3 }, void 0, cam);
+  fig("M35 83 L37.5 78.5 L43.5 78.5 L46 83 Z", cam);
+  el("rect", { x: 40, y: 81, width: 3, height: 2, rx: 0.5, class: "pfm-camera-detail" }, void 0, cam);
+  el("rect", { x: 48, y: 85, width: 9, height: 14, rx: 2 }, void 0, cam);
+  el("rect", { x: 51, y: 85, width: 1.4, height: 14, class: "pfm-camera-detail" }, void 0, cam);
+  el("ellipse", { cx: 57, cy: 92, rx: 1.6, ry: 5.5, class: "pfm-lens-glass" }, void 0, cam);
   el("text", { x: 6, y: 16, class: "pfm-scene-lens" }, `${fmt(i.focal)} mm \xB7 f/${fmt(i.aperture)}`);
   const subject = x(Number.isFinite(i.cameraDistance) && i.cameraDistance > 0 ? i.cameraDistance : 0);
+  el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-glow" });
   el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-line" });
+  el("ellipse", { cx: subject, cy: 165, rx: 16, ry: 3, class: "pfm-shadow" });
   const person = el("g", { transform: `translate(${subject},0)`, class: "pfm-person pfm-subject", "data-pfm-subject": "true", tabindex: 0, role: "slider", "aria-label": "\uD53C\uC0AC\uCCB4 \uAC70\uB9AC \xB7 \uC88C\uC6B0 \uB4DC\uB798\uADF8 \uB610\uB294 \uD654\uC0B4\uD45C \uD0A4\uB85C \uC870\uC808", "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0, "aria-valuemin": Number.isFinite(i.focal) ? i.focal / 1e3 + 1e-3 : 1e-3, "aria-valuemax": Math.max(i.diagramMax, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0), "aria-valuetext": metres(i.cameraDistance) });
   el("rect", { x: -26, y: 68, width: 52, height: 102, fill: "transparent" }, void 0, person);
-  el("circle", { cx: 0, cy: 82, r: 8 }, void 0, person);
-  el("path", { d: "M0 96 L0 129 M-13 113 L0 100 L13 113 M0 129 L-10 155 M0 129 L10 155", fill: "none", stroke: "currentColor", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, void 0, person);
+  limb("M-4.5 122 L-5 159", 7.5, person, "pfm-figure-pants");
+  limb("M4.5 122 L5 159", 7.5, person, "pfm-figure-pants");
+  el("ellipse", { cx: -6, cy: 162, rx: 5.5, ry: 2.6 }, void 0, person);
+  el("ellipse", { cx: 6, cy: 162, rx: 5.5, ry: 2.6 }, void 0, person);
+  limb("M-12.5 96 L-15 110 L-14 123", 5.5, person);
+  limb("M12.5 96 L15 110 L14 123", 5.5, person);
+  fig("M-12 94 C-12 90 -8 89 -4 89 L4 89 C8 89 12 90 12 94 L9 125 L-9 125 Z", person);
+  el("rect", { x: -3, y: 84, width: 6, height: 6, rx: 2 }, void 0, person);
+  el("circle", { cx: 0, cy: 80, r: 7.5, class: "pfm-figure-skin" }, void 0, person);
+  fig("M-7.8 80 C-8.5 72 -4 70 0 70 C4 70 8.5 72 7.8 80 C6 75.5 3 74 0 74 C-3 74 -6 75.5 -7.8 80 Z", person, "pfm-figure-hair");
   el("circle", { cx: 0, cy: 177, r: 5, class: "pfm-focus-dot" }, void 0, person);
   el("text", { x: Math.max(92, Math.min(subject, 340)), y: 38, "text-anchor": "middle", class: "pfm-subject-label" }, `${i.tab === "zone" ? "\uCD08\uC810" : "\uD53C\uC0AC\uCCB4"} ${i.cameraDistance > i.diagramMax ? "\u2192 \uADF8\uB9BC \uBC16" : out(i.cameraDistance)}`);
   el("line", { x1: SCENE.start, x2: SCENE.end, y1: 192, y2: 192, class: "pfm-distance-axis" });
@@ -943,7 +972,9 @@ var PhotoView = class extends import_obsidian.ItemView {
         if (!this.shotUndo && !expired) this.fieldMessage = "";
       }));
       b.dataset.shotId = shot.id;
+      b.setAttribute("aria-pressed", String(shot.id === f.activeShotId));
     }
+    if (!f.shots.length) node(shots, "p", "\uC800\uC7A5\uB41C \uCD2C\uC601 \uC870\uAC74 \uC5C6\uC74C \xB7 \u300C\uC990\uACA8\uCC3E\uAE30\xB7\uAC70\uB9AC \uAD00\uB9AC\u300D\uC5D0\uC11C \uD604\uC7AC \uC870\uAC74\uC744 \uC800\uC7A5\uD558\uC138\uC694.", "pfm-field-empty");
     if (active) {
       const problem = issue(s, active);
       if (problem) node(h, "p", `\uBD88\uC644\uC804\uD55C \uCD2C\uC601 \uC870\uAC74 \xB7 ${problem}`, "pfm-error");
@@ -978,6 +1009,7 @@ var PhotoView = class extends import_obsidian.ItemView {
           this.detailState.set("\uAC70\uB9AC \uB354\uBCF4\uAE30", false);
         }));
         b.dataset.distanceId = d.id;
+        b.setAttribute("aria-pressed", String(Object.is(i[key], d.metres)));
       }
     };
     addDistances(distance, 0, 5);
@@ -1055,12 +1087,14 @@ var PhotoView = class extends import_obsidian.ItemView {
     });
     const zones = node(h, "div", void 0, "pfm-zone-favorites");
     node(zones, "strong", "\uC874 \uBAA9\uD45C \uC990\uACA8\uCC3E\uAE30 \xB7 \uBAA9\uD45C\uB9CC \uBCC0\uACBD");
+    if (!f.zones.length) node(zones, "p", "\uC800\uC7A5\uB41C \uC874 \uBAA9\uD45C \uC5C6\uC74C \xB7 \u300C\uC990\uACA8\uCC3E\uAE30\xB7\uAC70\uB9AC \uAD00\uB9AC\u300D\uC5D0\uC11C \uD604\uC7AC \uBAA9\uD45C\uB97C \uC800\uC7A5\uD558\uC138\uC694.", "pfm-field-empty");
     for (const z of f.zones) {
       const b = this.fieldButton(zones, `${z.name} \xB7 ${metres(z.near)}~${z.infinity ? "\u221E" : metres(z.far)}`, () => this.fieldAction(() => {
         this.closeFieldManager();
         Object.assign(i, { zoneNear: z.near, zoneFar: z.far, zoneInfinity: z.infinity, zoneFlow: "target" });
       }));
       b.dataset.zoneFavorite = z.id;
+      b.setAttribute("aria-pressed", String(i.zoneFlow === "target" && i.zoneNear === z.near && i.zoneInfinity === z.infinity && (z.infinity || i.zoneFar === z.far)));
     }
     const zoneName = this.text(manage, "\uC874 \uBAA9\uD45C \uC774\uB984", "");
     zoneName.maxLength = 100;
@@ -1315,7 +1349,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       picker = node(wrap, "select", void 0, "pfm-value-picker");
       picker.dataset.preset = key;
       picker.setAttribute("aria-label", `${label} \uC790\uC8FC \uC4F0\uB294 \uAC12`);
-      const placeholder = node(picker, "option", "\uC790\uC8FC \uC4F0\uB294 \uAC12 \uC120\uD0DD\u2026");
+      const placeholder = node(picker, "option", "\uC790\uC8FC \uC4F0\uB294 \uAC12");
       placeholder.value = "";
       for (const value of choices[key]) {
         const option = node(picker, "option", isDistance ? metres(value) : key === "aperture" ? `f/${value}` : key === "focal" ? `${value} mm` : String(value));
@@ -1478,8 +1512,6 @@ var PhotoView = class extends import_obsidian.ItemView {
     const header = node(this.root, "header");
     node(header, "h1", "\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8");
     node(header, "p", "\uC870\uB9AC\uAC1C \uD558\uB098\uB85C, \uBE5B\uACFC \uC2EC\uB3C4\uB97C \uD568\uAED8.");
-    const version = node(this.root, "p", `v${this.plugin.manifest.version}`, "pfm-version");
-    version.setAttribute("aria-label", `\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804 ${this.plugin.manifest.version}`);
     const tabs = node(this.root, "nav", void 0, "pfm-tabs");
     tabs.setAttribute("aria-label", "\uACC4\uC0B0 \uD654\uBA74");
     for (const [v, t] of Object.entries({ flash: "\uD50C\uB798\uC2DC", dof: "\uC2EC\uB3C4\xB7\uD654\uAC01", combined: "\uD1B5\uD569", zone: "\uC874 \uD3EC\uCEE4\uC2F1" })) {
@@ -1487,13 +1519,16 @@ var PhotoView = class extends import_obsidian.ItemView {
         this.plugin.update("tab", v);
         this.changed();
         for (const btn of tabs.querySelectorAll("button")) btn.setAttribute("aria-pressed", String(btn === b));
+        if (this.results.getBoundingClientRect().top < this.contentEl.getBoundingClientRect().top) this.contentEl.scrollTop = 0;
       });
+      b.dataset.tab = v;
       b.setAttribute("aria-pressed", String(i.tab === v));
     }
     this.fieldPanel();
     this.context = node(this.root, "p", void 0, "pfm-context");
     this.results = node(this.root, "section", void 0, "pfm-results");
     this.results.setAttribute("aria-live", "polite");
+    this.results.after(this.fieldHost);
     this.picture = node(this.results, "figure", void 0, "pfm-diagram");
     this.sceneControls();
     this.flushOnEnd();
@@ -1538,7 +1573,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.equivalent = node(quick, "div", void 0, "pfm-equivalence");
     this.zonePanel();
     const zone = this.root.querySelector(".pfm-zone-panel");
-    if (zone) quick.before(zone);
+    if (zone) this.fieldHost.before(zone);
     this.resultDetails = node(this.root, "section", void 0, "pfm-result-details");
     const camera = this.details("\uCE74\uBA54\uB77C\xB7\uB80C\uC988\xB7CoC", "camera");
     node(camera, "p", "\uC13C\uC11C\uB294 \uD504\uB9AC\uC14B\uC73C\uB85C \uAC04\uB2E8\uD788 \uC120\uD0DD\uD558\uC138\uC694. \uCE58\uC218\uB97C \uC9C1\uC811 \uC218\uC815\uD558\uBA74 \uC0AC\uC6A9\uC790 \uC13C\uC11C\uB85C \uC804\uD658\uB429\uB2C8\uB2E4.");
@@ -1663,8 +1698,12 @@ var PhotoView = class extends import_obsidian.ItemView {
     });
     openNote.dataset.openNote = "true";
     openNote.hidden = !this.lastNote;
-    node(footer, "p", "1m \uC774\uD558 \uAC70\uB9AC\uB294 cm\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uAC70\uB9AC \uC785\uB825\uC740 \uC785\uB825\uCE78\uC758 \uB2E8\uC704\uB97C \uB530\uB974\uBA70 \uD3B8\uC9D1\uC744 \uB9C8\uCE58\uBA74 \uB2E8\uC704\uAC00 \uC790\uB3D9 \uC804\uD658\uB429\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD558\uBA70 \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC785\uB2C8\uB2E4. \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
-    node(footer, "p", "\uD604\uC7AC \uD0ED: \uC2EC\uB3C4\xB7\uD654\uAC01 \uB610\uB294 \uD50C\uB798\uC2DC \uACB0\uACFC\uB9CC \uC800\uC7A5 \xB7 \uD1B5\uD569/\uC804\uCCB4: \uBAA8\uB4E0 \uACC4\uC0B0 \uC870\uAC74 \uD544\uC694 \xB7 \uC77C\uBC18 Markdown \xB7 \uC0C8 \uB178\uD2B8 \uC0DD\uC131 \xB7 \uC624\uD504\uB77C\uC778");
+    const notes = node(footer, "details", void 0, "pfm-footer-notes");
+    node(notes, "summary", "\uD45C\uC2DC\xB7\uC800\uC7A5 \uC548\uB0B4");
+    node(notes, "p", "1m \uC774\uD558 \uAC70\uB9AC\uB294 cm\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uAC70\uB9AC \uC785\uB825\uC740 \uC785\uB825\uCE78\uC758 \uB2E8\uC704\uB97C \uB530\uB974\uBA70 \uD3B8\uC9D1\uC744 \uB9C8\uCE58\uBA74 \uB2E8\uC704\uAC00 \uC790\uB3D9 \uC804\uD658\uB429\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD558\uBA70 \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC785\uB2C8\uB2E4. \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    node(notes, "p", "\uD604\uC7AC \uD0ED: \uC2EC\uB3C4\xB7\uD654\uAC01 \uB610\uB294 \uD50C\uB798\uC2DC \uACB0\uACFC\uB9CC \uC800\uC7A5 \xB7 \uD1B5\uD569/\uC804\uCCB4: \uBAA8\uB4E0 \uACC4\uC0B0 \uC870\uAC74 \uD544\uC694 \xB7 \uC77C\uBC18 Markdown \xB7 \uC0C8 \uB178\uD2B8 \uC0DD\uC131 \xB7 \uC624\uD504\uB77C\uC778");
+    const version = node(this.root, "p", `v${this.plugin.manifest.version}`, "pfm-version");
+    version.setAttribute("aria-label", `\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804 ${this.plugin.manifest.version}`);
     this.paint(false);
   }
   zonePanel() {
@@ -1758,7 +1797,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       if (i.zoneFlow === "target") {
         const r = solveZone(i);
         const included = includesTarget(current, r.target);
-        node(this.zoneResult, "strong", !r.possible ? "\uB2EC\uC131 \uBD88\uAC00 \xB7 \uB80C\uC988 \uC870\uB9AC\uAC1C \uC81C\uD55C" : included ? "\uBAA9\uD45C \uAD6C\uAC04 \uD3EC\uD568" : "\uC77C\uBD80 \uBD80\uC871 \xB7 \uC81C\uC548 \uC124\uC815\uC744 \uC801\uC6A9\uD558\uC138\uC694", "pfm-zone-status");
+        node(this.zoneResult, "strong", !r.possible ? "\uB2EC\uC131 \uBD88\uAC00 \xB7 \uB80C\uC988 \uC870\uB9AC\uAC1C \uC81C\uD55C" : included ? "\uBAA9\uD45C \uAD6C\uAC04 \uD3EC\uD568" : "\uC77C\uBD80 \uBD80\uC871 \xB7 \uC81C\uC548 \uC124\uC815\uC744 \uC801\uC6A9\uD558\uC138\uC694", "pfm-zone-status").dataset.state = !r.possible ? "fail" : included ? "ok" : "warn";
         node(this.zoneResult, "p", `\uBAA9\uD45C ${metres(r.target.near)} ~ ${metres(r.target.far)} \xB7 \uC774\uB860 \uD544\uC694 f/${fmt(r.required, 3)}`);
         node(this.zoneResult, "p", `${r.possible ? "\uC81C\uC548" : "\uB80C\uC988 \uD55C\uACC4\uC5D0\uC11C \uB300\uC548"}: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(r.aperture)} \u2192 ${metres(r.actual.near)} ~ ${metres(r.actual.far)}`);
         if (r.possible) {
@@ -1953,7 +1992,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(flashPanel, "p", field(this.plugin.state).simple ? `\uCD9C\uB825 1/${i.denominator} \xB7 GN ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300)` : `1/${i.denominator} \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} \xB7 GN ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300)`);
       if (i.conditions.includes("\uC5F0\uC2B5\uC6A9 \uAC00\uC0C1 GN")) node(flashPanel, "small", "\uC5F0\uC2B5\uC6A9 GN \xB7 \uC2E4\uC81C \uC7A5\uBE44 \uC0AC\uC591 \uC544\uB2D8", "pfm-model-note");
       const label = f.ev > i.tolerance ? "\uC608\uC0C1 \uACFC\uB2E4 \uB178\uCD9C" : f.ev < -i.tolerance ? "\uC608\uC0C1 \uBD80\uC871 \uB178\uCD9C" : "\uD5C8\uC6A9 \uBC94\uC704 \uB0B4";
-      node(flashPanel, "p", `${metres(f.r)}\uC5D0\uC11C ${f.ev > 0 ? "+" : ""}${fmt(f.ev)} EV \xB7 ${label}`, "pfm-ev");
+      node(flashPanel, "p", `${metres(f.r)}\uC5D0\uC11C ${f.ev > 0 ? "+" : ""}${fmt(f.ev)} EV \xB7 ${label}`, "pfm-ev").dataset.state = f.ev > i.tolerance ? "over" : f.ev < -i.tolerance ? "under" : "ok";
       const action = node(flashPanel, "div", void 0, "pfm-output-action");
       node(action, "p", `\uAD8C\uC7A5 \uC9C0\uC6D0 \uCD9C\uB825 1/${f.nearest} \xB7 \uC801\uC6A9 \uD6C4 \uB0A8\uB294 \uC624\uCC28 ${f.residual > 0 ? "+" : ""}${fmt(f.residual)} EV${f.status === "\uC7A5\uBE44 \uCD9C\uB825 \uBC94\uC704 \uC548" ? "" : ` \xB7 ${f.status}`}`);
       const apply = node(action, "button", i.denominator === f.nearest ? "\uAD8C\uC7A5 \uCD9C\uB825\uACFC \uAC19\uC74C" : `\uAD8C\uC7A5 \uCD9C\uB825 1/${f.nearest} \uC801\uC6A9`);
@@ -2198,6 +2237,5 @@ var PhotoPlugin = class extends import_obsidian2.Plugin {
     this.active = false;
     this.noteNotice?.hide();
     void this.flush().catch((e) => this.reportSaveError(e));
-    this.app.workspace.detachLeavesOfType(VIEW);
   }
 };

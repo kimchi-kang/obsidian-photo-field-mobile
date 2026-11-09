@@ -60,5 +60,7 @@ export default class PhotoPlugin extends Plugin {
   }
   update<K extends keyof Inputs>(key:K,value:Inputs[K]):void {if((key==='gnMode'||key==='equipmentId')&&this.state.field)delete this.state.field.activeShotId;if(key==='gnMode'){setGnMode(this.state,value as Inputs['gnMode']);return;}this.state.inputs[key]=value;if(key==='zoom')applyEquipment(this.state);
     if(['gn','gnZoom','conditions','steps','minDenominator'].includes(key)&&this.state.inputs.gnMode==='equipment'){this.state.inputs.gnMode='manual';}}
-  onunload():void {this.active=false;this.noteNotice?.hide();void this.flush().catch(e=>this.reportSaveError(e));this.app.workspace.detachLeavesOfType(VIEW);}
+  onunload():void {this.active=false;this.noteNotice?.hide();void this.flush().catch(e=>this.reportSaveError(e));
+    // Leaves are kept so Obsidian can restore the view in place after an update or reload.
+  }
 }
