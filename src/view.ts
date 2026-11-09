@@ -40,13 +40,14 @@ export class PhotoView extends ItemView {
     if(this.shotUndo&&!canUndo(i,this.shotUndo)){this.shotUndo=undefined;this.fieldMessage='촬영 적용 취소 만료 · 적용 항목이 이후 변경되었습니다.';}
     const shotHeading=node(h,'strong',active?`${active.name} · ${Object.entries(active.values).every(([k,v])=>Object.is(i[k as keyof Inputs],v))?'적용됨':'이후 수정됨'}`:'촬영 즐겨찾기 · 조건 묶음');shotHeading.className='pfm-shot-heading';
     const shots=node(h,'div',undefined,'pfm-field-buttons pfm-shot-buttons');
-    for(const shot of f.shots){const b=this.fieldButton(shots,shot.name,()=>this.fieldAction(()=>{this.closeFieldManager();const expired=!!this.outputUndo;this.outputUndo=undefined;this.previousShotId=f.activeShotId;const applied=applyShot(s,shot);this.shotUndo=Object.keys(applied.after).length?applied:undefined;this.shotChanges=Object.entries(applied.after).map(([k,v])=>`${this.fieldLabel(k)}: ${this.fieldValue(k,applied.before[k as keyof Inputs])} → ${this.fieldValue(k,v)}`).join(' / ')||'변경 없음';this.fieldMessage=`${shot.name} 적용 · ${'cameraDistance' in shot.values?'카메라·별도 플래시 거리 포함':'현재 거리 유지'}${expired?' · 이전 출력 취소 만료':''}`;if(!this.shotUndo&&!expired)this.fieldMessage='';}));b.dataset.shotId=shot.id;}
+    for(const shot of f.shots){const b=this.fieldButton(shots,shot.name,()=>this.fieldAction(()=>{this.closeFieldManager();const expired=!!this.outputUndo;this.outputUndo=undefined;this.previousShotId=f.activeShotId;const applied=applyShot(s,shot);this.shotUndo=Object.keys(applied.after).length?applied:undefined;this.shotChanges=Object.entries(applied.after).map(([k,v])=>`${this.fieldLabel(k)}: ${this.fieldValue(k,applied.before[k as keyof Inputs])} → ${this.fieldValue(k,v)}`).join(' / ')||'변경 없음';this.fieldMessage=`${shot.name} 적용 · ${'cameraDistance' in shot.values?'카메라·별도 플래시 거리 포함':'현재 거리 유지'}${expired?' · 이전 출력 취소 만료':''}`;if(!this.shotUndo&&!expired)this.fieldMessage='';}));b.dataset.shotId=shot.id;b.setAttribute('aria-pressed',String(shot.id===f.activeShotId));}
+    if(!f.shots.length)node(shots,'p','저장된 촬영 조건 없음 · 「즐겨찾기·거리 관리」에서 현재 조건을 저장하세요.','pfm-field-empty');
     if(active){const problem=issue(s,active);if(problem)node(h,'p',`불완전한 촬영 조건 · ${problem}`,'pfm-error');}
     if(this.shotUndo){const b=this.fieldButton(h,'촬영 적용 한 번 취소 · 변경 항목만',()=>this.fieldAction(()=>{if(this.shotUndo)undo(i,this.shotUndo);this.shotUndo=undefined;f.activeShotId=this.previousShotId;applyEquipment(s);this.fieldMessage='촬영 조건 적용 취소됨 · 삭제 복구와 별개';}));b.className='pfm-shot-undo';}
     let review:HTMLDetailsElement|undefined;if(this.fieldMessage){review=node(h,'details',undefined,'pfm-field-review');node(review,'summary',this.fieldMessage.includes(' 적용 · ')?'촬영 적용 내역 확인':this.fieldMessage.startsWith('촬영 적용 취소 만료')?'촬영 취소 만료 · 설정 변경됨':this.fieldMessage.startsWith('권장 출력 적용 취소 만료')?'권장 적용 취소 만료 · 출력 변경됨':this.fieldMessage);node(review,'p',this.fieldMessage);if(this.shotChanges)node(review,'p',this.shotChanges,'pfm-field-status');}
     const distance=node(h,'div',undefined,'pfm-distance-buttons');this.distanceButtons=distance;const key=distanceKey(i);
     node(distance,'p',key==='flashDistance'?`내 거리 · 플래시 → 피사체 ${metres(i.flashDistance)} (카메라 초점 유지)`:`내 거리 · 초점 맞출 거리 ${metres(i.cameraDistance)}${i.linked&&(i.tab==='flash'||i.tab==='combined')?' · 플래시 연동':''}`);
-    const addDistances=(parent:HTMLElement,start:number,end:number)=>{for(const d of f.distances.slice(start,end)){const b=this.fieldButton(parent,metres(d.metres),()=>this.fieldAction(()=>{this.plugin.update(key,d.metres);const more=distance.querySelector('details');if(more)more.open=false;this.detailState.set('거리 더보기',false);}));b.dataset.distanceId=d.id;}};
+    const addDistances=(parent:HTMLElement,start:number,end:number)=>{for(const d of f.distances.slice(start,end)){const b=this.fieldButton(parent,metres(d.metres),()=>this.fieldAction(()=>{this.plugin.update(key,d.metres);const more=distance.querySelector('details');if(more)more.open=false;this.detailState.set('거리 더보기',false);}));b.dataset.distanceId=d.id;b.setAttribute('aria-pressed',String(Object.is(i[key],d.metres)));}};
     addDistances(distance,0,5);if(f.distances.length>5){const more=node(distance,'details');node(more,'summary','거리 더보기');addDistances(more,5,f.distances.length);}
     const actions=this.powerAdjust;actions.replaceChildren();
     for(const [dir,label]of [['weaker','출력 약하게'],['stronger','출력 강하게']] as const){const n=nextPower(i,dir);const b=this.fieldButton(actions,label,()=>this.fieldAction(()=>{if(n!==undefined)this.plugin.update('denominator',n);}));b.disabled=n===undefined;b.dataset.powerDirection=dir;}
@@ -63,8 +64,8 @@ export class PhotoView extends ItemView {
     const newDistance=this.text(manage,'새 내 거리 (m)','');newDistance.inputMode='decimal';
     this.fieldButton(manage,'거리 추가',()=>this.fieldAction(()=>{f.distances.push({id:id(),metres:validDistance(parseNumber(newDistance.value),f.distances.map(d=>d.metres))});}));
     f.distances.forEach((d,index)=>{const row=node(manage,'div',undefined,'pfm-field-row');const input=this.text(row,'내 거리 편집 (m)',String(d.metres));input.inputMode='decimal';this.fieldButton(row,'거리 수정',()=>this.fieldAction(()=>{d.metres=validDistance(parseNumber(input.value),f.distances.filter(x=>x!==d).map(x=>x.metres));}));for(const [offset,label]of [[-1,'앞으로'],[1,'뒤로']] as const){const b=this.fieldButton(row,label,()=>this.fieldAction(()=>{[f.distances[index],f.distances[index+offset]]=[f.distances[index+offset],d];}));b.disabled=index+offset<0||index+offset>=f.distances.length;}this.fieldButton(row,'거리 삭제',()=>this.fieldAction(()=>{f.distances.splice(index,1);}));});
-    const zones=node(h,'div',undefined,'pfm-zone-favorites');node(zones,'strong','존 목표 즐겨찾기 · 목표만 변경');
-    for(const z of f.zones){const b=this.fieldButton(zones,`${z.name} · ${metres(z.near)}~${z.infinity?'∞':metres(z.far)}`,()=>this.fieldAction(()=>{this.closeFieldManager();Object.assign(i,{zoneNear:z.near,zoneFar:z.far,zoneInfinity:z.infinity,zoneFlow:'target'});}));b.dataset.zoneFavorite=z.id;}
+    const zones=node(h,'div',undefined,'pfm-zone-favorites');node(zones,'strong','존 목표 즐겨찾기 · 목표만 변경');if(!f.zones.length)node(zones,'p','저장된 존 목표 없음 · 「즐겨찾기·거리 관리」에서 현재 목표를 저장하세요.','pfm-field-empty');
+    for(const z of f.zones){const b=this.fieldButton(zones,`${z.name} · ${metres(z.near)}~${z.infinity?'∞':metres(z.far)}`,()=>this.fieldAction(()=>{this.closeFieldManager();Object.assign(i,{zoneNear:z.near,zoneFar:z.far,zoneInfinity:z.infinity,zoneFlow:'target'});}));b.dataset.zoneFavorite=z.id;b.setAttribute('aria-pressed',String(i.zoneFlow==='target'&&i.zoneNear===z.near&&i.zoneInfinity===z.infinity&&(z.infinity||i.zoneFar===z.far)));}
     const zoneName=this.text(manage,'존 목표 이름','');zoneName.maxLength=100;
     this.fieldButton(manage,'현재 존 목표 새로 저장',()=>this.fieldAction(()=>{solveZone(i);f.zones.push({id:id(),name:name(zoneName.value),near:i.zoneNear,far:i.zoneFar,infinity:i.zoneInfinity});}));
     for(const z of f.zones){const row=node(manage,'div',undefined,'pfm-field-row'),n=this.text(row,'존 이름',z.name),near=this.text(row,'목표 근거리 (m)',String(z.near)),far=this.text(row,'목표 원거리 (m)',String(z.far)),label=node(row,'label',undefined,'pfm-check'),inf=node(label,'input');inf.type='checkbox';inf.checked=z.infinity;node(label,'span','목표 원거리 무한대');
@@ -168,7 +169,7 @@ export class PhotoView extends ItemView {
     const minus=this.button(entry,'−',()=>adjust(-1));minus.dataset.step='down';minus.setAttribute('aria-label',`${label} 줄이기`);entry.append(input);
     const plus=this.button(entry,'+',()=>adjust(1));plus.dataset.step='up';plus.setAttribute('aria-label',`${label} 늘리기`);
     let picker:HTMLSelectElement|undefined;
-    if(choices[key]){picker=node(wrap,'select',undefined,'pfm-value-picker');picker.dataset.preset=key;picker.setAttribute('aria-label',`${label} 자주 쓰는 값`);const placeholder=node(picker,'option','자주 쓰는 값 선택…');placeholder.value='';for(const value of choices[key]){const option=node(picker,'option',isDistance?metres(value):key==='aperture'?`f/${value}`:key==='focal'?`${value} mm`:String(value));option.value=String(value);}const control=picker;this.listen(control,'change',()=>{if(control.value!=='')apply(Number(control.value));control.value='';});}
+    if(choices[key]){picker=node(wrap,'select',undefined,'pfm-value-picker');picker.dataset.preset=key;picker.setAttribute('aria-label',`${label} 자주 쓰는 값`);const placeholder=node(picker,'option','자주 쓰는 값');placeholder.value='';for(const value of choices[key]){const option=node(picker,'option',isDistance?metres(value):key==='aperture'?`f/${value}`:key==='focal'?`${value} mm`:String(value));option.value=String(value);}const control=picker;this.listen(control,'change',()=>{if(control.value!=='')apply(Number(control.value));control.value='';});}
     const updateControls=()=>{minus.disabled=candidate(-1)===undefined;plus.disabled=candidate(1)===undefined;if(picker)picker.disabled=input.disabled;};
     this.numeric.set(key,{input,range,sync,updateControls});sync();
     this.listen(input,'input',()=>{const v=parseNumber(input.value)/scale;this.plugin.update(key,v);if(key==='denominator')this.syncPower();if(range&&Number.isFinite(v)){range.value=String(v);this.rangeProgress(range);}input.setAttribute('aria-invalid',String(!Number.isFinite(v)||v<0||(v===0&&key!=='loss')));this.changed();});
@@ -217,12 +218,12 @@ export class PhotoView extends ItemView {
     this.rememberDetails();this.clean();this.contentEl.replaceChildren();this.contentEl.addClass('pfm-container');
     this.root=node(this.contentEl,'div',undefined,'pfm-root');const i=this.plugin.state.inputs;
     const header=node(this.root,'header');node(header,'h1','사진 촬영 도우미');node(header,'p','조리개 하나로, 빛과 심도를 함께.');
-    const version=node(this.root,'p',`v${this.plugin.manifest.version}`,'pfm-version');version.setAttribute('aria-label',`플러그인 버전 ${this.plugin.manifest.version}`);
     const tabs=node(this.root,'nav',undefined,'pfm-tabs');tabs.setAttribute('aria-label','계산 화면');
-    for(const [v,t]of Object.entries({flash:'플래시',dof:'심도·화각',combined:'통합',zone:'존 포커싱'})) {const b=this.button(tabs,t,()=>{this.plugin.update('tab',v as Inputs['tab']);this.changed();for(const btn of tabs.querySelectorAll('button'))btn.setAttribute('aria-pressed',String(btn===b));});b.setAttribute('aria-pressed',String(i.tab===v));}
+    for(const [v,t]of Object.entries({flash:'플래시',dof:'심도·화각',combined:'통합',zone:'존 포커싱'})) {const b=this.button(tabs,t,()=>{this.plugin.update('tab',v as Inputs['tab']);this.changed();for(const btn of tabs.querySelectorAll('button'))btn.setAttribute('aria-pressed',String(btn===b));if(this.results.getBoundingClientRect().top<this.contentEl.getBoundingClientRect().top)this.contentEl.scrollTop=0;});b.dataset.tab=v;b.setAttribute('aria-pressed',String(i.tab===v));}
     this.fieldPanel();
     this.context=node(this.root,'p',undefined,'pfm-context');
     this.results=node(this.root,'section',undefined,'pfm-results');this.results.setAttribute('aria-live','polite');
+    this.results.after(this.fieldHost);
     this.picture=node(this.results,'figure',undefined,'pfm-diagram');this.sceneControls();this.flushOnEnd();
     const quick=node(this.root,'section',undefined,'pfm-quick');node(quick,'h2','빠른 조절');this.powerAdjust=node(quick,'div',undefined,'pfm-field-power');
     const shortcuts=node(quick,'nav',undefined,'pfm-settings-shortcuts');shortcuts.setAttribute('aria-label','상세 설정 바로가기');
@@ -239,7 +240,7 @@ export class PhotoView extends ItemView {
     // Keep the slider disabled state in sync with the explicit distance toggle.
     this.listen(check,'change',()=>{const r=this.numeric.get('flashDistance')?.range;if(r)r.disabled=check.checked;});
     this.equivalent=node(quick,'div',undefined,'pfm-equivalence');
-    this.zonePanel();const zone=this.root.querySelector('.pfm-zone-panel');if(zone)quick.before(zone);
+    this.zonePanel();const zone=this.root.querySelector('.pfm-zone-panel');if(zone)this.fieldHost.before(zone);
     this.resultDetails=node(this.root,'section',undefined,'pfm-result-details');
     const camera=this.details('카메라·렌즈·CoC','camera');
     node(camera,'p','센서는 프리셋으로 간단히 선택하세요. 치수를 직접 수정하면 사용자 센서로 전환됩니다.');
@@ -291,8 +292,9 @@ export class PhotoView extends ItemView {
     tabSave.className='pfm-tab-save';
     const save=this.button(footer,'전체 계산을 노트로 저장',()=>{save.disabled=true;void this.saveResult('all').catch(e=>this.plugin.report(e)).finally(()=>{save.disabled=false;});});save.className='pfm-save';
     const openNote=this.button(footer,'저장한 노트 열기',()=>{if(this.lastNote)void this.app.workspace.openLinkText(this.lastNote,'',true).catch(e=>this.plugin.report(e));});openNote.dataset.openNote='true';openNote.hidden=!this.lastNote;
-    node(footer,'p','1m 이하 거리는 cm로 표시합니다. 거리 입력은 입력칸의 단위를 따르며 편집을 마치면 단위가 자동 전환됩니다. 표시 숫자만 반올림하며 포함·출력 경계·노출 판정은 반올림 전 값입니다. 같은 표시 숫자라도 판정이 다를 수 있습니다.');
-    node(footer,'p','현재 탭: 심도·화각 또는 플래시 결과만 저장 · 통합/전체: 모든 계산 조건 필요 · 일반 Markdown · 새 노트 생성 · 오프라인');this.paint(false);
+    const notes=node(footer,'details',undefined,'pfm-footer-notes');node(notes,'summary','표시·저장 안내');node(notes,'p','1m 이하 거리는 cm로 표시합니다. 거리 입력은 입력칸의 단위를 따르며 편집을 마치면 단위가 자동 전환됩니다. 표시 숫자만 반올림하며 포함·출력 경계·노출 판정은 반올림 전 값입니다. 같은 표시 숫자라도 판정이 다를 수 있습니다.');
+    node(notes,'p','현재 탭: 심도·화각 또는 플래시 결과만 저장 · 통합/전체: 모든 계산 조건 필요 · 일반 Markdown · 새 노트 생성 · 오프라인');
+    const version=node(this.root,'p',`v${this.plugin.manifest.version}`,'pfm-version');version.setAttribute('aria-label',`플러그인 버전 ${this.plugin.manifest.version}`);this.paint(false);
   }
   private zonePanel():void {
     const section=node(this.root,'section',undefined,'pfm-zone-panel');node(section,'h2','존 포커싱');
@@ -336,7 +338,7 @@ export class PhotoView extends ItemView {
       const current=optics(i);if(i.zoneFlow==='current'){node(this.zoneResult,'p',`${metres(i.cameraDistance)}에 초점을 맞추면 약 ${metres(current.near)} ~ ${metres(current.far)} 범위가 허용 선명도 안에 들어옵니다.`);
       node(this.zoneResult,'p',`전체 심도 ${metres(current.total)} · 과초점거리 ${metres(current.hyperfocal)}`);}
       if(i.zoneFlow==='target'){
-        const r=solveZone(i);const included=includesTarget(current,r.target);node(this.zoneResult,'strong',!r.possible?'달성 불가 · 렌즈 조리개 제한':included?'목표 구간 포함':'일부 부족 · 제안 설정을 적용하세요','pfm-zone-status');
+        const r=solveZone(i);const included=includesTarget(current,r.target);node(this.zoneResult,'strong',!r.possible?'달성 불가 · 렌즈 조리개 제한':included?'목표 구간 포함':'일부 부족 · 제안 설정을 적용하세요','pfm-zone-status').dataset.state=!r.possible?'fail':included?'ok':'warn';
         node(this.zoneResult,'p',`목표 ${metres(r.target.near)} ~ ${metres(r.target.far)} · 이론 필요 f/${fmt(r.required,3)}`);
         node(this.zoneResult,'p',`${r.possible?'제안':'렌즈 한계에서 대안'}: 초점 맞출 거리 ${metres(r.cameraDistance)} · 실제 조리개 f/${fmt(r.aperture)} → ${metres(r.actual.near)} ~ ${metres(r.actual.far)}`);
         if(r.possible){node(this.zoneResult,'p',`적용 전 확인: 초점 맞출 거리 ${metres(i.cameraDistance)} → ${metres(r.cameraDistance)} · 실제 조리개 f/${fmt(i.aperture)} → f/${fmt(r.aperture)}`);const b=node(this.zoneResult,'button','역산 결과를 현재 설정에 적용');b.type='button';b.dataset.zoneApply='true';b.onclick=()=>{const scrollTop=this.contentEl.scrollTop;this.plugin.update('cameraDistance',r.cameraDistance);this.plugin.update('aperture',r.aperture);this.syncNumeric('cameraDistance');this.syncNumeric('aperture');this.changed();this.contentEl.scrollTop=scrollTop;this.root.querySelector<HTMLElement>('[data-zone-apply]')?.focus({preventScroll:true});};}
@@ -383,7 +385,7 @@ export class PhotoView extends ItemView {
       node(flashPanel,'p',field(this.plugin.state).simple?`출력 1/${i.denominator} · GN ${fmt(f.g)}m (${fmt(i.zoom)}mm·ISO100 최대)`:`1/${i.denominator} · f/${fmt(i.aperture)} · ISO ${fmt(i.iso,0)} · GN ${fmt(f.g)}m (${fmt(i.zoom)}mm·ISO100 최대)`);
       if(i.conditions.includes('연습용 가상 GN'))node(flashPanel,'small','연습용 GN · 실제 장비 사양 아님','pfm-model-note');
       const label=f.ev>i.tolerance?'예상 과다 노출':f.ev< -i.tolerance?'예상 부족 노출':'허용 범위 내';
-      node(flashPanel,'p',`${metres(f.r)}에서 ${f.ev>0?'+':''}${fmt(f.ev)} EV · ${label}`,'pfm-ev');
+      node(flashPanel,'p',`${metres(f.r)}에서 ${f.ev>0?'+':''}${fmt(f.ev)} EV · ${label}`,'pfm-ev').dataset.state=f.ev>i.tolerance?'over':f.ev< -i.tolerance?'under':'ok';
       const action=node(flashPanel,'div',undefined,'pfm-output-action');
       node(action,'p',`권장 지원 출력 1/${f.nearest} · 적용 후 남는 오차 ${f.residual>0?'+':''}${fmt(f.residual)} EV${f.status==='장비 출력 범위 안'?'':` · ${f.status}`}`);
       const apply=node(action,'button',i.denominator===f.nearest?'권장 출력과 같음':`권장 출력 1/${f.nearest} 적용`);apply.type='button';apply.dataset.flashApply='true';apply.disabled=i.denominator===f.nearest;apply.onclick=()=>{this.outputUndo={before:i.denominator,applied:f.nearest};if(this.fieldMessage.startsWith('권장 출력 적용 취소 만료'))this.fieldMessage='';this.plugin.update('denominator',f.nearest);this.syncNumeric('denominator');this.changed();this.root.querySelector<HTMLElement>('[data-flash-undo]')?.focus({preventScroll:true});};

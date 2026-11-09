@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-28T15:45:31.993Z",
+  "date": "2026-11-09T07:32:43.952Z",
   "host": "macOS Obsidian mobile emulation + Chromium DevTools",
   "actualIos": false,
   "actualAndroid": false,
@@ -19,7 +19,7 @@
     "offline view reentry and synthetic touch slider interaction",
     "portrait/landscape, light/dark, reduced viewport keyboard surrogate, no overflow",
     "numeric input focus survives rerender of results",
-    "view close/plugin disable abort handlers and detach leaves",
+    "view close/plugin disable abort handlers; leaf kept for in-place restore",
     "no uncaught runtime exception during QA"
   ],
   "exceptions": []

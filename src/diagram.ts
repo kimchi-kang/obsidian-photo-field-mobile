@@ -22,9 +22,11 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   el('rect',{x:SCENE.start,y:24,width:SCENE.end-SCENE.start,height:140},undefined,clip);
   const pattern=el('pattern',{id:id+'-hatch',width:7,height:7,patternUnits:'userSpaceOnUse'},undefined,defs);
   el('path',{d:'M0 7 L7 0',stroke:'var(--text-accent)','stroke-width':1.2},undefined,pattern);
+  const coneFill=el('linearGradient',{id:id+'-cone',x1:0,x2:1,y1:0,y2:0},undefined,defs);
+  el('stop',{offset:0,class:'pfm-cone-stop-near'},undefined,coneFill);el('stop',{offset:1,class:'pfm-cone-stop-far'},undefined,coneFill);
   const x=(d:number)=>SCENE.start+(SCENE.end-SCENE.start)*Math.max(0,Math.min(d/i.diagramMax,1));
   const out=(d:number)=>`${d>i.diagramMax&&Number.isFinite(d)?'→ ':''}${metres(d)}`;
-  const cone=(degrees:number,cl:string)=>{const half=(SCENE.end-SCENE.start)*Math.tan(degrees*Math.PI/360);el('path',{d:`M${SCENE.start} 92 L${SCENE.end} ${92-half} L${SCENE.end} ${92+half} Z`,class:cl,'clip-path':`url(#${id}-clip)`});};
+  const cone=(degrees:number,cl:string)=>{const half=(SCENE.end-SCENE.start)*Math.tan(degrees*Math.PI/360);el('path',{d:`M${SCENE.start} 92 L${SCENE.end} ${92-half} L${SCENE.end} ${92+half} Z`,class:cl,'clip-path':`url(#${id}-clip)`,...(cl==='pfm-camera-cone'?{fill:`url(#${id}-cone)`}:{})});};
   try {
     const o=optics(i);cone(o.vertical,'pfm-camera-cone');
     if(showDof){
@@ -35,18 +37,37 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   if(i.tab==='zone'&&i.zoneFlow==='target')try{const t=zoneTarget(i);el('rect',{x:x(t.near),y:145,width:Math.max(0,x(t.far)-x(t.near)),height:13,fill:`url(#${id}-hatch)`,class:'pfm-target-zone'});el('text',{x:SCENE.start,y:57,class:'pfm-axis-label'},'목표 구간 · 빗금');}catch{/* Target errors appear in the zone result. */}
   if(showFlash&&i.linked)try{cone(coverage(i).v,'pfm-flash-cone');}catch{/* Coverage errors remain visible in the result details. */}
   el('line',{x1:4,x2:390,y1:164,y2:164,class:'pfm-ground'});
-  // Photographer and camera are symbols rather than life-size or licensed illustrations.
-  const photographer=el('g',{class:'pfm-person'});
-  el('circle',{cx:24,cy:75,r:8},undefined,photographer);
-  el('path',{d:'M22 88 L15 116 L9 151 M15 116 L31 151 M22 91 L36 99 L42 87',fill:'none',stroke:'currentColor','stroke-width':9,'stroke-linecap':'round','stroke-linejoin':'round'},undefined,photographer);
-  el('rect',{x:35,y:80,width:17,height:13,rx:2},undefined,photographer);el('rect',{x:49,y:83,width:7,height:7},undefined,photographer);
+  // Photographer and camera are newly drawn silhouettes rather than life-size or licensed illustrations.
+  const fig=(d:string,parent:Element,cls='')=>el('path',{d,...(cls?{class:cls}:{})},undefined,parent);
+  const limb=(d:string,width:number,parent:Element,cls='')=>el('path',{d,fill:'none',stroke:'currentColor','stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',...(cls?{class:cls}:{})},undefined,parent);
+  el('ellipse',{cx:25,cy:165,rx:20,ry:3,class:'pfm-shadow'});
+  const photographer=el('g',{class:'pfm-person pfm-photographer'});
+  limb('M29 96 L34 110 L51 100',5.5,photographer,'pfm-figure-far');
+  limb('M20 122 L17 142 L14 158',8,photographer,'pfm-figure-pants');limb('M29 122 L33 142 L33 158',8,photographer,'pfm-figure-pants');
+  fig('M8 164 Q8 158 14 158 L18 158 Q21 158 21 161 L21 164 Z',photographer);fig('M30 164 Q30 158 35 158 L38 158 Q42 159 42 164 Z',photographer);
+  fig('M19 93 C20 89 25 88 30 90 L35 93 C37 95 37 98 36 101 L32 125 L17 125 C15 113 16 101 19 93 Z',photographer);
+  el('rect',{x:24,y:85,width:6,height:6,rx:2},undefined,photographer);
+  el('circle',{cx:27,cy:80,r:7.5,class:'pfm-figure-skin'},undefined,photographer);
+  fig('M19.5 79 C19.5 72 24 70 28 70.5 C32 71 34.5 74 34 78 L27 76 Z',photographer,'pfm-figure-hair');
+  limb('M32 95 L37 108 L44 99',6,photographer);
+  const cam=el('g',{class:'pfm-camera-body'},undefined,photographer);
+  el('rect',{x:31,y:83,width:18,height:15,rx:3},undefined,cam);fig('M35 83 L37.5 78.5 L43.5 78.5 L46 83 Z',cam);el('rect',{x:40,y:81,width:3,height:2,rx:.5,class:'pfm-camera-detail'},undefined,cam);
+  el('rect',{x:48,y:85,width:9,height:14,rx:2},undefined,cam);el('rect',{x:51,y:85,width:1.4,height:14,class:'pfm-camera-detail'},undefined,cam);
+  el('ellipse',{cx:57,cy:92,rx:1.6,ry:5.5,class:'pfm-lens-glass'},undefined,cam);
   el('text',{x:6,y:16,class:'pfm-scene-lens'},`${fmt(i.focal)} mm · f/${fmt(i.aperture)}`);
   const subject=x(Number.isFinite(i.cameraDistance)&&i.cameraDistance>0?i.cameraDistance:0);
+  el('line',{x1:subject,x2:subject,y1:24,y2:180,class:'pfm-focus-glow'});
   el('line',{x1:subject,x2:subject,y1:24,y2:180,class:'pfm-focus-line'});
+  el('ellipse',{cx:subject,cy:165,rx:16,ry:3,class:'pfm-shadow'});
   const person=el('g',{transform:`translate(${subject},0)`,class:'pfm-person pfm-subject','data-pfm-subject':'true',tabindex:0,role:'slider','aria-label':'피사체 거리 · 좌우 드래그 또는 화살표 키로 조절','aria-valuenow':Number.isFinite(i.cameraDistance)?i.cameraDistance:0,'aria-valuemin':Number.isFinite(i.focal)?i.focal/1000+0.001:0.001,'aria-valuemax':Math.max(i.diagramMax,Number.isFinite(i.cameraDistance)?i.cameraDistance:0),'aria-valuetext':metres(i.cameraDistance)});
   el('rect',{x:-26,y:68,width:52,height:102,fill:'transparent'},undefined,person);
-  el('circle',{cx:0,cy:82,r:8},undefined,person);
-  el('path',{d:'M0 96 L0 129 M-13 113 L0 100 L13 113 M0 129 L-10 155 M0 129 L10 155',fill:'none',stroke:'currentColor','stroke-width':9,'stroke-linecap':'round','stroke-linejoin':'round'},undefined,person);
+  limb('M-4.5 122 L-5 159',7.5,person,'pfm-figure-pants');limb('M4.5 122 L5 159',7.5,person,'pfm-figure-pants');
+  el('ellipse',{cx:-6,cy:162,rx:5.5,ry:2.6},undefined,person);el('ellipse',{cx:6,cy:162,rx:5.5,ry:2.6},undefined,person);
+  limb('M-12.5 96 L-15 110 L-14 123',5.5,person);limb('M12.5 96 L15 110 L14 123',5.5,person);
+  fig('M-12 94 C-12 90 -8 89 -4 89 L4 89 C8 89 12 90 12 94 L9 125 L-9 125 Z',person);
+  el('rect',{x:-3,y:84,width:6,height:6,rx:2},undefined,person);
+  el('circle',{cx:0,cy:80,r:7.5,class:'pfm-figure-skin'},undefined,person);
+  fig('M-7.8 80 C-8.5 72 -4 70 0 70 C4 70 8.5 72 7.8 80 C6 75.5 3 74 0 74 C-3 74 -6 75.5 -7.8 80 Z',person,'pfm-figure-hair');
   el('circle',{cx:0,cy:177,r:5,class:'pfm-focus-dot'},undefined,person);
   el('text',{x:Math.max(92,Math.min(subject,340)),y:38,'text-anchor':'middle',class:'pfm-subject-label'},`${i.tab==='zone'?'초점':'피사체'} ${i.cameraDistance>i.diagramMax?'→ 그림 밖':out(i.cameraDistance)}`);
   el('line',{x1:SCENE.start,x2:SCENE.end,y1:192,y2:192,class:'pfm-distance-axis'});
