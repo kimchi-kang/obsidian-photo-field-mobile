@@ -1,0 +1,26 @@
+{
+  "version": "1.5.1",
+  "assets": {
+    "main.js": "31a292ce421a1621957a6e17f9db13f383afc079b54fcd64472dbfb257290b5f",
+    "manifest.json": "ea14ae087cdd72394b79e9732b3017f6bb94075d06df48b5b5ffecdfb5a491ca",
+    "styles.css": "cd159c3112d14c15f3e135fc5f8aed409bf9154d69c9021ff1d442d25c55f811",
+    "LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+    "THIRD_PARTY_NOTICES.md": "5fa6f3736999098fc1550c4339268731f7e3f96c2585f48fcbbd7459f6964064",
+    "photo-field-mobile-1.5.1.zip": "7a5de93218a18ffc81c89029f05b30bda8a2f701387964018578f2e0bedb1a20",
+    "photo-field-mobile-1.5.0.zip": "e6f98ba0f737b5d76e3fa4977e47c64cb4a2f558264ace437665ea5ed68ad59a"
+  },
+  "files": {
+    "photo-field-mobile/main.js": "31a292ce421a1621957a6e17f9db13f383afc079b54fcd64472dbfb257290b5f",
+    "photo-field-mobile/manifest.json": "ea14ae087cdd72394b79e9732b3017f6bb94075d06df48b5b5ffecdfb5a491ca",
+    "photo-field-mobile/styles.css": "cd159c3112d14c15f3e135fc5f8aed409bf9154d69c9021ff1d442d25c55f811",
+    "photo-field-mobile/LICENSE.txt": "686b66996872cd9ff7235eff841b44216397b6e7fae1dba3853e5b8959037ccd",
+    "photo-field-mobile/THIRD_PARTY_NOTICES.md": "5fa6f3736999098fc1550c4339268731f7e3f96c2585f48fcbbd7459f6964064",
+    "photo-field-mobile/vendor/depth-of-field-LICENSE.txt": "d9ded95dec98e5d03c794d743d9b5aad33cf0f1988c44e252f3a8af6906c9b9d",
+    "photo-field-mobile/vendor/NanumSquareRound-OFL.txt": "d0f19fbdb569900d073132459118e02f332b11987958b7a5c4be5f339007f91b",
+    "photo-field-mobile/RELEASE.md": "be56db0f853790bdc9d54baa61bc2b1909fe0f70acdfd2fe257f78d82ecc1e7d",
+    "photo-field-mobile/INSTALL.md": "f3fa9d89c9a9b546a284927f63e4357cad5755353182d5b4f36590da03f36aa0"
+  },
+  "zipVerified": true,
+  "dataExcluded": true,
+  "testedFilesMatch": true
+}

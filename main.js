@@ -61,6 +61,7 @@ var defaults = {
   aperture: 4,
   iso: 100,
   cameraDistance: 5,
+  focusInfinity: false,
   linked: true,
   flashDistance: 5,
   cocMode: "estimate",
@@ -90,6 +91,10 @@ var defaults = {
   apertureMax: 16,
   apertureSteps: "1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32"
 };
+function assignInput(i, key, value) {
+  i[key] = value;
+  if (key === "cameraDistance") i.focusInfinity = false;
+}
 var sensors = {
   ff: { name: "\uD480\uD504\uB808\uC784", width: 36, height: 24 },
   apsc: { name: "APS-C \uBA85\uBAA9 1.5\xD7 (23.6\xD715.6mm)", width: 23.6, height: 15.6 },
@@ -139,16 +144,19 @@ function footprint(r, h, v) {
   return { width, height };
 }
 function optics(i) {
-  positive(i.width, i.height, i.focal, i.aperture, i.cameraDistance);
+  positive(i.width, i.height, i.focal, i.aperture);
+  if (!i.focusInfinity) positive(i.cameraDistance);
   const c = i.cocMode === "estimate" ? Math.hypot(i.width, i.height) / 1500 : i.coc;
   positive(c);
   const s = i.cameraDistance * 1e3, f = i.focal;
-  positive(s);
-  if (s <= f) throw Error("\uCE74\uBA54\uB77C \uAC70\uB9AC\uB294 \uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4. (\uBC15\uB9C9\uB80C\uC988 \uBAA8\uB378)");
+  if (!i.focusInfinity) {
+    positive(s);
+    if (s <= f) throw Error("\uCE74\uBA54\uB77C \uAC70\uB9AC\uB294 \uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4. (\uBC15\uB9C9\uB80C\uC988 \uBAA8\uB378)");
+  }
   const h0 = f * f / (i.aperture * c), H = h0 + f;
   positive(h0, H);
-  const near = h0 / (h0 + s - f) * (s / 1e3);
-  const atInfinity = i.cameraDistance >= H / 1e3;
+  const near = i.focusInfinity ? h0 / 1e3 : h0 / (h0 + s - f) * (s / 1e3);
+  const atInfinity = i.focusInfinity || i.cameraDistance >= H / 1e3;
   const far = atInfinity ? Infinity : h0 / 1e3 / (H / 1e3 - i.cameraDistance) * i.cameraDistance;
   positive(near);
   if (!atInfinity) positive(far);
@@ -198,6 +206,7 @@ function powerSteps(text, minDenominator) {
 function flash(i) {
   if (i.mode !== "manual") throw Error("\uC120\uD0DD \uC870\uAC74\uC740 \uAE30\uBCF8 GN \uBAA8\uB378\uB85C \uACC4\uC0B0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC2E4\uCE21 \uB610\uB294 \uC804\uC6A9 \uC790\uB8CC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
   positive(i.zoom);
+  if (i.linked && i.focusInfinity) throw Error("\uCD08\uC810\uC774 \uBB34\uD55C\uB300\uB77C \uD50C\uB798\uC2DC\u2192\uD53C\uC0AC\uCCB4 \uAC70\uB9AC\uB97C \uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC624\uD504\uCE74\uBA54\uB77C\uB85C \uD50C\uB798\uC2DC \uAC70\uB9AC\uB97C \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.");
   if (i.gnZoom !== i.zoom) throw Error(`\uC120\uD0DD \uC90C ${i.zoom}mm\uC758 GN \uC790\uB8CC \uC5C6\uC74C. \uD574\uB2F9 \uC90C\uC758 GN\uACFC \uCE21\uC815 \uC90C\uC744 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.`);
   positive(i.gn, i.gnZoom, i.denominator, i.minDenominator, i.tolerance, i.linked ? i.cameraDistance : i.flashDistance);
   if (!i.conditions.trim()) throw Error("GN \uCE21\uC815 \uC870\uAC74\uC744 \uC785\uB825\uD558\uC138\uC694.");
@@ -235,6 +244,7 @@ function flash(i) {
   };
 }
 function coverage(i) {
+  if (i.focusInfinity) throw Error("\uCD08\uC810 \uBB34\uD55C\uB300\uC5D0\uC11C\uB294 \uD504\uB808\uC784\xB7\uC870\uC0AC \uBC94\uC704\uB97C \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
   const h = i.coverage === "approx" ? angle(36, i.zoom) : i.horizontal;
   const v = i.coverage === "approx" ? angle(24, i.zoom) : i.vertical;
   const r = i.linked ? i.cameraDistance : i.flashDistance;
@@ -361,7 +371,7 @@ function name(value) {
 function capture(s, label, distances, existingId = id()) {
   const values = {};
   for (const k of shootingKeys) Object.assign(values, { [k]: s.inputs[k] });
-  if (distances) Object.assign(values, { cameraDistance: s.inputs.cameraDistance, flashDistance: s.inputs.linked ? s.inputs.cameraDistance : s.inputs.flashDistance });
+  if (distances) Object.assign(values, { cameraDistance: s.inputs.cameraDistance, flashDistance: s.inputs.linked ? s.inputs.cameraDistance : s.inputs.flashDistance, focusInfinity: s.inputs.focusInfinity });
   for (const v of Object.values(values)) if (typeof v === "number" && !Number.isFinite(v)) throw Error("\uBE48\uCE78 \uB610\uB294 \uC798\uBABB\uB41C \uC22B\uC790\uAC00 \uC788\uC2B5\uB2C8\uB2E4. \uC785\uB825\uC744 \uC644\uB8CC\uD558\uC138\uC694.");
   const e = s.equipment.find((e2) => e2.id === values.equipmentId);
   if (values.gnMode === "equipment" && e) {
@@ -386,6 +396,7 @@ function applyShot(s, shot) {
   field(s).activeShotId = shot.id;
   const values = { ...shot.values };
   const before = { ...s.inputs };
+  if ("cameraDistance" in values && !("focusInfinity" in values)) values.focusInfinity = false;
   Object.assign(s.inputs, values);
   if (s.inputs.linked) s.inputs.flashDistance = s.inputs.cameraDistance;
   applyEquipment(s);
@@ -439,10 +450,10 @@ function restoreField(raw) {
   if (Array.isArray(d.shots)) for (const x of d.shots) {
     if (!identity(x) || typeof x.name !== "string" || !x.name.trim() || x.name.length > 100 || !x.values || typeof x.values !== "object") continue;
     const v = x.values;
-    const good = shootingKeys.every((k) => typeof v[k] === typeof defaults[k] && (typeof v[k] !== "number" || Number.isFinite(v[k]))) && ["manual", "equipment"].includes(v.gnMode) && ["m", "ft"].includes(v.gnUnit) && ["approx", "angles"].includes(v.coverage) && ["estimate", "custom"].includes(v.cocMode) && ["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(v.mode) && ["cameraDistance", "flashDistance"].every((k) => !(k in v) || Number.isFinite(v[k]) && Number(v[k]) > 0);
+    const good = shootingKeys.every((k) => typeof v[k] === typeof defaults[k] && (typeof v[k] !== "number" || Number.isFinite(v[k]))) && ["manual", "equipment"].includes(v.gnMode) && ["m", "ft"].includes(v.gnUnit) && ["approx", "angles"].includes(v.coverage) && ["estimate", "custom"].includes(v.cocMode) && ["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(v.mode) && (!("focusInfinity" in v) || typeof v.focusInfinity === "boolean") && ["cameraDistance", "flashDistance"].every((k) => !(k in v) || Number.isFinite(v[k]) && Number(v[k]) > 0);
     if (!good) continue;
     const values = {};
-    for (const k of [...shootingKeys, "cameraDistance", "flashDistance"]) if (k in v) Object.assign(values, { [k]: v[k] });
+    for (const k of [...shootingKeys, "cameraDistance", "flashDistance", "focusInfinity"]) if (k in v) Object.assign(values, { [k]: v[k] });
     f.shots.push({ id: x.id, name: x.name, values, ...typeof x.equipmentSignature === "string" ? { equipmentSignature: x.equipmentSignature } : {} });
   }
   return f;
@@ -639,12 +650,12 @@ function solveZone(i) {
   if (!steps.length) throw Error("\uB80C\uC988 \uBC94\uC704 \uC548\uC5D0 \uC120\uD0DD \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
   for (const aperture2 of steps) {
     const cameraDistance2 = target.far === Infinity ? (f * f / (aperture2 * c) + f) / 1e3 : focus / 1e3;
-    const actual = optics({ ...i, aperture: aperture2, cameraDistance: cameraDistance2 });
+    const actual = optics({ ...i, aperture: aperture2, cameraDistance: cameraDistance2, focusInfinity: false });
     if (includesTarget(actual, target)) return { possible: true, aperture: aperture2, cameraDistance: cameraDistance2, actual, required, target };
   }
   const aperture = steps[steps.length - 1];
   const cameraDistance = target.far === Infinity ? (f * f / (aperture * c) + f) / 1e3 : focus / 1e3;
-  return { possible: false, aperture, cameraDistance, actual: optics({ ...i, aperture, cameraDistance }), required, target };
+  return { possible: false, aperture, cameraDistance, actual: optics({ ...i, aperture, cameraDistance, focusInfinity: false }), required, target };
 }
 
 // src/diagram.ts
@@ -666,7 +677,6 @@ function diagram(host, i) {
   const svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", `0 0 400 ${showFlash ? 260 : 212}`);
   svg.setAttribute("role", "group");
-  svg.setAttribute("aria-label", "\uCE74\uBA54\uB77C\uC640 \uD53C\uC0AC\uCCB4, \uB80C\uC988 \uD654\uAC01\uACFC \uC2EC\uB3C4\uB97C \uD568\uAED8 \uBCF4\uB294 \uCD2C\uC601 \uC7A5\uBA74");
   svg.dataset.scene = "true";
   host.append(svg);
   function el(tag, attrs, text, parent = svg) {
@@ -676,7 +686,10 @@ function diagram(host, i) {
     parent.append(n);
     return n;
   }
-  const id2 = `pfm-scene-${++nextId}`, defs = el("defs", {}), clip = el("clipPath", { id: id2 + "-clip" }, void 0, defs);
+  const id2 = `pfm-scene-${++nextId}`;
+  el("title", { id: `${id2}-title` }, "\uCE74\uBA54\uB77C\uC640 \uD53C\uC0AC\uCCB4, \uB80C\uC988 \uD654\uAC01\uACFC \uC2EC\uB3C4\uB97C \uD568\uAED8 \uBCF4\uB294 \uCD2C\uC601 \uC7A5\uBA74");
+  svg.setAttribute("aria-labelledby", `${id2}-title`);
+  const defs = el("defs", {}), clip = el("clipPath", { id: id2 + "-clip" }, void 0, defs);
   el("rect", { x: SCENE.start, y: 24, width: SCENE.end - SCENE.start, height: 140 }, void 0, clip);
   const pattern = el("pattern", { id: id2 + "-hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse" }, void 0, defs);
   el("path", { d: "M0 7 L7 0", stroke: "var(--text-accent)", "stroke-width": 1.2 }, void 0, pattern);
@@ -684,6 +697,7 @@ function diagram(host, i) {
   el("stop", { offset: 0, class: "pfm-cone-stop-near" }, void 0, coneFill);
   el("stop", { offset: 1, class: "pfm-cone-stop-far" }, void 0, coneFill);
   const x = (d) => SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(d / i.diagramMax, 1));
+  const inf = i.focusInfinity;
   const out = (d) => `${d > i.diagramMax && Number.isFinite(d) ? "\u2192 " : ""}${metres(d)}`;
   const cone = (degrees, cl) => {
     const half = (SCENE.end - SCENE.start) * Math.tan(degrees * Math.PI / 360);
@@ -732,11 +746,12 @@ function diagram(host, i) {
   el("rect", { x: 51, y: 85, width: 1.4, height: 14, class: "pfm-camera-detail" }, void 0, cam);
   el("ellipse", { cx: 57, cy: 92, rx: 1.6, ry: 5.5, class: "pfm-lens-glass" }, void 0, cam);
   el("text", { x: 6, y: 16, class: "pfm-scene-lens" }, `${fmt(i.focal)} mm \xB7 f/${fmt(i.aperture)}`);
-  const subject = x(Number.isFinite(i.cameraDistance) && i.cameraDistance > 0 ? i.cameraDistance : 0);
+  const subject = inf ? SCENE.end : x(Number.isFinite(i.cameraDistance) && i.cameraDistance > 0 ? i.cameraDistance : 0);
   el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-glow" });
   el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-line" });
   el("ellipse", { cx: subject, cy: 165, rx: 16, ry: 3, class: "pfm-shadow" });
-  const person = el("g", { transform: `translate(${subject},0)`, class: "pfm-person pfm-subject", "data-pfm-subject": "true", tabindex: 0, role: "slider", "aria-label": "\uD53C\uC0AC\uCCB4 \uAC70\uB9AC \xB7 \uC88C\uC6B0 \uB4DC\uB798\uADF8 \uB610\uB294 \uD654\uC0B4\uD45C \uD0A4\uB85C \uC870\uC808", "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0, "aria-valuemin": Number.isFinite(i.focal) ? i.focal / 1e3 + 1e-3 : 1e-3, "aria-valuemax": Math.max(i.diagramMax, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0), "aria-valuetext": metres(i.cameraDistance) });
+  const person = el("g", { transform: `translate(${subject},0)`, class: "pfm-person pfm-subject", "data-pfm-subject": "true", tabindex: 0, role: "slider", "aria-labelledby": `${id2}-subject-title`, "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0, "aria-valuemin": Number.isFinite(i.focal) ? i.focal / 1e3 + 1e-3 : 1e-3, "aria-valuemax": Math.max(i.diagramMax, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0), "aria-valuetext": inf ? "\uBB34\uD55C\uB300" : metres(i.cameraDistance) });
+  el("title", { id: `${id2}-subject-title` }, "\uD53C\uC0AC\uCCB4 \uAC70\uB9AC \xB7 \uC88C\uC6B0 \uB4DC\uB798\uADF8 \uB610\uB294 \uD654\uC0B4\uD45C \uD0A4\uB85C \uC870\uC808", person);
   el("rect", { x: -26, y: 68, width: 52, height: 102, fill: "transparent" }, void 0, person);
   limb("M-4.5 122 L-5 159", 7.5, person, "pfm-figure-pants");
   limb("M4.5 122 L5 159", 7.5, person, "pfm-figure-pants");
@@ -749,7 +764,7 @@ function diagram(host, i) {
   el("circle", { cx: 0, cy: 80, r: 7.5, class: "pfm-figure-skin" }, void 0, person);
   fig("M-7.8 80 C-8.5 72 -4 70 0 70 C4 70 8.5 72 7.8 80 C6 75.5 3 74 0 74 C-3 74 -6 75.5 -7.8 80 Z", person, "pfm-figure-hair");
   el("circle", { cx: 0, cy: 177, r: 5, class: "pfm-focus-dot" }, void 0, person);
-  el("text", { x: Math.max(92, Math.min(subject, 340)), y: 38, "text-anchor": "middle", class: "pfm-subject-label" }, `${i.tab === "zone" ? "\uCD08\uC810" : "\uD53C\uC0AC\uCCB4"} ${i.cameraDistance > i.diagramMax ? "\u2192 \uADF8\uB9BC \uBC16" : out(i.cameraDistance)}`);
+  el("text", { x: Math.max(92, Math.min(subject, 340)), y: 38, "text-anchor": "middle", class: "pfm-subject-label" }, `${i.tab === "zone" ? "\uCD08\uC810" : "\uD53C\uC0AC\uCCB4"} ${inf ? "\u221E" : i.cameraDistance > i.diagramMax ? "\u2192 \uADF8\uB9BC \uBC16" : out(i.cameraDistance)}`);
   el("line", { x1: SCENE.start, x2: SCENE.end, y1: 192, y2: 192, class: "pfm-distance-axis" });
   for (let n = 0; n <= 4; n++) {
     const d = i.diagramMax * n / 4;
@@ -822,12 +837,12 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
 `, `| \uD56D\uBAA9 | \uAC12 |`, `| --- | --- |`];
   lines.push(`\uC800\uC7A5 \uBC94\uC704: ${scope === "zone" ? "\uD604\uC7AC \uD0ED \xB7 \uC874 \uD3EC\uCEE4\uC2F1 (\uD50C\uB798\uC2DC \uC81C\uC678)" : scope === "dof" ? "\uD604\uC7AC \uD0ED \xB7 \uC2EC\uB3C4\xB7\uD654\uAC01 (\uD50C\uB798\uC2DC\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "flash" ? "\uD604\uC7AC \uD0ED \xB7 \uD50C\uB798\uC2DC (\uC2EC\uB3C4\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "combined" ? "\uD604\uC7AC \uD0ED \xB7 \uD1B5\uD569 (\uC804\uCCB4 \uACC4\uC0B0)" : "\uC804\uCCB4 \uACC4\uC0B0"}`);
   lines.push(`\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804: ${context?.version ?? "\uAC1C\uBC1C/\uBBF8\uC9C0\uC815"}`, `GN \uC785\uB825 \uBAA8\uB4DC: ${i.gnMode === "equipment" ? "\uC7A5\uBE44 \uD45C" : "\uC218\uB3D9 GN"}`, `\uC120\uD0DD \uC7A5\uBE44: ${context?.equipment?.name ?? "\uC5C6\uC74C \xB7 \uC218\uB3D9 GN"}`, `\uC7A5\uBE44 \uCD9C\uCC98: ${context?.equipment?.source ?? "GN \uC870\uAC74 \uCC38\uC870"}`);
-  const labels = { gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44 ID (\uC218\uB3D9 \uBAA8\uB4DC\uC5D0\uC11C\uB294 \uC801\uC6A9 \uC548 \uD568)", sensor: "\uC13C\uC11C \uD504\uB9AC\uC14B", width: "\uC13C\uC11C \uAC00\uB85C mm", height: "\uC13C\uC11C \uC138\uB85C mm", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC mm", aperture: "\uC870\uB9AC\uAC1C f/", iso: "ISO", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC m", linked: "\uC628\uCE74\uBA54\uB77C \uC5F0\uB3D9", flashDistance: "\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC m", cocMode: "CoC \uBC29\uC2DD", coc: "\uC0AC\uC6A9\uC790 CoC mm", gn: "ISO100 \uCD5C\uB300 \uCD9C\uB825 GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C mm", zoom: "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C mm", conditions: "GN \uC870\uAC74", denominator: "\uCD9C\uB825 1/n\uC758 n", loss: "\uCD94\uAC00 \uC190\uC2E4 stop", tolerance: "\uD5C8\uC6A9 \uC624\uCC28 \xB1EV", minDenominator: "\uCD5C\uC18C \uCD9C\uB825 1/n\uC758 n", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coverage: "\uC870\uC0AC\uAC01 \uBC29\uC2DD (approx=\uD480\uD504\uB808\uC784 \uAC00\uC815)", horizontal: "\uC9C1\uC811 \uC785\uB825 \uC218\uD3C9 \uC870\uC0AC\uAC01 \xB0", vertical: "\uC9C1\uC811 \uC785\uB825 \uC218\uC9C1 \uC870\uC0AC\uAC01 \xB0", mode: "\uBC1C\uAD11 \uC870\uAC74", diagramMax: "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC m", tab: "\uD654\uBA74", cropBasis: "\uD658\uC0B0 \uAE30\uC900", zoneFlow: "\uC874 \uD750\uB984", zoneNear: "\uBAA9\uD45C \uADFC\uAC70\uB9AC m", zoneFar: "\uBAA9\uD45C \uC720\uD55C \uC6D0\uAC70\uB9AC m (\uBB34\uD55C\uB300 \uC120\uD0DD \uC2DC \uBBF8\uC0AC\uC6A9)", zoneInfinity: "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300", apertureMin: "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12", apertureMax: "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12", apertureSteps: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC2E4\uC81C \uC870\uB9AC\uAC1C \uB2E8\uACC4" };
-  const opticalKeys = /* @__PURE__ */ new Set(["sensor", "width", "height", "focal", "aperture", "cameraDistance", "cocMode", "coc", "tab", "cropBasis"]);
-  const flashKeys = /* @__PURE__ */ new Set(["gnMode", "equipmentId", "aperture", "iso", "linked", "cameraDistance", "flashDistance", "gn", "gnUnit", "gnZoom", "zoom", "conditions", "denominator", "loss", "tolerance", "minDenominator", "steps", "mode", "tab"]);
+  const labels = { gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44 ID (\uC218\uB3D9 \uBAA8\uB4DC\uC5D0\uC11C\uB294 \uC801\uC6A9 \uC548 \uD568)", sensor: "\uC13C\uC11C \uD504\uB9AC\uC14B", width: "\uC13C\uC11C \uAC00\uB85C mm", height: "\uC13C\uC11C \uC138\uB85C mm", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC mm", aperture: "\uC870\uB9AC\uAC1C f/", iso: "ISO", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC m", focusInfinity: "\uBB34\uD55C\uB300 \uCD08\uC810 (\uCF1C\uBA74 \uCE74\uBA54\uB77C \uAC70\uB9AC m\uB294 \uB9C8\uC9C0\uB9C9 \uC720\uD55C\uAC12 \uBCF4\uC874)", linked: "\uC628\uCE74\uBA54\uB77C \uC5F0\uB3D9", flashDistance: "\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC m", cocMode: "CoC \uBC29\uC2DD", coc: "\uC0AC\uC6A9\uC790 CoC mm", gn: "ISO100 \uCD5C\uB300 \uCD9C\uB825 GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C mm", zoom: "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C mm", conditions: "GN \uC870\uAC74", denominator: "\uCD9C\uB825 1/n\uC758 n", loss: "\uCD94\uAC00 \uC190\uC2E4 stop", tolerance: "\uD5C8\uC6A9 \uC624\uCC28 \xB1EV", minDenominator: "\uCD5C\uC18C \uCD9C\uB825 1/n\uC758 n", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coverage: "\uC870\uC0AC\uAC01 \uBC29\uC2DD (approx=\uD480\uD504\uB808\uC784 \uAC00\uC815)", horizontal: "\uC9C1\uC811 \uC785\uB825 \uC218\uD3C9 \uC870\uC0AC\uAC01 \xB0", vertical: "\uC9C1\uC811 \uC785\uB825 \uC218\uC9C1 \uC870\uC0AC\uAC01 \xB0", mode: "\uBC1C\uAD11 \uC870\uAC74", diagramMax: "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC m", tab: "\uD654\uBA74", cropBasis: "\uD658\uC0B0 \uAE30\uC900", zoneFlow: "\uC874 \uD750\uB984", zoneNear: "\uBAA9\uD45C \uADFC\uAC70\uB9AC m", zoneFar: "\uBAA9\uD45C \uC720\uD55C \uC6D0\uAC70\uB9AC m (\uBB34\uD55C\uB300 \uC120\uD0DD \uC2DC \uBBF8\uC0AC\uC6A9)", zoneInfinity: "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300", apertureMin: "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12", apertureMax: "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12", apertureSteps: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC2E4\uC81C \uC870\uB9AC\uAC1C \uB2E8\uACC4" };
+  const opticalKeys = /* @__PURE__ */ new Set(["sensor", "width", "height", "focal", "aperture", "cameraDistance", "focusInfinity", "cocMode", "coc", "tab", "cropBasis"]);
+  const flashKeys = /* @__PURE__ */ new Set(["gnMode", "equipmentId", "aperture", "iso", "linked", "cameraDistance", "focusInfinity", "flashDistance", "gn", "gnUnit", "gnZoom", "zoom", "conditions", "denominator", "loss", "tolerance", "minDenominator", "steps", "mode", "tab"]);
   for (const key of Object.keys(labels)) {
     if ((scope === "dof" || scope === "zone") && !opticalKeys.has(key) && !["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity", "apertureMin", "apertureMax", "apertureSteps"].includes(key) || scope === "flash" && !flashKeys.has(key)) continue;
-    lines.push(`| ${labels[key]} | ${String(key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode === "estimate" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" ? "\uBBF8\uC0AC\uC6A9" : i[key]).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
+    lines.push(`| ${labels[key]} | ${String(key === "cameraDistance" && i.focusInfinity && !(scope === "flash" && !i.linked) ? "\u221E (\uBB34\uD55C\uB300 \uCD08\uC810)" : key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode === "estimate" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" ? "\uBBF8\uC0AC\uC6A9" : i[key]).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
   }
   lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n", "\uAC70\uB9AC \uACB0\uACFC\uB294 1m \uC774\uD558\uC5D0\uC11C cm\uB85C \uC790\uB3D9 \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uC704 \uC785\uB825\uD45C\uC640 \uB0B4\uBD80 \uC800\uC7A5\uC758 \uAC70\uB9AC\uB294 \uC7AC\uD604\uC744 \uC704\uD574 m\uB97C \uC720\uC9C0\uD569\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD569\uB2C8\uB2E4. \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC774\uBBC0\uB85C \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
   if (scope !== "dof" && scope !== "zone") try {
@@ -999,7 +1014,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     const distance = node(h, "div", void 0, "pfm-distance-buttons");
     this.distanceButtons = distance;
     const key = distanceKey(i);
-    node(distance, "p", key === "flashDistance" ? `\uB0B4 \uAC70\uB9AC \xB7 \uD50C\uB798\uC2DC \u2192 \uD53C\uC0AC\uCCB4 ${metres(i.flashDistance)} (\uCE74\uBA54\uB77C \uCD08\uC810 \uC720\uC9C0)` : `\uB0B4 \uAC70\uB9AC \xB7 \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(i.cameraDistance)}${i.linked && (i.tab === "flash" || i.tab === "combined") ? " \xB7 \uD50C\uB798\uC2DC \uC5F0\uB3D9" : ""}`);
+    node(distance, "p", key === "flashDistance" ? `\uB0B4 \uAC70\uB9AC \xB7 \uD50C\uB798\uC2DC \u2192 \uD53C\uC0AC\uCCB4 ${metres(i.flashDistance)} (\uCE74\uBA54\uB77C \uCD08\uC810 \uC720\uC9C0)` : `\uB0B4 \uAC70\uB9AC \xB7 \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${i.focusInfinity ? "\u221E" : metres(i.cameraDistance)}${i.linked && (i.tab === "flash" || i.tab === "combined") ? " \xB7 \uD50C\uB798\uC2DC \uC5F0\uB3D9" : ""}`);
     const addDistances = (parent, start, end) => {
       for (const d of f.distances.slice(start, end)) {
         const b = this.fieldButton(parent, metres(d.metres), () => this.fieldAction(() => {
@@ -1009,7 +1024,7 @@ var PhotoView = class extends import_obsidian.ItemView {
           this.detailState.set("\uAC70\uB9AC \uB354\uBCF4\uAE30", false);
         }));
         b.dataset.distanceId = d.id;
-        b.setAttribute("aria-pressed", String(Object.is(i[key], d.metres)));
+        b.setAttribute("aria-pressed", String(Object.is(i[key], d.metres) && !(key === "cameraDistance" && i.focusInfinity)));
       }
     };
     addDistances(distance, 0, 5);
@@ -1126,9 +1141,10 @@ var PhotoView = class extends import_obsidian.ItemView {
     }));
   }
   fieldLabel(k) {
-    return { sensor: "\uC13C\uC11C", width: "\uC13C\uC11C \uAC00\uB85C(mm)", height: "\uC13C\uC11C \uC138\uB85C(mm)", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C", iso: "ISO", denominator: "\uCD9C\uB825", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC", flashDistance: "\uD50C\uB798\uC2DC \uAC70\uB9AC", linked: "\uAC70\uB9AC \uC5F0\uB3D9", gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44", gn: "GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C(mm)", zoom: "\uD50C\uB798\uC2DC \uC90C(mm)", conditions: "\uCE21\uC815 \uC870\uAC74", loss: "\uC190\uC2E4(stop)", tolerance: "\uD5C8\uC6A9 \uC624\uCC28(EV)", minDenominator: "\uCD5C\uC18C \uCD9C\uB825", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coc: "CoC(mm)", cocMode: "CoC \uAE30\uC900", coverage: "\uC870\uC0AC\uAC01 \uAE30\uC900", horizontal: "\uC218\uD3C9 \uC870\uC0AC\uAC01(\uB3C4)", vertical: "\uC218\uC9C1 \uC870\uC0AC\uAC01(\uB3C4)", mode: "\uB3D9\uC870\xB7\uBC1C\uAD11 \uC870\uAC74" }[k] ?? k;
+    return { sensor: "\uC13C\uC11C", width: "\uC13C\uC11C \uAC00\uB85C(mm)", height: "\uC13C\uC11C \uC138\uB85C(mm)", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C", iso: "ISO", denominator: "\uCD9C\uB825", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC", focusInfinity: "\uCD08\uC810 \uBB34\uD55C\uB300", flashDistance: "\uD50C\uB798\uC2DC \uAC70\uB9AC", linked: "\uAC70\uB9AC \uC5F0\uB3D9", gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44", gn: "GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C(mm)", zoom: "\uD50C\uB798\uC2DC \uC90C(mm)", conditions: "\uCE21\uC815 \uC870\uAC74", loss: "\uC190\uC2E4(stop)", tolerance: "\uD5C8\uC6A9 \uC624\uCC28(EV)", minDenominator: "\uCD5C\uC18C \uCD9C\uB825", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coc: "CoC(mm)", cocMode: "CoC \uAE30\uC900", coverage: "\uC870\uC0AC\uAC01 \uAE30\uC900", horizontal: "\uC218\uD3C9 \uC870\uC0AC\uAC01(\uB3C4)", vertical: "\uC218\uC9C1 \uC870\uC0AC\uAC01(\uB3C4)", mode: "\uB3D9\uC870\xB7\uBC1C\uAD11 \uC870\uAC74" }[k] ?? k;
   }
   fieldValue(k, value) {
+    if (k === "focusInfinity") return value ? "\u221E" : "\uB054";
     if (typeof value === "number") {
       if (k === "denominator" || k === "minDenominator") return `1/${value}`;
       if (k === "cameraDistance" || k === "flashDistance") return metres(value);
@@ -1196,7 +1212,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       const x = coordinate(event);
       if (x === null) return;
       const i = this.plugin.state.inputs;
-      offset = x - (SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(1, (Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0) / i.diagramMax)));
+      offset = x - (i.focusInfinity ? SCENE.end : SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(1, (Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0) / i.diagramMax)));
       dragging = event.pointerId;
       this.contentEl.setPointerCapture(event.pointerId);
       event.preventDefault();
@@ -1254,6 +1270,7 @@ var PhotoView = class extends import_obsidian.ItemView {
   number(parent, label, key, options) {
     const wrap = node(parent, "div", void 0, "pfm-field");
     wrap.dataset.field = key;
+    const infinite = () => key === "cameraDistance" && this.plugin.state.inputs.focusInfinity;
     const compact = { cameraDistance: "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC (m)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C (f/)", focal: "\uCD08\uC810\uAC70\uB9AC (mm)" };
     const caption = node(wrap, "label", compact[key] ?? label);
     const entry = node(wrap, "div", void 0, "pfm-number-entry");
@@ -1269,6 +1286,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     const isDistance = ["cameraDistance", "flashDistance", "zoneNear", "zoneFar", "diagramMax"].includes(key);
     let scale = 1;
     let range;
+    let infinityButton;
     if (options) {
       wrap.classList.add("pfm-range-field");
       input.min = String(options.min);
@@ -1291,6 +1309,16 @@ var PhotoView = class extends import_obsidian.ItemView {
     }
     if (key === "flashDistance") wrap.classList.add("pfm-flash-distance");
     if (key === "denominator") wrap.classList.add("pfm-custom-power");
+    const infinityUi = () => {
+      if (key !== "cameraDistance") return;
+      input.placeholder = infinite() ? "\u221E" : "";
+      if (infinite()) {
+        input.value = "";
+        input.setAttribute("aria-invalid", "false");
+      }
+      wrap.dataset.focusInfinity = String(infinite());
+      infinityButton?.setAttribute("aria-pressed", String(infinite()));
+    };
     const sync = () => {
       const value = this.plugin.state.inputs[key];
       if (isDistance && Number.isFinite(value) && value >= 0) scale = value <= 1 ? 100 : 1;
@@ -1301,7 +1329,8 @@ var PhotoView = class extends import_obsidian.ItemView {
         input.dataset.displayUnit = unit;
         if (options) input.min = String(options.min * scale);
       }
-      input.value = Number.isFinite(value) ? String(scale === 100 ? Number((value * scale).toPrecision(15)) : value) : "";
+      input.value = infinite() ? "" : Number.isFinite(value) ? String(scale === 100 ? Number((value * scale).toPrecision(15)) : value) : "";
+      infinityUi();
       if (range) {
         range.value = String(value);
         this.rangeProgress(range);
@@ -1334,6 +1363,10 @@ var PhotoView = class extends import_obsidian.ItemView {
       return (result - value) * direction > 0 ? result : void 0;
     };
     const adjust = (direction) => {
+      if (infinite()) {
+        if (direction < 0) apply(this.plugin.state.inputs[key]);
+        return;
+      }
       const value = candidate(direction);
       if (value !== void 0) apply(value);
     };
@@ -1362,10 +1395,24 @@ var PhotoView = class extends import_obsidian.ItemView {
       });
     }
     const updateControls = () => {
-      minus.disabled = candidate(-1) === void 0;
-      plus.disabled = candidate(1) === void 0;
+      infinityUi();
+      minus.disabled = infinite() ? false : candidate(-1) === void 0;
+      plus.disabled = infinite() || candidate(1) === void 0;
       if (picker) picker.disabled = input.disabled;
     };
+    if (key === "cameraDistance") {
+      const b = node(wrap, "button", "\u221E", "pfm-infinity-toggle");
+      b.type = "button";
+      b.dataset.focusInfinity = "true";
+      b.setAttribute("aria-label", "\uBB34\uD55C\uB300 \uCD08\uC810");
+      infinityButton = b;
+      this.listen(b, "click", () => {
+        this.plugin.setFocusInfinity(!this.plugin.state.inputs.focusInfinity);
+        sync();
+        this.changed();
+        b.focus({ preventScroll: true });
+      });
+    }
     this.numeric.set(key, { input, range, sync, updateControls });
     sync();
     this.listen(input, "input", () => {
@@ -1791,7 +1838,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     try {
       const current = optics(i);
       if (i.zoneFlow === "current") {
-        node(this.zoneResult, "p", `${metres(i.cameraDistance)}\uC5D0 \uCD08\uC810\uC744 \uB9DE\uCD94\uBA74 \uC57D ${metres(current.near)} ~ ${metres(current.far)} \uBC94\uC704\uAC00 \uD5C8\uC6A9 \uC120\uBA85\uB3C4 \uC548\uC5D0 \uB4E4\uC5B4\uC635\uB2C8\uB2E4.`);
+        node(this.zoneResult, "p", `${i.focusInfinity ? "\u221E" : metres(i.cameraDistance)}\uC5D0 \uCD08\uC810\uC744 \uB9DE\uCD94\uBA74 \uC57D ${metres(current.near)} ~ ${metres(current.far)} \uBC94\uC704\uAC00 \uD5C8\uC6A9 \uC120\uBA85\uB3C4 \uC548\uC5D0 \uB4E4\uC5B4\uC635\uB2C8\uB2E4.`);
         node(this.zoneResult, "p", `\uC804\uCCB4 \uC2EC\uB3C4 ${metres(current.total)} \xB7 \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(current.hyperfocal)}`);
       }
       if (i.zoneFlow === "target") {
@@ -1801,7 +1848,7 @@ var PhotoView = class extends import_obsidian.ItemView {
         node(this.zoneResult, "p", `\uBAA9\uD45C ${metres(r.target.near)} ~ ${metres(r.target.far)} \xB7 \uC774\uB860 \uD544\uC694 f/${fmt(r.required, 3)}`);
         node(this.zoneResult, "p", `${r.possible ? "\uC81C\uC548" : "\uB80C\uC988 \uD55C\uACC4\uC5D0\uC11C \uB300\uC548"}: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(r.aperture)} \u2192 ${metres(r.actual.near)} ~ ${metres(r.actual.far)}`);
         if (r.possible) {
-          node(this.zoneResult, "p", `\uC801\uC6A9 \uC804 \uD655\uC778: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(i.cameraDistance)} \u2192 ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(i.aperture)} \u2192 f/${fmt(r.aperture)}`);
+          node(this.zoneResult, "p", `\uC801\uC6A9 \uC804 \uD655\uC778: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${i.focusInfinity ? "\u221E" : metres(i.cameraDistance)} \u2192 ${metres(r.cameraDistance)} \xB7 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(i.aperture)} \u2192 f/${fmt(r.aperture)}`);
           const b = node(this.zoneResult, "button", "\uC5ED\uC0B0 \uACB0\uACFC\uB97C \uD604\uC7AC \uC124\uC815\uC5D0 \uC801\uC6A9");
           b.type = "button";
           b.dataset.zoneApply = "true";
@@ -2227,11 +2274,14 @@ var PhotoPlugin = class extends import_obsidian2.Plugin {
       setGnMode(this.state, value);
       return;
     }
-    this.state.inputs[key] = value;
+    assignInput(this.state.inputs, key, value);
     if (key === "zoom") applyEquipment(this.state);
     if (["gn", "gnZoom", "conditions", "steps", "minDenominator"].includes(key) && this.state.inputs.gnMode === "equipment") {
       this.state.inputs.gnMode = "manual";
     }
+  }
+  setFocusInfinity(on) {
+    this.state.inputs.focusInfinity = on;
   }
   onunload() {
     this.active = false;

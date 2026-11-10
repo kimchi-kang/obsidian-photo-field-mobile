@@ -3,7 +3,7 @@ import {applyEquipment,signature,manualFlash} from './presets';
 export {signature,issue} from './presets';
 import {powerSteps} from './engine';
 export const shootingKeys=['sensor','width','height','focal','aperture','iso','gnMode','equipmentId','gn','gnUnit','gnZoom','zoom','conditions','denominator','linked','cocMode','coc','coverage','horizontal','vertical','loss','tolerance','minDenominator','steps','mode'] as const;
-export type ShotValues=Pick<Inputs,typeof shootingKeys[number]>&Partial<Pick<Inputs,'cameraDistance'|'flashDistance'>>;
+export type ShotValues=Pick<Inputs,typeof shootingKeys[number]>&Partial<Pick<Inputs,'cameraDistance'|'flashDistance'|'focusInfinity'>>;
 export interface Shot {id:string;name:string;values:ShotValues;equipmentSignature?:string}
 export interface ZoneFavorite {id:string;name:string;near:number;far:number;infinity:boolean}
 export interface FieldData {version:1;simple:boolean;activeShotId?:string;shots:Shot[];distances:{id:string;metres:number}[];zones:ZoneFavorite[]}
@@ -14,7 +14,7 @@ export function id():string{return crypto.randomUUID();}
 export function name(value:string):string{const n=value.trim();if(!n||n.length>100)throw Error('이름은 1~100자로 입력하세요.');return n;}
 export function capture(s:Saved,label:string,distances:boolean,existingId=id()):Shot {
  const values={} as ShotValues;for(const k of shootingKeys)Object.assign(values,{[k]:s.inputs[k]});
- if(distances)Object.assign(values,{cameraDistance:s.inputs.cameraDistance,flashDistance:s.inputs.linked?s.inputs.cameraDistance:s.inputs.flashDistance});
+ if(distances)Object.assign(values,{cameraDistance:s.inputs.cameraDistance,flashDistance:s.inputs.linked?s.inputs.cameraDistance:s.inputs.flashDistance,focusInfinity:s.inputs.focusInfinity});
  for(const v of Object.values(values))if(typeof v==='number'&&!Number.isFinite(v))throw Error('빈칸 또는 잘못된 숫자가 있습니다. 입력을 완료하세요.');
  const e=s.equipment.find(e=>e.id===values.equipmentId);
  if(values.gnMode==='equipment'&&e){const normalized={...s,inputs:{...s.inputs},field:undefined};applyEquipment(normalized);for(const k of shootingKeys)Object.assign(values,{[k]:normalized.inputs[k]});}
@@ -25,7 +25,7 @@ export function patch(i:Inputs,values:Partial<Inputs>):Patch {const before:Parti
 export function applyShot(s:Saved,shot:Shot):Patch {
  if(s.inputs.gnMode==='manual'&&shot.values.gnMode==='equipment')s.manualFlash=manualFlash(s.inputs);
  field(s).activeShotId=shot.id;const values={...shot.values};const before={...s.inputs};
- Object.assign(s.inputs,values);if(s.inputs.linked)s.inputs.flashDistance=s.inputs.cameraDistance;
+ if('cameraDistance' in values&&!('focusInfinity' in values))values.focusInfinity=false;Object.assign(s.inputs,values);if(s.inputs.linked)s.inputs.flashDistance=s.inputs.cameraDistance;
  applyEquipment(s);
  const after={...s.inputs};Object.assign(s.inputs,before);return patch(s.inputs,after);
 }
@@ -42,7 +42,7 @@ export function restoreField(raw:unknown):FieldData {
  if(Array.isArray(d.distances)){f.distances=[];for(const x of d.distances)if(identity(x)&&typeof x.metres==='number'&&Number.isFinite(x.metres)&&x.metres>0&&x.metres<=1e6&&!f.distances.some(y=>y.metres===x.metres))f.distances.push({id:x.id,metres:x.metres});}
  if(Array.isArray(d.zones))for(const x of d.zones)if(identity(x)&&typeof x.name==='string'&&x.name.trim()&&x.name.length<=100&&Number.isFinite(x.near)&&x.near>0&&Number.isFinite(x.far)&&x.far>0&&typeof x.infinity==='boolean'&&(x.infinity||x.far>x.near))f.zones.push({id:x.id,name:x.name,near:x.near,far:x.far,infinity:x.infinity});
  if(Array.isArray(d.shots))for(const x of d.shots){if(!identity(x)||typeof x.name!=='string'||!x.name.trim()||x.name.length>100||!x.values||typeof x.values!=='object')continue;
- const v=x.values;const good=shootingKeys.every(k=>typeof v[k]===typeof defaults[k]&&(typeof v[k]!=='number'||Number.isFinite(v[k])))&&['manual','equipment'].includes(v.gnMode)&&['m','ft'].includes(v.gnUnit)&&['approx','angles'].includes(v.coverage)&&['estimate','custom'].includes(v.cocMode)&&['manual','ttl','hss','bounce','modifier','near'].includes(v.mode)&&['cameraDistance','flashDistance'].every(k=>!(k in v)||(Number.isFinite(v[k as keyof ShotValues])&&Number(v[k as keyof ShotValues])>0));
- if(!good)continue;const values={} as ShotValues;for(const k of [...shootingKeys,'cameraDistance','flashDistance'] as const)if(k in v)Object.assign(values,{[k]:v[k]});f.shots.push({id:x.id,name:x.name,values,...(typeof x.equipmentSignature==='string'?{equipmentSignature:x.equipmentSignature}:{})});}
+ const v=x.values;const good=shootingKeys.every(k=>typeof v[k]===typeof defaults[k]&&(typeof v[k]!=='number'||Number.isFinite(v[k])))&&['manual','equipment'].includes(v.gnMode)&&['m','ft'].includes(v.gnUnit)&&['approx','angles'].includes(v.coverage)&&['estimate','custom'].includes(v.cocMode)&&['manual','ttl','hss','bounce','modifier','near'].includes(v.mode)&&(!('focusInfinity' in v)||typeof v.focusInfinity==='boolean')&&['cameraDistance','flashDistance'].every(k=>!(k in v)||(Number.isFinite(v[k as keyof ShotValues])&&Number(v[k as keyof ShotValues])>0));
+ if(!good)continue;const values={} as ShotValues;for(const k of [...shootingKeys,'cameraDistance','flashDistance','focusInfinity'] as const)if(k in v)Object.assign(values,{[k]:v[k]});f.shots.push({id:x.id,name:x.name,values,...(typeof x.equipmentSignature==='string'?{equipmentSignature:x.equipmentSignature}:{})});}
  return f;
 }

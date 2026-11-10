@@ -14,17 +14,18 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   host.replaceChildren();
   if(!Number.isFinite(i.diagramMax)||i.diagramMax<=0){const p=document.createElement('p');p.textContent='그림 최대 거리를 양수로 입력하세요.';host.append(p);return;}
   const showDof=i.tab!=='flash',showFlash=i.tab!=='dof'&&i.tab!=='zone';
-  const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 400 ${showFlash?260:212}`);svg.setAttribute('role','group');svg.setAttribute('aria-label','카메라와 피사체, 렌즈 화각과 심도를 함께 보는 촬영 장면');svg.dataset.scene='true';host.append(svg);
+  const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 400 ${showFlash?260:212}`);svg.setAttribute('role','group');svg.dataset.scene='true';host.append(svg);
   function el(tag:string,attrs:Record<string,string|number>,text?:string,parent:Element=svg):SVGElement {
     const n=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;parent.append(n);return n;
   }
-  const id=`pfm-scene-${++nextId}`,defs=el('defs',{}),clip=el('clipPath',{id:id+'-clip'},undefined,defs);
+  const id=`pfm-scene-${++nextId}`;el('title',{id:`${id}-title`},'카메라와 피사체, 렌즈 화각과 심도를 함께 보는 촬영 장면');svg.setAttribute('aria-labelledby',`${id}-title`);
+  const defs=el('defs',{}),clip=el('clipPath',{id:id+'-clip'},undefined,defs);
   el('rect',{x:SCENE.start,y:24,width:SCENE.end-SCENE.start,height:140},undefined,clip);
   const pattern=el('pattern',{id:id+'-hatch',width:7,height:7,patternUnits:'userSpaceOnUse'},undefined,defs);
   el('path',{d:'M0 7 L7 0',stroke:'var(--text-accent)','stroke-width':1.2},undefined,pattern);
   const coneFill=el('linearGradient',{id:id+'-cone',x1:0,x2:1,y1:0,y2:0},undefined,defs);
   el('stop',{offset:0,class:'pfm-cone-stop-near'},undefined,coneFill);el('stop',{offset:1,class:'pfm-cone-stop-far'},undefined,coneFill);
-  const x=(d:number)=>SCENE.start+(SCENE.end-SCENE.start)*Math.max(0,Math.min(d/i.diagramMax,1));
+  const x=(d:number)=>SCENE.start+(SCENE.end-SCENE.start)*Math.max(0,Math.min(d/i.diagramMax,1));const inf=i.focusInfinity;
   const out=(d:number)=>`${d>i.diagramMax&&Number.isFinite(d)?'→ ':''}${metres(d)}`;
   const cone=(degrees:number,cl:string)=>{const half=(SCENE.end-SCENE.start)*Math.tan(degrees*Math.PI/360);el('path',{d:`M${SCENE.start} 92 L${SCENE.end} ${92-half} L${SCENE.end} ${92+half} Z`,class:cl,'clip-path':`url(#${id}-clip)`,...(cl==='pfm-camera-cone'?{fill:`url(#${id}-cone)`}:{})});};
   try {
@@ -55,11 +56,12 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   el('rect',{x:48,y:85,width:9,height:14,rx:2},undefined,cam);el('rect',{x:51,y:85,width:1.4,height:14,class:'pfm-camera-detail'},undefined,cam);
   el('ellipse',{cx:57,cy:92,rx:1.6,ry:5.5,class:'pfm-lens-glass'},undefined,cam);
   el('text',{x:6,y:16,class:'pfm-scene-lens'},`${fmt(i.focal)} mm · f/${fmt(i.aperture)}`);
-  const subject=x(Number.isFinite(i.cameraDistance)&&i.cameraDistance>0?i.cameraDistance:0);
+  const subject=inf?SCENE.end:x(Number.isFinite(i.cameraDistance)&&i.cameraDistance>0?i.cameraDistance:0);
   el('line',{x1:subject,x2:subject,y1:24,y2:180,class:'pfm-focus-glow'});
   el('line',{x1:subject,x2:subject,y1:24,y2:180,class:'pfm-focus-line'});
   el('ellipse',{cx:subject,cy:165,rx:16,ry:3,class:'pfm-shadow'});
-  const person=el('g',{transform:`translate(${subject},0)`,class:'pfm-person pfm-subject','data-pfm-subject':'true',tabindex:0,role:'slider','aria-label':'피사체 거리 · 좌우 드래그 또는 화살표 키로 조절','aria-valuenow':Number.isFinite(i.cameraDistance)?i.cameraDistance:0,'aria-valuemin':Number.isFinite(i.focal)?i.focal/1000+0.001:0.001,'aria-valuemax':Math.max(i.diagramMax,Number.isFinite(i.cameraDistance)?i.cameraDistance:0),'aria-valuetext':metres(i.cameraDistance)});
+  const person=el('g',{transform:`translate(${subject},0)`,class:'pfm-person pfm-subject','data-pfm-subject':'true',tabindex:0,role:'slider','aria-labelledby':`${id}-subject-title`,'aria-valuenow':Number.isFinite(i.cameraDistance)?i.cameraDistance:0,'aria-valuemin':Number.isFinite(i.focal)?i.focal/1000+0.001:0.001,'aria-valuemax':Math.max(i.diagramMax,Number.isFinite(i.cameraDistance)?i.cameraDistance:0),'aria-valuetext':inf?'무한대':metres(i.cameraDistance)});
+  el('title',{id:`${id}-subject-title`},'피사체 거리 · 좌우 드래그 또는 화살표 키로 조절',person);
   el('rect',{x:-26,y:68,width:52,height:102,fill:'transparent'},undefined,person);
   limb('M-4.5 122 L-5 159',7.5,person,'pfm-figure-pants');limb('M4.5 122 L5 159',7.5,person,'pfm-figure-pants');
   el('ellipse',{cx:-6,cy:162,rx:5.5,ry:2.6},undefined,person);el('ellipse',{cx:6,cy:162,rx:5.5,ry:2.6},undefined,person);
@@ -69,7 +71,7 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   el('circle',{cx:0,cy:80,r:7.5,class:'pfm-figure-skin'},undefined,person);
   fig('M-7.8 80 C-8.5 72 -4 70 0 70 C4 70 8.5 72 7.8 80 C6 75.5 3 74 0 74 C-3 74 -6 75.5 -7.8 80 Z',person,'pfm-figure-hair');
   el('circle',{cx:0,cy:177,r:5,class:'pfm-focus-dot'},undefined,person);
-  el('text',{x:Math.max(92,Math.min(subject,340)),y:38,'text-anchor':'middle',class:'pfm-subject-label'},`${i.tab==='zone'?'초점':'피사체'} ${i.cameraDistance>i.diagramMax?'→ 그림 밖':out(i.cameraDistance)}`);
+  el('text',{x:Math.max(92,Math.min(subject,340)),y:38,'text-anchor':'middle',class:'pfm-subject-label'},`${i.tab==='zone'?'초점':'피사체'} ${inf?'∞':i.cameraDistance>i.diagramMax?'→ 그림 밖':out(i.cameraDistance)}`);
   el('line',{x1:SCENE.start,x2:SCENE.end,y1:192,y2:192,class:'pfm-distance-axis'});
   for(let n=0;n<=4;n++){const d=i.diagramMax*n/4;el('line',{x1:x(d),x2:x(d),y1:189,y2:195,class:'pfm-distance-axis'});el('text',{x:x(d),y:208,'text-anchor':n===4?'end':'middle',class:'pfm-axis-label'},metres(d,1));}
   if(showFlash)try{
