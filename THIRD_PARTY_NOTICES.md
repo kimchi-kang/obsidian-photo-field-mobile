@@ -42,8 +42,20 @@ SOFTWARE.
 
 ## Runtime and assets
 
-The only external import is `obsidian`, supplied by the host application. The Obsidian API type definitions are MIT licensed; they are used during development and are not bundled. The camera ribbon icon is supplied by Obsidian's built-in icon service. No third-party icon path, image, font or executable package is bundled. All visible SVG geometry is newly authored in `src/diagram.ts`.
+The only external import is `obsidian`, supplied by the host application. The Obsidian API type definitions are MIT licensed; they are used during development and are not bundled. The camera ribbon icon is supplied by Obsidian's built-in icon service. No third-party icon path, image or executable package is bundled. The only bundled third-party font is a renamed NanumSquareRound subset used for Hangul, described in the NanumSquareRound section below. All visible SVG geometry is newly authored in `src/diagram.ts`.
 
 ## Development tools (not included in the plugin runtime)
 
 esbuild: MIT; TypeScript: Apache-2.0; tsx: MIT; Playwright/playwright-core: Apache-2.0; @types/node: MIT; obsidian API types: MIT. Lockfile versions and transitive license metadata for both projects are recorded in `docs/dependency-license-audit.json`. The source archive includes package manifests/lockfile and no node_modules. npm reported zero known vulnerabilities at install time; that result is not a security guarantee.
+
+## NanumSquareRound (Hangul glyphs, embedded font subset)
+
+Copyright holder: NAVER Corporation (font designed by Sandoll Communications Inc.), Copyright (c) 2010, NAVER Corporation (https://www.navercorp.com/); font file copyright notice: "Copyright 2017 NAVER Corporation. All rights reserved."
+
+License: SIL Open Font License, Version 1.1. The full license text, with the Naver copyright line and Reserved Font Names, is in `vendor/NanumSquareRound-OFL.txt`.
+
+Source: NanumSquareRound (Regular and Bold TrueType files) downloaded from Naver's official distribution at https://hangeul.naver.com/hangeul_static/webfont/zips/nanum-square-round.zip; license wording confirmed against Naver's Nanum font license page (https://help.naver.com/support/contents/contents.help?serviceNo=1074&categoryNo=3497).
+
+Modification: the Regular and Bold fonts were subset to the 2,350 KS X 1001 Hangul syllables, Hangul Compatibility Jamo and a few punctuation marks (5,596 glyphs each), hinting removed, converted to WOFF2 and embedded as base64 `data:` URLs in `styles.css` (`@font-face`, family `PFM Round KR`, used only for Hangul and jamo through `unicode-range`).
+
+Reserved Font Name: the font declares Reserved Font Names including "NanumSquareRound" and "Nanum". Because this is a Modified Version, the internal name table of the embedded fonts was renamed to "PFM Round KR" (name IDs 1, 3, 4, 6; IDs 16/17 removed) and the original names do not appear in the font data or in the CSS. The original copyright notice is kept. The font is not sold on its own.

@@ -41,10 +41,10 @@ export function solveZone(i:Inputs) {
   // Try the widest actual step first, then verify with the unchanged forward engine.
   for(const aperture of steps){
     const cameraDistance=target.far===Infinity?(f*f/(aperture*c)+f)/1000:focus/1000;
-    const actual=optics({...i,aperture,cameraDistance});
+    const actual=optics({...i,aperture,cameraDistance,focusInfinity:false});
     if(includesTarget(actual,target))return {possible:true as const,aperture,cameraDistance,actual,required,target};
   }
   const aperture=steps[steps.length-1];
   const cameraDistance=target.far===Infinity?(f*f/(aperture*c)+f)/1000:focus/1000;
-  return {possible:false as const,aperture,cameraDistance,actual:optics({...i,aperture,cameraDistance}),required,target};
+  return {possible:false as const,aperture,cameraDistance,actual:optics({...i,aperture,cameraDistance,focusInfinity:false}),required,target};
 }

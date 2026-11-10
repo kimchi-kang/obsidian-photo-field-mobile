@@ -15,15 +15,15 @@ export function footprint(r:number,h:number,v:number):{width:number;height:numbe
   positive(width,height);return {width,height};
 }
 export function optics(i:Inputs) {
-  positive(i.width,i.height,i.focal,i.aperture,i.cameraDistance);
+  positive(i.width,i.height,i.focal,i.aperture);if(!i.focusInfinity)positive(i.cameraDistance);
   const c=i.cocMode==='estimate'?Math.hypot(i.width,i.height)/1500:i.coc;
-  positive(c); const s=i.cameraDistance*1000,f=i.focal;positive(s);
-  if(s<=f)throw Error('카메라 거리는 실제 초점거리보다 커야 합니다. (박막렌즈 모델)');
+  positive(c); const s=i.cameraDistance*1000,f=i.focal;if(!i.focusInfinity){positive(s);
+  if(s<=f)throw Error('카메라 거리는 실제 초점거리보다 커야 합니다. (박막렌즈 모델)');}
   const h0=f*f/(i.aperture*c), H=h0+f;
   // H includes +f. Use H-f in both numerators and denominators for s=H -> infinity.
   positive(h0,H);
-  const near=h0/(h0+s-f)*(s/1000);
-  const atInfinity=i.cameraDistance>=H/1000;
+  const near=i.focusInfinity?h0/1000:h0/(h0+s-f)*(s/1000);
+  const atInfinity=i.focusInfinity||i.cameraDistance>=H/1000;
   // Subtract in the input's metre domain: H itself is exposed in metres.
   // This keeps the immediately preceding representable input finite, without an infinity epsilon band.
   const far=atInfinity?Infinity:(h0/1000)/(H/1000-i.cameraDistance)*i.cameraDistance;
@@ -50,6 +50,7 @@ export function powerSteps(text:string,minDenominator:number):number[] {
 export function flash(i:Inputs) {
   if(i.mode!=='manual')throw Error('선택 조건은 기본 GN 모델로 계산할 수 없습니다. 실측 또는 전용 자료가 필요합니다.');
   positive(i.zoom);
+  if(i.linked&&i.focusInfinity)throw Error('초점이 무한대라 플래시→피사체 거리를 정할 수 없습니다. 오프카메라로 플래시 거리를 직접 입력하세요.');
   if(i.gnZoom!==i.zoom)throw Error(`선택 줌 ${i.zoom}mm의 GN 자료 없음. 해당 줌의 GN과 측정 줌을 직접 입력하세요.`);
   positive(i.gn,i.gnZoom,i.denominator,i.minDenominator,i.tolerance,i.linked?i.cameraDistance:i.flashDistance);
   if(!i.conditions.trim())throw Error('GN 측정 조건을 입력하세요.');
@@ -73,6 +74,7 @@ export function flash(i:Inputs) {
     distances:steps.map(n=>({n,d:flashDistance(g,1/n,i.iso,i.aperture,i.loss)}))};
 }
 export function coverage(i:Inputs) {
+  if(i.focusInfinity)throw Error('초점 무한대에서는 프레임·조사 범위를 계산하지 않습니다.');
   const h=i.coverage==='approx'?angle(36,i.zoom):i.horizontal;
   const v=i.coverage==='approx'?angle(24,i.zoom):i.vertical;
   const r=i.linked?i.cameraDistance:i.flashDistance;
