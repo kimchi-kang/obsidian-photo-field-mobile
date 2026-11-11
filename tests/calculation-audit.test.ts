@@ -1,23 +1,26 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {writeFileSync,mkdirSync} from 'node:fs';
-import {defaults,Inputs} from '../src/model';
+import {defaults as filmDefaults,Inputs} from '../src/model';import {digitalDefaults as defaults} from './digital-reference';
 import {optics,flash,flashDistance,requiredPower,angle,coverage,exposureEV,footprint} from '../src/engine';
 import {solveZone,includesTarget,equivalence} from '../src/zone';
 import {fmt,parseNumber,feetToMetres,metresToFeet} from '../src/units';
 import {snapshot,restore} from '../src/storage';
 import {applyEquipment,parseTable} from '../src/presets';
 import {note} from '../src/note';
+import {extension,filmBlur} from './film-plane';
 const input=(p:Partial<Inputs>={}):Inputs=>({...defaults,...p});
 // Dimensionless relative error plus a unit-specific absolute floor. No production inverse oracle.
 const close=(a:number,b:number,rel=2e-11,abs=1e-12)=>assert.ok(Math.abs(a-b)<=abs+rel*Math.abs(b),`${a} != ${b}`);
 let seed=0x50484f54;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/2**32;};
 const rows:object[]=[];
 // Independent ray geometry: image distances from 1/u+1/v=1/f and a cone from a lens stop f/N.
-function blur(i:Inputs,u:number,N=i.aperture,s=i.cameraDistance*1000){const v=1/(1/i.focal-1/u),vs=1/(1/i.focal-1/s);return i.focal/N*Math.abs(1-vs/v);}
+// Distances are from the film plane; D is the focus setting, U the subject. lensBlur takes the lens-side focus distance s instead.
+function blur(i:Inputs,U:number,N=i.aperture,D=i.cameraDistance*1000){return filmBlur(i.focal,N,D,U);}
+function lensBlur(i:Inputs,U:number,N:number,s:number){const vs=1/(1/i.focal-1/s),v=1/(1/i.focal-1/(U-vs));return i.focal/N*Math.abs(1-vs/v);}
 // Independent minimax search over focus vergence; aperture requirement is worst endpoint blur at N=1 / c.
 function optimum(i:Inputs){const a=i.zoneNear*1000,b=i.zoneInfinity?Infinity:i.zoneFar*1000,c=i.cocMode==='estimate'?Math.hypot(i.width,i.height)/1500:i.coc;
- let lo=1/b,hi=1/a;const objective=(q:number)=>Math.max(blur(i,a,1,1/q),blur(i,b,1,1/q))/c;
+ let lo=1/b,hi=1/(a-2*i.focal);const objective=(q:number)=>Math.max(lensBlur(i,a,1,1/q),lensBlur(i,b,1,1/q))/c;
  for(let j=0;j<130;j++){const l=(2*lo+hi)/3,r=(lo+2*hi)/3;if(objective(l)<objective(r))hi=r;else lo=l;}
  return objective((lo+hi)/2);
 }
@@ -36,7 +39,7 @@ test('independent flash exposure energy, inverse settings, EV and all supported 
 });
 test('independent thin-lens rays at DOF boundaries: 800 seeded physical cases',()=>{
  for(let k=0;k<800;k++){
-  const i=input({focal:8+random()*592,aperture:1+random()*31,cameraDistance:.7+random()*200,cocMode:'custom',coc:.008+random()*.05});const o=optics(i);
+  const focal=8+random()*592;const i=input({focal,aperture:1+random()*31,cameraDistance:4.5*focal/1000+.7+random()*200,cocMode:'custom',coc:.008+random()*.05});const o=optics(i);
   assert.ok(o.near<=i.cameraDistance&&o.far>=i.cameraDistance);close(blur(i,o.near*1000),i.coc,2e-8);
   if(Number.isFinite(o.far))close(blur(i,o.far*1000),i.coc,2e-8);else assert.ok(blur(i,Infinity)<=i.coc*(1+1e-10));
   assert.equal(o.total,o.far-o.near);assert.deepEqual(optics({...i,diagramMax:.001}),o);
@@ -44,7 +47,7 @@ test('independent thin-lens rays at DOF boundaries: 800 seeded physical cases',(
 });
 test('zone minimax independent continuous optimization, step optimality and endpoint rays: 300 seeded targets',()=>{
  for(let k=0;k<300;k++){
-  const i=input({focal:8+random()*127,zoneNear:.2+random()*40,zoneFar:50+random()*150,zoneInfinity:k%3===0,apertureMax:32});const r=solveZone(i),required=optimum(i);
+  const focal=8+random()*127;const i=input({focal,zoneNear:6*focal/1000+.2+random()*40,zoneFar:50+random()*150,zoneInfinity:k%3===0,apertureMax:32});const r=solveZone(i),required=optimum(i);
   close(r.required,required,1e-9);
   const steps=i.apertureSteps.split(',').map(Number).filter(n=>n>=i.apertureMin&&n<=i.apertureMax),best=steps.find(n=>n>=required);
   assert.equal(r.possible,best!==undefined);if(best!==undefined)assert.equal(r.aperture,best);
@@ -56,7 +59,9 @@ test('mandatory examples, independent frame dimensions, nominal and dimensional 
  for(const [denominator,iso,loss,expected] of [[1,100,0,10],[4,100,0,5],[16,100,0,2.5],[16,400,0,5],[1,100,1,Math.sqrt(50)]]){const o=flash(input({denominator,iso,loss}));close(o.d,expected);rows.push({area:'example',denominator,iso,loss,expected,actual:o.d,error:o.d-expected});}
  close(exposureEV(5,10),-2);close(flashDistance(40,1,100,8),5);
  close(angle(1e308,1e308),53.13010235415598);close(angle(36,50),39.597752709049864);close(angle(24,50),26.991466561591622);
- for(let k=0;k<200;k++){const i=input({width:8+random()*50,height:6+random()*35,focal:8+random()*200,cameraDistance:.2+random()*50});const c=coverage(i);close(c.camera.width,i.width*i.cameraDistance/i.focal);close(c.camera.height,i.height*i.cameraDistance/i.focal);}
+ for(let k=0;k<200;k++){const width=8+random()*50,height=6+random()*35,focal=8+random()*200;const i=input({width,height,focal,cameraDistance:4.5*focal/1000+.2+random()*50});const c=coverage(i);
+  // Frame at the subject = film size ÷ magnification, magnification = lens extension ÷ subject distance from the lens.
+  const D=i.cameraDistance*1000,vs=extension(D,focal),scale=(D-vs)/vs/1000;close(c.camera.width,width*scale,1e-9);close(c.camera.height,height*scale,1e-9);}
  for(const [sensor,crop]of [['ff',1],['apsc',1.5],['apsc16',1.6]]as const){const i=input({sensor,focal:35,aperture:2});close(equivalence(i).focal,35*crop);close(equivalence(i).aperture,2*crop);assert.deepEqual(flash({...i,cropBasis:'dimensions'}),flash(i));}
  close(optics(input({aperture:8})).airy,.010736);close(feetToMetres(1),.3048);close(feetToMetres(metresToFeet(40)),40);
 });
@@ -70,7 +75,7 @@ test('fixed cancellation regression immediately below the exposed hyperfocal bou
  const o=optics({...i,cameraDistance:H*(1-Number.EPSILON)});assert.ok(Number.isFinite(o.far));assert.ok(o.far>1e15);
 });
 test('narrow wide close far zone cases and smaller continuous apertures fail independent minimax',()=>{
- for(const [zoneNear,zoneFar]of [[2,2.0001],[.1,.15],[1,1e8],[1000,1001],[2,5]]){
+ for(const [zoneNear,zoneFar]of [[2,2.0001],[.3,.45],[1,1e8],[1000,1001],[2,5]]){
   const i=input({focal:35,zoneNear,zoneFar,apertureMax:32}),r=solveZone(i),expected=optimum(i);close(r.required,expected,2e-8);
   const c=Math.hypot(i.width,i.height)/1500,s=r.cameraDistance*1000;
   assert.ok(Math.max(blur(i,zoneNear*1000,expected*.999,s),blur(i,zoneFar*1000,expected*.999,s))>c);

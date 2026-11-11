@@ -1,16 +1,16 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults,assignInput} from '../src/model';
+import {defaults as filmDefaults,assignInput} from '../src/model';import {digitalDefaults as defaults} from './digital-reference';
 import {optics,flash,coverage} from '../src/engine';
 import {restore} from '../src/storage';
 import {capture,applyShot,restoreField,field} from '../src/field';
 import {note,validateNote} from '../src/note';
 import {solveZone} from '../src/zone';
 const close=(a:number,b:number,tol=1e-9)=>assert.ok(Math.abs(a-b)<tol,`${a} != ${b}`);
-test('focus infinity: near is h/1000, far and total are infinite, hyperfocal unchanged',()=>{
+test('focus infinity: near is (h+f)/1000 from the film plane, far and total are infinite, hyperfocal unchanged',()=>{
  const i={...defaults,focusInfinity:true,cameraDistance:Number.NaN},f=i.focal,c=Math.hypot(i.width,i.height)/1500;
  const o=optics(i),finite=optics({...defaults});
- close(o.near,(f*f/(i.aperture*c))/1000);assert.equal(o.far,Infinity);assert.equal(o.total,Infinity);assert.equal(o.hyperfocal,finite.hyperfocal);
+ close(o.near,(f*f/(i.aperture*c)+f)/1000);assert.equal(o.far,Infinity);assert.equal(o.total,Infinity);assert.equal(o.hyperfocal,finite.hyperfocal);
  assert.equal(finite.near,optics({...defaults,focusInfinity:false}).near);assert.ok(Number.isFinite(finite.far));
  assert.throws(()=>optics({...i,aperture:0}));
 });

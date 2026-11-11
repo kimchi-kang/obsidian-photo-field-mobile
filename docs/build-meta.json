@@ -1,17 +1,17 @@
 {
   "inputs": {
     "src/model.ts": {
-      "bytes": 3012,
+      "bytes": 3502,
       "imports": [],
       "format": "esm"
     },
     "src/units.ts": {
-      "bytes": 1020,
+      "bytes": 1188,
       "imports": [],
       "format": "esm"
     },
     "src/engine.ts": {
-      "bytes": 6752,
+      "bytes": 8479,
       "imports": [
         {
           "path": "./model",
@@ -48,7 +48,7 @@
       "format": "esm"
     },
     "src/field.ts": {
-      "bytes": 6525,
+      "bytes": 6532,
       "imports": [
         {
           "path": "src/model.ts",
@@ -74,7 +74,7 @@
       "format": "esm"
     },
     "src/storage.ts": {
-      "bytes": 4581,
+      "bytes": 4584,
       "imports": [
         {
           "path": "src/field.ts",
@@ -100,7 +100,7 @@
       "format": "esm"
     },
     "src/zone.ts": {
-      "bytes": 3233,
+      "bytes": 4363,
       "imports": [
         {
           "path": "./model",
@@ -116,7 +116,7 @@
       "format": "esm"
     },
     "src/diagram.ts": {
-      "bytes": 10061,
+      "bytes": 10094,
       "imports": [
         {
           "path": "./model",
@@ -142,7 +142,7 @@
       "format": "esm"
     },
     "src/note.ts": {
-      "bytes": 10304,
+      "bytes": 11153,
       "imports": [
         {
           "path": "./model",
@@ -168,7 +168,7 @@
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 64541,
+      "bytes": 67411,
       "imports": [
         {
           "path": "src/field.ts",
@@ -281,40 +281,40 @@
           "bytesInOutput": 6364
         },
         "src/model.ts": {
-          "bytesInOutput": 1551
+          "bytesInOutput": 1869
         },
         "src/units.ts": {
-          "bytesInOutput": 894
+          "bytesInOutput": 947
         },
         "src/engine.ts": {
-          "bytesInOutput": 7088
+          "bytesInOutput": 8012
         },
         "src/presets.ts": {
           "bytesInOutput": 4951
         },
         "src/field.ts": {
-          "bytesInOutput": 6274
+          "bytesInOutput": 6282
         },
         "src/storage.ts": {
-          "bytesInOutput": 4633
+          "bytesInOutput": 4637
         },
         "src/writer.ts": {
           "bytesInOutput": 1413
         },
         "src/view.ts": {
-          "bytesInOutput": 81077
+          "bytesInOutput": 84450
         },
         "src/zone.ts": {
-          "bytesInOutput": 3585
+          "bytesInOutput": 4498
         },
         "src/diagram.ts": {
-          "bytesInOutput": 11179
+          "bytesInOutput": 11189
         },
         "src/note.ts": {
-          "bytesInOutput": 14493
+          "bytesInOutput": 15789
         }
       },
-      "bytes": 145747
+      "bytes": 152646
     }
   }
 }
