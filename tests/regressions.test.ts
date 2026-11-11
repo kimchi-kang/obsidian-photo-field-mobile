@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults} from '../src/model';
+import {defaults as filmDefaults} from '../src/model';import {digitalDefaults as defaults} from './digital-reference';
 import {restore,snapshot} from '../src/storage';
 import {flash,optics,footprint,flashDistance} from '../src/engine';
 

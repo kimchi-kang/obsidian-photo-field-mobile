@@ -1,6 +1,7 @@
 /* Optical concepts adapted from jherr/depth-of-field App.tsx (MIT).
  * Copyright (c) 2026 Jack Herrington. Original MIT text: vendor/depth-of-field-LICENSE.txt.
  * Reimplemented using a consistent thin-lens model; no display clamp in physics.
+ * Subject distances are referenced to the film plane (lens distance-scale convention).
  */
 import {Inputs} from './model';
 import {feetToMetres} from './units';
@@ -14,23 +15,42 @@ export function footprint(r:number,h:number,v:number):{width:number;height:numbe
   const width=2*r*Math.tan(h*Math.PI/360),height=2*r*Math.tan(v*Math.PI/360);
   positive(width,height);return {width,height};
 }
+/** Circle of confusion in mm. 'film' = 0.03 mm on the 36x24 frame (Nikon DOF-scale convention), scaled with the frame diagonal. */
+export const FILM_COC_35MM=0.03;
+export function circleOfConfusion(i:Pick<Inputs,'cocMode'|'coc'|'width'|'height'>):number {
+  const diagonal=Math.hypot(i.width,i.height);
+  return i.cocMode==='custom'?i.coc:i.cocMode==='estimate'?diagonal/1500:FILM_COC_35MM*diagonal/Math.hypot(36,24);
+}
+/** Distances are measured from the film plane, like a lens distance scale. Thin lens focused at lens distance s: D = s + v = s²/(s−f). All in mm. */
+export const filmFromLens=(s:number,f:number):number=>s*s/(s-f);
+/** Closest focus setting the model accepts (m, from the film plane): just beyond 1:1, where D = 4f. */
+export const minFocusDistance=(focal:number):number=>4*focal/1000+0.001;
+/** Inverse of filmFromLens for magnification ≤ 1 (D ≥ 4f). */
+export function lensFromFilm(D:number,f:number):number {
+  positive(D,f);if(D<4*f)throw Error('초점 맞출 거리는 필름면 기준으로 초점거리의 4배 이상이어야 합니다. (등배보다 가까운 접사는 계산하지 않습니다)');
+  return (D+Math.sqrt(D*(D-4*f)))/2;
+}
+/** Film-plane distance (mm) of the hyperfocal focus setting; h0 = f²/(N·c). Shared with the zone solver so the infinity boundary compares exactly. */
+export const hyperfocalFilm=(h0:number,f:number):number=>{const H=h0+f;return H*H/h0;};
 export function optics(i:Inputs) {
   positive(i.width,i.height,i.focal,i.aperture);if(!i.focusInfinity)positive(i.cameraDistance);
-  const c=i.cocMode==='estimate'?Math.hypot(i.width,i.height)/1500:i.coc;
-  positive(c); const s=i.cameraDistance*1000,f=i.focal;if(!i.focusInfinity){positive(s);
-  if(s<=f)throw Error('카메라 거리는 실제 초점거리보다 커야 합니다. (박막렌즈 모델)');}
-  const h0=f*f/(i.aperture*c), H=h0+f;
-  // H includes +f. Use H-f in both numerators and denominators for s=H -> infinity.
-  positive(h0,H);
-  const near=i.focusInfinity?h0/1000:h0/(h0+s-f)*(s/1000);
-  const atInfinity=i.focusInfinity||i.cameraDistance>=H/1000;
-  // Subtract in the input's metre domain: H itself is exposed in metres.
-  // This keeps the immediately preceding representable input finite, without an infinity epsilon band.
-  const far=atInfinity?Infinity:(h0/1000)/(H/1000-i.cameraDistance)*i.cameraDistance;
-  positive(near);if(!atInfinity)positive(far);
+  const c=circleOfConfusion(i);
+  positive(c);const f=i.focal,h0=f*f/(i.aperture*c),H=h0+f;positive(h0,H);
+  const hyperfocal=hyperfocalFilm(h0,f)/1000;positive(hyperfocal);
+  let near:number,far:number;
+  if(i.focusInfinity){near=H/1000;far=Infinity;} // lens at f from the film: near limit h0 from the lens
+  else{
+    const s=lensFromFilm(i.cameraDistance*1000,f),v=f*s/(s-f);positive(s,v);
+    // Compare in the input's metre domain: the hyperfocal value itself is exposed in metres.
+    const atInfinity=i.cameraDistance>=hyperfocal;
+    // H−s = (D_H−D)·h0(s−f)/(Hs−f(H+s)); taking the difference in metres keeps the last finite input finite.
+    near=(h0*s/(h0+s-f)+v)/1000;far=atInfinity?Infinity:s*(H*s-f*(H+s))/((hyperfocal-i.cameraDistance)*1000*(s-f))/1000+v/1000;
+    if(!atInfinity)positive(far);
+  }
+  positive(near);
   const equivalent=f*(Math.hypot(36,24)/Math.hypot(i.width,i.height)),airy=2.44*0.00055*i.aperture;
   positive(equivalent,airy);
-  return {c,hyperfocal:H/1000,near,far,total:far-near,
+  return {c,hyperfocal,near,far,total:far-near,
     horizontal:angle(i.width,f),vertical:angle(i.height,f),diagonal:angle(Math.hypot(i.width,i.height),f),
     equivalent,airy};
 }
@@ -78,7 +98,9 @@ export function coverage(i:Inputs) {
   const h=i.coverage==='approx'?angle(36,i.zoom):i.horizontal;
   const v=i.coverage==='approx'?angle(24,i.zoom):i.vertical;
   const r=i.linked?i.cameraDistance:i.flashDistance;
-  return {h,v,flash:footprint(r,h,v),camera:footprint(i.cameraDistance,angle(i.width,i.focal),angle(i.height,i.focal)),narrow:h<angle(i.width,i.focal)||v<angle(i.height,i.focal)};
+  // Frame at the focused subject: film size ÷ magnification, with the lens extended for this focus distance.
+  positive(i.width,i.height);const s=lensFromFilm(i.cameraDistance*1000,i.focal),scale=(s-i.focal)/i.focal/1000,camera={width:i.width*scale,height:i.height*scale};positive(camera.width,camera.height);
+  return {h,v,flash:footprint(r,h,v),camera,narrow:h<angle(i.width,i.focal)||v<angle(i.height,i.focal)};
 }
 export function validate(i:Inputs):string[] {
   const errors:string[]=[];

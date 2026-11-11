@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults} from '../src/model';
+import {filmBlur} from './film-plane';
+import {defaults as filmDefaults} from '../src/model';import {digitalDefaults as defaults} from './digital-reference';
 import {angle,coverage,exposureEV,flash,flashDistance,optics,requiredPower,validate} from '../src/engine';
 import {feetToMetres,metresToFeet,parseNumber} from '../src/units';
 import {restore} from '../src/storage';
@@ -22,8 +23,10 @@ test('finite DOF beyond old 360in scene remains finite',()=>{
  assert.equal(o.far,optics({...defaults,cameraDistance:10,aperture:4,cocMode:'custom',coc:0.03,diagramMax:1}).far);
 });
 test('hyperfocal boundary consistent with H=f²/Nc+f',()=>{
- const base={...defaults,cocMode:'custom',coc:0.03};const H=optics(base).hyperfocal;close(H,(2500/(4*0.03)+50)/1000);
- const at=optics({...base,cameraDistance:H});assert.equal(at.far,Infinity);close(at.near,H/2);
+ const base={...defaults,cocMode:'custom',coc:0.03};const H=optics(base).hyperfocal,h0=2500/(4*0.03),HL=h0+50;
+ // Lens-side hyperfocal HL=f²/Nc+f; on the distance scale (from the film plane) it reads HL+v with v=f·HL/h0.
+ close(H,(HL+50*HL/h0)/1000);
+ const at=optics({...base,cameraDistance:H});assert.equal(at.far,Infinity);close(at.near,(HL/2+50*HL/h0)/1000);
  assert.ok(Number.isFinite(optics({...base,cameraDistance:H*(1-1e-8)}).far));assert.equal(optics({...base,cameraDistance:H*1.01}).far,Infinity);
 });
 test('unit conversion m-ft round trip including GN',()=>{close(feetToMetres(metresToFeet(40)),40);close(flash({...defaults,gn:metresToFeet(40),gnUnit:'ft'}).d,5);});
@@ -51,8 +54,8 @@ test('equipment table normalizes ft and refuses duplicate/blank values',()=>{
  assert.ok(equipmentValid({name:'실측',conditions:'ISO100 full',source:'사용자 측정',table,minDenominator:128,steps:'1,2,4,8,16,32,64,128'}));
 });
 test('restores only well formed data and presets',()=>{
- const data=restore({inputs:{aperture:8,iso:null,mode:'bad'},equipment:[null,{name:1}]});assert.equal(data.inputs.aperture,8);assert.equal(data.inputs.iso,100);assert.equal(data.inputs.mode,'manual');assert.deepEqual(data.equipment,[]);
- assert.deepEqual(restore(null).inputs,defaults);
+ const data=restore({inputs:{aperture:8,iso:null,mode:'bad'},equipment:[null,{name:1}]});assert.equal(data.inputs.aperture,8);assert.equal(data.inputs.iso,filmDefaults.iso);assert.equal(data.inputs.mode,'manual');assert.deepEqual(data.equipment,[]);
+ assert.deepEqual(restore(null).inputs,filmDefaults);
 });
 test('plain markdown includes inputs, results, source, date and limits',()=>{
  const md=note(defaults,new Date('2026-10-28T00:00:00Z'));for(const text of ['적정 노출 예상 거리: 5 m','Copyright','2026-10-28','ISO100','GN','심도','HSS','c75dd6'])assert.ok(md.includes(text),text);
@@ -61,8 +64,7 @@ test('plain markdown includes inputs, results, source, date and limits',()=>{
 });
 test('independent thin lens defocus circle equals CoC at both DOF bounds',()=>{
  const i={...defaults,cocMode:'custom',coc:0.03,cameraDistance:5};const o=optics(i);
- const f=i.focal,s=i.cameraDistance*1000,focusImage=f*s/(s-f),opening=f/i.aperture;
- for(const r of [o.near,o.far]){const object=r*1000,image=f*object/(object-f);close(opening*Math.abs(focusImage-image)/image,i.coc);}
+ for(const r of [o.near,o.far])close(filmBlur(i.focal,i.aperture,i.cameraDistance*1000,r*1000),i.coc);
 });
 test('rounding EV agrees with forward distance equation at selected output',()=>{
  const i={...defaults,cameraDistance:6};const f=flash(i),rounded=flashDistance(40,1/f.nearest,i.iso,i.aperture);close(exposureEV(rounded,6),f.residual);

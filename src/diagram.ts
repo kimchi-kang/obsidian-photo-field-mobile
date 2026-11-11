@@ -1,14 +1,14 @@
 /* Original scene concept: jherr/depth-of-field (MIT, Jack Herrington).
  * All geometry and figure symbols below are newly authored; no original asset paths are reused. */
 import {Inputs} from './model';
-import {optics,flash,coverage} from './engine';
+import {optics,flash,coverage,minFocusDistance} from './engine';
 import {zoneTarget} from './zone';
 import {metres,fmt} from './units';
 const ns='http://www.w3.org/2000/svg';
 export const SCENE={width:400,start:54,end:382};
 let nextId=0;
 export function sceneDistance(x:number,max:number,focal:number):number {
-  return Math.max(focal/1000+0.001,Math.min(max,(x-SCENE.start)/(SCENE.end-SCENE.start)*max));
+  return Math.max(minFocusDistance(focal),Math.min(max,(x-SCENE.start)/(SCENE.end-SCENE.start)*max));
 }
 export function diagram(host:HTMLElement,i:Inputs):void {
   host.replaceChildren();
@@ -52,7 +52,7 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   fig('M19.5 79 C19.5 72 24 70 28 70.5 C32 71 34.5 74 34 78 L27 76 Z',photographer,'pfm-figure-hair');
   limb('M32 95 L37 108 L44 99',6,photographer);
   const cam=el('g',{class:'pfm-camera-body'},undefined,photographer);
-  el('rect',{x:31,y:83,width:18,height:15,rx:3},undefined,cam);fig('M35 83 L37.5 78.5 L43.5 78.5 L46 83 Z',cam);el('rect',{x:40,y:81,width:3,height:2,rx:.5,class:'pfm-camera-detail'},undefined,cam);
+  el('rect',{x:31,y:83,width:18,height:15,rx:3},undefined,cam);fig('M35 83 L37.5 78.5 L43.5 78.5 L46 83 Z',cam);el('rect',{x:40,y:80.5,width:3,height:2.5,rx:1,class:'pfm-camera-shutter'},undefined,cam);
   el('rect',{x:48,y:85,width:9,height:14,rx:2},undefined,cam);el('rect',{x:51,y:85,width:1.4,height:14,class:'pfm-camera-detail'},undefined,cam);
   el('ellipse',{cx:57,cy:92,rx:1.6,ry:5.5,class:'pfm-lens-glass'},undefined,cam);
   el('text',{x:6,y:16,class:'pfm-scene-lens'},`${fmt(i.focal)} mm · f/${fmt(i.aperture)}`);
@@ -60,7 +60,7 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   el('line',{x1:subject,x2:subject,y1:24,y2:180,class:'pfm-focus-glow'});
   el('line',{x1:subject,x2:subject,y1:24,y2:180,class:'pfm-focus-line'});
   el('ellipse',{cx:subject,cy:165,rx:16,ry:3,class:'pfm-shadow'});
-  const person=el('g',{transform:`translate(${subject},0)`,class:'pfm-person pfm-subject','data-pfm-subject':'true',tabindex:0,role:'slider','aria-labelledby':`${id}-subject-title`,'aria-valuenow':Number.isFinite(i.cameraDistance)?i.cameraDistance:0,'aria-valuemin':Number.isFinite(i.focal)?i.focal/1000+0.001:0.001,'aria-valuemax':Math.max(i.diagramMax,Number.isFinite(i.cameraDistance)?i.cameraDistance:0),'aria-valuetext':inf?'무한대':metres(i.cameraDistance)});
+  const person=el('g',{transform:`translate(${subject},0)`,class:'pfm-person pfm-subject','data-pfm-subject':'true',tabindex:0,role:'slider','aria-labelledby':`${id}-subject-title`,'aria-valuenow':Number.isFinite(i.cameraDistance)?i.cameraDistance:0,'aria-valuemin':Number.isFinite(i.focal)?minFocusDistance(i.focal):0.001,'aria-valuemax':Math.max(i.diagramMax,Number.isFinite(i.cameraDistance)?i.cameraDistance:0),'aria-valuetext':inf?'무한대':metres(i.cameraDistance)});
   el('title',{id:`${id}-subject-title`},'피사체 거리 · 좌우 드래그 또는 화살표 키로 조절',person);
   el('rect',{x:-26,y:68,width:52,height:102,fill:'transparent'},undefined,person);
   limb('M-4.5 122 L-5 159',7.5,person,'pfm-figure-pants');limb('M4.5 122 L5 159',7.5,person,'pfm-figure-pants');
@@ -73,7 +73,7 @@ export function diagram(host:HTMLElement,i:Inputs):void {
   el('circle',{cx:0,cy:177,r:5,class:'pfm-focus-dot'},undefined,person);
   el('text',{x:Math.max(92,Math.min(subject,340)),y:38,'text-anchor':'middle',class:'pfm-subject-label'},`${i.tab==='zone'?'초점':'피사체'} ${inf?'∞':i.cameraDistance>i.diagramMax?'→ 그림 밖':out(i.cameraDistance)}`);
   el('line',{x1:SCENE.start,x2:SCENE.end,y1:192,y2:192,class:'pfm-distance-axis'});
-  for(let n=0;n<=4;n++){const d=i.diagramMax*n/4;el('line',{x1:x(d),x2:x(d),y1:189,y2:195,class:'pfm-distance-axis'});el('text',{x:x(d),y:208,'text-anchor':n===4?'end':'middle',class:'pfm-axis-label'},metres(d,1));}
+  for(let n=0;n<=4;n++){const d=i.diagramMax*n/4;el('line',{x1:x(d),x2:x(d),y1:189,y2:195,class:'pfm-distance-axis'});el('text',{x:x(d),y:208,'text-anchor':n===4?'end':'middle',class:'pfm-axis-label'},metres(d));}
   if(showFlash)try{
     const f=flash(i);const y=228;
     el('rect',{x:SCENE.start,y,width:x(f.low)-SCENE.start,height:12,class:'pfm-over-zone'});

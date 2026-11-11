@@ -5,6 +5,7 @@ import {equivalence,solveZone,includesTarget} from '../src/zone';
 import {optics,flash} from '../src/engine';
 import {restore,snapshot} from '../src/storage';
 import {note,validateNote} from '../src/note';
+import {extension} from './film-plane';
 const input=(p:Partial<Inputs>={}):Inputs=>({...defaults,...p});
 const close=(a:number,b:number)=>assert.ok(Math.abs(a-b)<1e-10,`${a} != ${b}`);
 test('nominal 1.5, 1.6 and full frame examples remain explicit',()=>{
@@ -33,7 +34,9 @@ test('finite and infinite inverse results include targets after actual stage rou
  assert.ok(successes>50);assert.ok(failures>0);
 });
 test('finite focus is harmonic; infinity uses hyperfocal and correct boundary',()=>{
- const i=input({focal:35,zoneNear:2,zoneFar:5});const r=solveZone(i);assert.ok(r.possible);close(r.cameraDistance,20/7);assert.notEqual(r.cameraDistance,3.5);
+ const i=input({focal:35,zoneNear:2,zoneFar:5});const r=solveZone(i);assert.ok(r.possible);assert.notEqual(r.cameraDistance,3.5);
+ // From the lens the focus is the harmonic mean of the limits; all three shift by the lens extension to the film plane.
+ {const D=r.cameraDistance*1000,v=extension(D,35),nl=2000-v,fl=5000-v;close((D-v)/1000,2*nl*fl/(nl+fl)/1000);assert.ok(Math.abs(r.cameraDistance-20/7)<0.01);}
  const inf=solveZone({...i,zoneInfinity:true});assert.ok(inf.possible);close(inf.cameraDistance,inf.actual.hyperfocal);assert.equal(inf.actual.far,Infinity);
  const H=optics(i).hyperfocal;assert.equal(optics({...i,cameraDistance:H}).far,Infinity);assert.ok(Number.isFinite(optics({...i,cameraDistance:H*(1-1e-8)}).far));
 });
@@ -52,6 +55,6 @@ test('legacy equipment, drafts and all new settings survive migration and snapsh
 });
 test('zone Markdown remains independent of missing flash and describes inputs, actual and suggestion',()=>{
  const i=input({tab:'zone',zoneFlow:'target',zoneNear:2,zoneFar:5,focal:35,gn:NaN,zoom:NaN,conditions:''});validateNote(i,'zone');const text=note(i,new Date(),{scope:'zone',version:'1.3.0'});
- for(const term of ['목표 근거리','목표 유한 원거리','존 포커싱 역산','제안 검산','심도 근거리','명목 계수','실제 노출 조리개','s=2ab'])assert.ok(text.includes(term),term);
+ for(const term of ['목표 근거리','목표 유한 원거리','존 포커싱 역산','제안 검산','심도 근거리','명목 계수','실제 노출 조리개','s=2a′b′','필름면 기준'])assert.ok(text.includes(term),term);
  assert.doesNotMatch(text,/적정 노출 예상 거리:|플래시 계산 불가:/);assert.throws(()=>validateNote(i,'all'));
 });

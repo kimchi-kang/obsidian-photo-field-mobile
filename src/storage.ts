@@ -21,7 +21,7 @@ export function restore(data:unknown):Saved {
   if(!['flash','dof','combined','zone'].includes(i.tab))i.tab='combined';
   if(!['m','ft'].includes(i.gnUnit))i.gnUnit='m';
   if(!['approx','angles'].includes(i.coverage))i.coverage='approx';
-  if(!['estimate','custom'].includes(i.cocMode))i.cocMode='estimate';
+  if(!['film','estimate','custom'].includes(i.cocMode))i.cocMode='film';
   if(Array.isArray(d.equipment))result.equipment=d.equipment.filter((p):p is Equipment=>{
     if(!p||typeof p!=='object')return false;
     const e=p as Equipment;

@@ -51,6 +51,7 @@ var import_obsidian2 = require("obsidian");
 
 // src/model.ts
 var emptyDraft = () => ({ id: "", name: "", conditions: "", source: "", table: "", unit: "m", minDenominator: "256", steps: "1,2,4,8,16,32,64,128,256" });
+var FULL_STOP_APERTURES = "1.2,1.4,1.8,2,2.8,4,5.6,8,11,16,22,32";
 var defaults = {
   gnMode: "manual",
   equipmentId: "",
@@ -59,13 +60,13 @@ var defaults = {
   height: 24,
   focal: 50,
   aperture: 4,
-  iso: 100,
+  iso: 400,
   cameraDistance: 5,
   focusInfinity: false,
   linked: true,
   flashDistance: 5,
-  cocMode: "estimate",
-  coc: 0.029,
+  cocMode: "film",
+  coc: 0.03,
   gn: 40,
   gnUnit: "m",
   gnZoom: 50,
@@ -89,17 +90,21 @@ var defaults = {
   zoneInfinity: false,
   apertureMin: 1.4,
   apertureMax: 16,
-  apertureSteps: "1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32"
+  apertureSteps: FULL_STOP_APERTURES
 };
 function assignInput(i, key, value) {
   i[key] = value;
   if (key === "cameraDistance") i.focusInfinity = false;
 }
 var sensors = {
-  ff: { name: "\uD480\uD504\uB808\uC784", width: 36, height: 24 },
-  apsc: { name: "APS-C \uBA85\uBAA9 1.5\xD7 (23.6\xD715.6mm)", width: 23.6, height: 15.6 },
-  apsc16: { name: "APS-C \uBA85\uBAA9 1.6\xD7 (22.3\xD714.9mm)", width: 22.3, height: 14.9 },
-  mft: { name: "Micro Four Thirds", width: 17.3, height: 13 }
+  ff: { name: "35mm \uD544\uB984", width: 36, height: 24 },
+  half: { name: "\uD558\uD504\uD504\uB808\uC784 \uD544\uB984", width: 24, height: 18 },
+  mf645: { name: "\uC911\uD615 645 \uD544\uB984", width: 56, height: 41.5 },
+  mf66: { name: "\uC911\uD615 6\xD76 \uD544\uB984", width: 56, height: 56 },
+  mf67: { name: "\uC911\uD615 6\xD77 \uD544\uB984", width: 70, height: 56 },
+  apsc: { name: "\uB514\uC9C0\uD138 APS-C 1.5\xD7", width: 23.6, height: 15.6 },
+  apsc16: { name: "\uB514\uC9C0\uD138 APS-C 1.6\xD7", width: 22.3, height: 14.9 },
+  mft: { name: "\uB514\uC9C0\uD138 \uB9C8\uC774\uD06C\uB85C \uD3EC\uC11C\uC988", width: 17.3, height: 13 }
 };
 
 // src/units.ts
@@ -113,14 +118,15 @@ function fmt(v, digits = 2) {
   if (!Number.isFinite(v)) return "\u2014";
   return (Math.abs(v) < 0.5 * 10 ** -digits ? 0 : v).toLocaleString("ko-KR", { maximumFractionDigits: digits });
 }
-function distanceParts(v, digits = 2) {
+var DISTANCE_DIGITS = 1;
+function distanceParts(v, digits = DISTANCE_DIGITS) {
   if (v === Infinity) return { value: "\u221E", unit: "" };
   if (!Number.isFinite(v) || v < 0) return { value: "\u2014", unit: "" };
   const unit = v <= 1 ? "cm" : "m", scaled = unit === "cm" ? v * 100 : v;
   const value = scaled > 0 && scaled < 0.5 * 10 ** -digits ? `<${fmt(10 ** -digits, digits)}` : fmt(scaled, digits);
   return { value, unit };
 }
-function metres(v, digits = 2) {
+function metres(v, digits = DISTANCE_DIGITS) {
   const d = distanceParts(v, digits);
   return d.unit ? `${d.value} ${d.unit}` : d.value;
 }
@@ -143,28 +149,49 @@ function footprint(r, h, v) {
   positive(width, height);
   return { width, height };
 }
+var FILM_COC_35MM = 0.03;
+function circleOfConfusion(i) {
+  const diagonal = Math.hypot(i.width, i.height);
+  return i.cocMode === "custom" ? i.coc : i.cocMode === "estimate" ? diagonal / 1500 : FILM_COC_35MM * diagonal / Math.hypot(36, 24);
+}
+var filmFromLens = (s, f) => s * s / (s - f);
+var minFocusDistance = (focal) => 4 * focal / 1e3 + 1e-3;
+function lensFromFilm(D, f) {
+  positive(D, f);
+  if (D < 4 * f) throw Error("\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC\uB294 \uD544\uB984\uBA74 \uAE30\uC900\uC73C\uB85C \uCD08\uC810\uAC70\uB9AC\uC758 4\uBC30 \uC774\uC0C1\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4. (\uB4F1\uBC30\uBCF4\uB2E4 \uAC00\uAE4C\uC6B4 \uC811\uC0AC\uB294 \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4)");
+  return (D + Math.sqrt(D * (D - 4 * f))) / 2;
+}
+var hyperfocalFilm = (h0, f) => {
+  const H = h0 + f;
+  return H * H / h0;
+};
 function optics(i) {
   positive(i.width, i.height, i.focal, i.aperture);
   if (!i.focusInfinity) positive(i.cameraDistance);
-  const c = i.cocMode === "estimate" ? Math.hypot(i.width, i.height) / 1500 : i.coc;
+  const c = circleOfConfusion(i);
   positive(c);
-  const s = i.cameraDistance * 1e3, f = i.focal;
-  if (!i.focusInfinity) {
-    positive(s);
-    if (s <= f) throw Error("\uCE74\uBA54\uB77C \uAC70\uB9AC\uB294 \uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4. (\uBC15\uB9C9\uB80C\uC988 \uBAA8\uB378)");
-  }
-  const h0 = f * f / (i.aperture * c), H = h0 + f;
+  const f = i.focal, h0 = f * f / (i.aperture * c), H = h0 + f;
   positive(h0, H);
-  const near = i.focusInfinity ? h0 / 1e3 : h0 / (h0 + s - f) * (s / 1e3);
-  const atInfinity = i.focusInfinity || i.cameraDistance >= H / 1e3;
-  const far = atInfinity ? Infinity : h0 / 1e3 / (H / 1e3 - i.cameraDistance) * i.cameraDistance;
+  const hyperfocal = hyperfocalFilm(h0, f) / 1e3;
+  positive(hyperfocal);
+  let near, far;
+  if (i.focusInfinity) {
+    near = H / 1e3;
+    far = Infinity;
+  } else {
+    const s = lensFromFilm(i.cameraDistance * 1e3, f), v = f * s / (s - f);
+    positive(s, v);
+    const atInfinity = i.cameraDistance >= hyperfocal;
+    near = (h0 * s / (h0 + s - f) + v) / 1e3;
+    far = atInfinity ? Infinity : s * (H * s - f * (H + s)) / ((hyperfocal - i.cameraDistance) * 1e3 * (s - f)) / 1e3 + v / 1e3;
+    if (!atInfinity) positive(far);
+  }
   positive(near);
-  if (!atInfinity) positive(far);
   const equivalent = f * (Math.hypot(36, 24) / Math.hypot(i.width, i.height)), airy = 2.44 * 55e-5 * i.aperture;
   positive(equivalent, airy);
   return {
     c,
-    hyperfocal: H / 1e3,
+    hyperfocal,
     near,
     far,
     total: far - near,
@@ -248,7 +275,10 @@ function coverage(i) {
   const h = i.coverage === "approx" ? angle(36, i.zoom) : i.horizontal;
   const v = i.coverage === "approx" ? angle(24, i.zoom) : i.vertical;
   const r = i.linked ? i.cameraDistance : i.flashDistance;
-  return { h, v, flash: footprint(r, h, v), camera: footprint(i.cameraDistance, angle(i.width, i.focal), angle(i.height, i.focal)), narrow: h < angle(i.width, i.focal) || v < angle(i.height, i.focal) };
+  positive(i.width, i.height);
+  const s = lensFromFilm(i.cameraDistance * 1e3, i.focal), scale = (s - i.focal) / i.focal / 1e3, camera = { width: i.width * scale, height: i.height * scale };
+  positive(camera.width, camera.height);
+  return { h, v, flash: footprint(r, h, v), camera, narrow: h < angle(i.width, i.focal) || v < angle(i.height, i.focal) };
 }
 
 // src/presets.ts
@@ -450,7 +480,7 @@ function restoreField(raw) {
   if (Array.isArray(d.shots)) for (const x of d.shots) {
     if (!identity(x) || typeof x.name !== "string" || !x.name.trim() || x.name.length > 100 || !x.values || typeof x.values !== "object") continue;
     const v = x.values;
-    const good = shootingKeys.every((k) => typeof v[k] === typeof defaults[k] && (typeof v[k] !== "number" || Number.isFinite(v[k]))) && ["manual", "equipment"].includes(v.gnMode) && ["m", "ft"].includes(v.gnUnit) && ["approx", "angles"].includes(v.coverage) && ["estimate", "custom"].includes(v.cocMode) && ["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(v.mode) && (!("focusInfinity" in v) || typeof v.focusInfinity === "boolean") && ["cameraDistance", "flashDistance"].every((k) => !(k in v) || Number.isFinite(v[k]) && Number(v[k]) > 0);
+    const good = shootingKeys.every((k) => typeof v[k] === typeof defaults[k] && (typeof v[k] !== "number" || Number.isFinite(v[k]))) && ["manual", "equipment"].includes(v.gnMode) && ["m", "ft"].includes(v.gnUnit) && ["approx", "angles"].includes(v.coverage) && ["film", "estimate", "custom"].includes(v.cocMode) && ["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(v.mode) && (!("focusInfinity" in v) || typeof v.focusInfinity === "boolean") && ["cameraDistance", "flashDistance"].every((k) => !(k in v) || Number.isFinite(v[k]) && Number(v[k]) > 0);
     if (!good) continue;
     const values = {};
     for (const k of [...shootingKeys, "cameraDistance", "flashDistance", "focusInfinity"]) if (k in v) Object.assign(values, { [k]: v[k] });
@@ -481,7 +511,7 @@ function restore(data) {
   if (!["flash", "dof", "combined", "zone"].includes(i.tab)) i.tab = "combined";
   if (!["m", "ft"].includes(i.gnUnit)) i.gnUnit = "m";
   if (!["approx", "angles"].includes(i.coverage)) i.coverage = "approx";
-  if (!["estimate", "custom"].includes(i.cocMode)) i.cocMode = "estimate";
+  if (!["film", "estimate", "custom"].includes(i.cocMode)) i.cocMode = "film";
   if (Array.isArray(d.equipment)) result.equipment = d.equipment.filter((p) => {
     if (!p || typeof p !== "object") return false;
     const e = p;
@@ -614,12 +644,12 @@ function equivalence(i) {
     focal,
     aperture,
     differentAspect: Math.abs(i.width / i.height - 1.5) > 1e-3,
-    comparable: i.cocMode === "estimate"
+    comparable: i.cocMode !== "custom"
   };
 }
 function zoneTarget(i) {
   positive(i.zoneNear, i.focal);
-  if (i.zoneNear * 1e3 <= i.focal) throw Error("\uBAA9\uD45C \uADFC\uAC70\uB9AC\uB294 \uC2E4\uC81C \uB80C\uC988 \uCD08\uC810\uAC70\uB9AC\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4.");
+  if (i.zoneNear * 1e3 <= 4 * i.focal) throw Error("\uBAA9\uD45C \uADFC\uAC70\uB9AC\uB294 \uD544\uB984\uBA74 \uAE30\uC900\uC73C\uB85C \uCD08\uC810\uAC70\uB9AC\uC758 4\uBC30\uBCF4\uB2E4 \uCEE4\uC57C \uD569\uB2C8\uB2E4.");
   if (!i.zoneInfinity) {
     positive(i.zoneFar);
     if (i.zoneNear >= i.zoneFar) throw Error("\uBAA9\uD45C \uADFC\uAC70\uB9AC\uB294 \uC6D0\uAC70\uB9AC\uBCF4\uB2E4 \uC791\uC544\uC57C \uD569\uB2C8\uB2E4.");
@@ -627,34 +657,62 @@ function zoneTarget(i) {
   return { near: i.zoneNear, far: i.zoneInfinity ? Infinity : i.zoneFar };
 }
 function includesTarget(o, t) {
-  const le = (a, b) => a <= b || Number.isFinite(a) && Number.isFinite(b) && a - b <= 16 * Number.EPSILON * Math.max(Math.abs(a), Math.abs(b));
+  const le = (a, b) => a <= b || Number.isFinite(a) && Number.isFinite(b) && a - b <= 1e-12 * Math.max(Math.abs(a), Math.abs(b));
   return le(o.near, t.near) && (t.far === Infinity ? o.far === Infinity : le(t.far, o.far));
+}
+var tooClose = () => Error("\uBAA9\uD45C \uAD6C\uAC04\uC774 \uB108\uBB34 \uAC00\uAE5D\uC2B5\uB2C8\uB2E4. \uB4F1\uBC30\uBCF4\uB2E4 \uAC00\uAE4C\uC6B4 \uC811\uC0AC\uB294 \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+function solveFinite(a, b, f) {
+  let s = 2 * a * b / (a + b), nl = 0, fl = 0, done = false;
+  for (let n = 0; n < 500 && !done; n++) {
+    if (!(s > 2 * f)) throw tooClose();
+    const v2 = f * s / (s - f);
+    nl = a - v2;
+    fl = b - v2;
+    if (!(nl > f)) throw tooClose();
+    const next = 2 * nl * fl / (nl + fl);
+    done = Math.abs(next - s) <= 4 * Number.EPSILON * s;
+    s = next;
+  }
+  if (!done || !(s > 2 * f)) throw tooClose();
+  const v = f * s / (s - f);
+  nl = a - v;
+  fl = b - v;
+  return { s, h: (2 * nl * fl - f * (nl + fl)) / (fl - nl) };
 }
 function solveZone(i) {
   const target = zoneTarget(i);
   positive(i.apertureMin, i.apertureMax);
   if (i.apertureMin > i.apertureMax) throw Error("\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12\uC740 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12 \uC774\uD558\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  const c = i.cocMode === "estimate" ? Math.hypot(i.width, i.height) / 1500 : i.coc;
+  const c = circleOfConfusion(i);
   positive(i.width, i.height, c);
   const a = target.near * 1e3, b = target.far * 1e3, f = i.focal;
   positive(a);
   if (!i.zoneInfinity) positive(b);
-  const focus = target.far === Infinity ? 2 * a : 2 * a / (1 + a / b);
-  const h = target.far === Infinity ? 2 * a - f : (2 * a - f * (1 + a / b)) / (1 - a / b);
-  positive(h, focus);
+  let h, focus = 0;
+  if (target.far === Infinity) {
+    const p = 2 * a - 3 * f, disc = p * p - 8 * f * f;
+    if (!(p > 0) || !(disc >= 0)) throw tooClose();
+    h = (p + Math.sqrt(disc)) / 2;
+  } else {
+    const r = solveFinite(a, b, f);
+    h = r.h;
+    focus = filmFromLens(r.s, f);
+    positive(focus);
+  }
+  positive(h);
   const required = f * f / (c * h);
   positive(required);
   const raw = i.apertureSteps.split(",").map((v) => v.trim());
   if (raw.some((v) => !v || !Number.isFinite(Number(v)) || Number(v) <= 0)) throw Error("\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4\uB97C \uC591\uC218 f\uAC12\uC73C\uB85C \uC785\uB825\uD558\uC138\uC694.");
   const steps = [...new Set(raw.map(Number))].filter((v) => v >= i.apertureMin && v <= i.apertureMax).sort((a2, b2) => a2 - b2);
   if (!steps.length) throw Error("\uB80C\uC988 \uBC94\uC704 \uC548\uC5D0 \uC120\uD0DD \uAC00\uB2A5\uD55C \uC870\uB9AC\uAC1C \uB2E8\uACC4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  const distanceFor = (aperture2) => target.far === Infinity ? hyperfocalFilm(f * f / (aperture2 * c), f) / 1e3 : focus / 1e3;
   for (const aperture2 of steps) {
-    const cameraDistance2 = target.far === Infinity ? (f * f / (aperture2 * c) + f) / 1e3 : focus / 1e3;
+    const cameraDistance2 = distanceFor(aperture2);
     const actual = optics({ ...i, aperture: aperture2, cameraDistance: cameraDistance2, focusInfinity: false });
     if (includesTarget(actual, target)) return { possible: true, aperture: aperture2, cameraDistance: cameraDistance2, actual, required, target };
   }
-  const aperture = steps[steps.length - 1];
-  const cameraDistance = target.far === Infinity ? (f * f / (aperture * c) + f) / 1e3 : focus / 1e3;
+  const aperture = steps[steps.length - 1], cameraDistance = distanceFor(aperture);
   return { possible: false, aperture, cameraDistance, actual: optics({ ...i, aperture, cameraDistance, focusInfinity: false }), required, target };
 }
 
@@ -663,7 +721,7 @@ var ns = "http://www.w3.org/2000/svg";
 var SCENE = { width: 400, start: 54, end: 382 };
 var nextId = 0;
 function sceneDistance(x, max, focal) {
-  return Math.max(focal / 1e3 + 1e-3, Math.min(max, (x - SCENE.start) / (SCENE.end - SCENE.start) * max));
+  return Math.max(minFocusDistance(focal), Math.min(max, (x - SCENE.start) / (SCENE.end - SCENE.start) * max));
 }
 function diagram(host, i) {
   host.replaceChildren();
@@ -741,7 +799,7 @@ function diagram(host, i) {
   const cam = el("g", { class: "pfm-camera-body" }, void 0, photographer);
   el("rect", { x: 31, y: 83, width: 18, height: 15, rx: 3 }, void 0, cam);
   fig("M35 83 L37.5 78.5 L43.5 78.5 L46 83 Z", cam);
-  el("rect", { x: 40, y: 81, width: 3, height: 2, rx: 0.5, class: "pfm-camera-detail" }, void 0, cam);
+  el("rect", { x: 40, y: 80.5, width: 3, height: 2.5, rx: 1, class: "pfm-camera-shutter" }, void 0, cam);
   el("rect", { x: 48, y: 85, width: 9, height: 14, rx: 2 }, void 0, cam);
   el("rect", { x: 51, y: 85, width: 1.4, height: 14, class: "pfm-camera-detail" }, void 0, cam);
   el("ellipse", { cx: 57, cy: 92, rx: 1.6, ry: 5.5, class: "pfm-lens-glass" }, void 0, cam);
@@ -750,7 +808,7 @@ function diagram(host, i) {
   el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-glow" });
   el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-line" });
   el("ellipse", { cx: subject, cy: 165, rx: 16, ry: 3, class: "pfm-shadow" });
-  const person = el("g", { transform: `translate(${subject},0)`, class: "pfm-person pfm-subject", "data-pfm-subject": "true", tabindex: 0, role: "slider", "aria-labelledby": `${id2}-subject-title`, "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0, "aria-valuemin": Number.isFinite(i.focal) ? i.focal / 1e3 + 1e-3 : 1e-3, "aria-valuemax": Math.max(i.diagramMax, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0), "aria-valuetext": inf ? "\uBB34\uD55C\uB300" : metres(i.cameraDistance) });
+  const person = el("g", { transform: `translate(${subject},0)`, class: "pfm-person pfm-subject", "data-pfm-subject": "true", tabindex: 0, role: "slider", "aria-labelledby": `${id2}-subject-title`, "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0, "aria-valuemin": Number.isFinite(i.focal) ? minFocusDistance(i.focal) : 1e-3, "aria-valuemax": Math.max(i.diagramMax, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0), "aria-valuetext": inf ? "\uBB34\uD55C\uB300" : metres(i.cameraDistance) });
   el("title", { id: `${id2}-subject-title` }, "\uD53C\uC0AC\uCCB4 \uAC70\uB9AC \xB7 \uC88C\uC6B0 \uB4DC\uB798\uADF8 \uB610\uB294 \uD654\uC0B4\uD45C \uD0A4\uB85C \uC870\uC808", person);
   el("rect", { x: -26, y: 68, width: 52, height: 102, fill: "transparent" }, void 0, person);
   limb("M-4.5 122 L-5 159", 7.5, person, "pfm-figure-pants");
@@ -769,7 +827,7 @@ function diagram(host, i) {
   for (let n = 0; n <= 4; n++) {
     const d = i.diagramMax * n / 4;
     el("line", { x1: x(d), x2: x(d), y1: 189, y2: 195, class: "pfm-distance-axis" });
-    el("text", { x: x(d), y: 208, "text-anchor": n === 4 ? "end" : "middle", class: "pfm-axis-label" }, metres(d, 1));
+    el("text", { x: x(d), y: 208, "text-anchor": n === 4 ? "end" : "middle", class: "pfm-axis-label" }, metres(d));
   }
   if (showFlash) try {
     const f = flash(i);
@@ -822,7 +880,7 @@ function diagram(host, i) {
 }
 
 // src/note.ts
-var limitations = "\uC218\uB3D9 \uD50C\uB798\uC2DC\xB7\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870\xB7\uC911\uC2EC\uBD80 \uB178\uCD9C\uC758 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC810\uAD11\uC6D0 \uC5ED\uC81C\uACF1 \uADFC\uC0AC\uC774\uBA70 \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC5D0\uB294 \uBD80\uC801\uC808\uD569\uB2C8\uB2E4. \uC2E4\uC81C \uBC30\uAD11\xB7\uBC18\uC0AC\uC728\xB7\uD658\uACBD\uAD11\xB7\uC7A5\uBE44 \uD3B8\uCC28\uB97C \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. TTL, HSS, \uBC14\uC6B4\uC2A4, \uC18C\uD504\uD2B8\uBC15\uC2A4, \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC740 \uC774 \uAE30\uBCF8 \uBAA8\uB378\uB85C \uD655\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC190\uC2E4 \uBCF4\uC815\uC740 \uCD94\uC815\uC774\uBA70 GN\uC5D0 \uC774\uBBF8 \uD3EC\uD568\uB41C \uC190\uC2E4\uC744 \uC911\uBCF5 \uC801\uC6A9\uD558\uC9C0 \uB9C8\uC138\uC694.";
+var limitations = "\uD544\uB984 \uCE74\uBA54\uB77C(Nikon FM2) \uAE30\uC900: \uD50C\uB798\uC2DC \uB3D9\uC870\uB294 \uC154\uD130 1/250\uCD08 \uC774\uD558(FM2n, \uCD08\uAE30 FM2\uB294 1/200\uCD08)\uC774\uBA70 TTL\xB7HSS\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4. \uC218\uB3D9 \uD50C\uB798\uC2DC\xB7\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870\xB7\uC911\uC2EC\uBD80 \uB178\uCD9C\uC758 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC810\uAD11\uC6D0 \uC5ED\uC81C\uACF1 \uADFC\uC0AC\uC774\uBA70 \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC5D0\uB294 \uBD80\uC801\uC808\uD569\uB2C8\uB2E4. \uC2E4\uC81C \uBC30\uAD11\xB7\uBC18\uC0AC\uC728\xB7\uD658\uACBD\uAD11\xB7\uC7A5\uBE44 \uD3B8\uCC28\uB97C \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. TTL, HSS, \uBC14\uC6B4\uC2A4, \uC18C\uD504\uD2B8\uBC15\uC2A4, \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC740 \uC774 \uAE30\uBCF8 \uBAA8\uB378\uB85C \uD655\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC190\uC2E4 \uBCF4\uC815\uC740 \uCD94\uC815\uC774\uBA70 GN\uC5D0 \uC774\uBBF8 \uD3EC\uD568\uB41C \uC190\uC2E4\uC744 \uC911\uBCF5 \uC801\uC6A9\uD558\uC9C0 \uB9C8\uC138\uC694.";
 function validateNote(i, scope = "all") {
   if (scope !== "flash") optics(i);
   if (scope === "zone" && i.zoneFlow === "target") solveZone(i);
@@ -837,14 +895,15 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
 `, `| \uD56D\uBAA9 | \uAC12 |`, `| --- | --- |`];
   lines.push(`\uC800\uC7A5 \uBC94\uC704: ${scope === "zone" ? "\uD604\uC7AC \uD0ED \xB7 \uC874 \uD3EC\uCEE4\uC2F1 (\uD50C\uB798\uC2DC \uC81C\uC678)" : scope === "dof" ? "\uD604\uC7AC \uD0ED \xB7 \uC2EC\uB3C4\xB7\uD654\uAC01 (\uD50C\uB798\uC2DC\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "flash" ? "\uD604\uC7AC \uD0ED \xB7 \uD50C\uB798\uC2DC (\uC2EC\uB3C4\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "combined" ? "\uD604\uC7AC \uD0ED \xB7 \uD1B5\uD569 (\uC804\uCCB4 \uACC4\uC0B0)" : "\uC804\uCCB4 \uACC4\uC0B0"}`);
   lines.push(`\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804: ${context?.version ?? "\uAC1C\uBC1C/\uBBF8\uC9C0\uC815"}`, `GN \uC785\uB825 \uBAA8\uB4DC: ${i.gnMode === "equipment" ? "\uC7A5\uBE44 \uD45C" : "\uC218\uB3D9 GN"}`, `\uC120\uD0DD \uC7A5\uBE44: ${context?.equipment?.name ?? "\uC5C6\uC74C \xB7 \uC218\uB3D9 GN"}`, `\uC7A5\uBE44 \uCD9C\uCC98: ${context?.equipment?.source ?? "GN \uC870\uAC74 \uCC38\uC870"}`);
-  const labels = { gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44 ID (\uC218\uB3D9 \uBAA8\uB4DC\uC5D0\uC11C\uB294 \uC801\uC6A9 \uC548 \uD568)", sensor: "\uC13C\uC11C \uD504\uB9AC\uC14B", width: "\uC13C\uC11C \uAC00\uB85C mm", height: "\uC13C\uC11C \uC138\uB85C mm", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC mm", aperture: "\uC870\uB9AC\uAC1C f/", iso: "ISO", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC m", focusInfinity: "\uBB34\uD55C\uB300 \uCD08\uC810 (\uCF1C\uBA74 \uCE74\uBA54\uB77C \uAC70\uB9AC m\uB294 \uB9C8\uC9C0\uB9C9 \uC720\uD55C\uAC12 \uBCF4\uC874)", linked: "\uC628\uCE74\uBA54\uB77C \uC5F0\uB3D9", flashDistance: "\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC m", cocMode: "CoC \uBC29\uC2DD", coc: "\uC0AC\uC6A9\uC790 CoC mm", gn: "ISO100 \uCD5C\uB300 \uCD9C\uB825 GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C mm", zoom: "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C mm", conditions: "GN \uC870\uAC74", denominator: "\uCD9C\uB825 1/n\uC758 n", loss: "\uCD94\uAC00 \uC190\uC2E4 stop", tolerance: "\uD5C8\uC6A9 \uC624\uCC28 \xB1EV", minDenominator: "\uCD5C\uC18C \uCD9C\uB825 1/n\uC758 n", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coverage: "\uC870\uC0AC\uAC01 \uBC29\uC2DD (approx=\uD480\uD504\uB808\uC784 \uAC00\uC815)", horizontal: "\uC9C1\uC811 \uC785\uB825 \uC218\uD3C9 \uC870\uC0AC\uAC01 \xB0", vertical: "\uC9C1\uC811 \uC785\uB825 \uC218\uC9C1 \uC870\uC0AC\uAC01 \xB0", mode: "\uBC1C\uAD11 \uC870\uAC74", diagramMax: "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC m", tab: "\uD654\uBA74", cropBasis: "\uD658\uC0B0 \uAE30\uC900", zoneFlow: "\uC874 \uD750\uB984", zoneNear: "\uBAA9\uD45C \uADFC\uAC70\uB9AC m", zoneFar: "\uBAA9\uD45C \uC720\uD55C \uC6D0\uAC70\uB9AC m (\uBB34\uD55C\uB300 \uC120\uD0DD \uC2DC \uBBF8\uC0AC\uC6A9)", zoneInfinity: "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300", apertureMin: "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12", apertureMax: "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12", apertureSteps: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC2E4\uC81C \uC870\uB9AC\uAC1C \uB2E8\uACC4" };
+  const labels = { gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44 ID (\uC218\uB3D9 \uBAA8\uB4DC\uC5D0\uC11C\uB294 \uC801\uC6A9 \uC548 \uD568)", sensor: "\uD544\uB984\xB7\uD3EC\uB9F7 \uD504\uB9AC\uC14B", width: "\uD504\uB808\uC784 \uAC00\uB85C mm", height: "\uD504\uB808\uC784 \uC138\uB85C mm", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC mm", aperture: "\uC870\uB9AC\uAC1C f/", iso: "\uD544\uB984 \uAC10\uB3C4 ISO", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC", focusInfinity: "\uBB34\uD55C\uB300 \uCD08\uC810 (\uCF1C\uBA74 \uCE74\uBA54\uB77C \uAC70\uB9AC\uB294 \uB9C8\uC9C0\uB9C9 \uC720\uD55C\uAC12 \uBCF4\uC874)", linked: "\uC628\uCE74\uBA54\uB77C \uC5F0\uB3D9", flashDistance: "\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC", cocMode: "CoC \uBC29\uC2DD", coc: "\uC0AC\uC6A9\uC790 CoC mm", gn: "ISO100 \uCD5C\uB300 \uCD9C\uB825 GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C mm", zoom: "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C mm", conditions: "GN \uC870\uAC74", denominator: "\uCD9C\uB825 1/n\uC758 n", loss: "\uCD94\uAC00 \uC190\uC2E4 stop", tolerance: "\uD5C8\uC6A9 \uC624\uCC28 \xB1EV", minDenominator: "\uCD5C\uC18C \uCD9C\uB825 1/n\uC758 n", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coverage: "\uC870\uC0AC\uAC01 \uBC29\uC2DD (approx=35mm \uD504\uB808\uC784 \uAC00\uC815)", horizontal: "\uC9C1\uC811 \uC785\uB825 \uC218\uD3C9 \uC870\uC0AC\uAC01 \xB0", vertical: "\uC9C1\uC811 \uC785\uB825 \uC218\uC9C1 \uC870\uC0AC\uAC01 \xB0", mode: "\uBC1C\uAD11 \uC870\uAC74", diagramMax: "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC", tab: "\uD654\uBA74", cropBasis: "35mm \uD658\uC0B0 \uAE30\uC900", zoneFlow: "\uC874 \uD750\uB984", zoneNear: "\uBAA9\uD45C \uADFC\uAC70\uB9AC", zoneFar: "\uBAA9\uD45C \uC720\uD55C \uC6D0\uAC70\uB9AC (\uBB34\uD55C\uB300 \uC120\uD0DD \uC2DC \uBBF8\uC0AC\uC6A9)", zoneInfinity: "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300", apertureMin: "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12", apertureMax: "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12", apertureSteps: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC2E4\uC81C \uC870\uB9AC\uAC1C \uB2E8\uACC4" };
   const opticalKeys = /* @__PURE__ */ new Set(["sensor", "width", "height", "focal", "aperture", "cameraDistance", "focusInfinity", "cocMode", "coc", "tab", "cropBasis"]);
   const flashKeys = /* @__PURE__ */ new Set(["gnMode", "equipmentId", "aperture", "iso", "linked", "cameraDistance", "focusInfinity", "flashDistance", "gn", "gnUnit", "gnZoom", "zoom", "conditions", "denominator", "loss", "tolerance", "minDenominator", "steps", "mode", "tab"]);
+  const distanceKeys = /* @__PURE__ */ new Set(["cameraDistance", "flashDistance", "zoneNear", "zoneFar", "diagramMax"]);
   for (const key of Object.keys(labels)) {
     if ((scope === "dof" || scope === "zone") && !opticalKeys.has(key) && !["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity", "apertureMin", "apertureMax", "apertureSteps"].includes(key) || scope === "flash" && !flashKeys.has(key)) continue;
-    lines.push(`| ${labels[key]} | ${String(key === "cameraDistance" && i.focusInfinity && !(scope === "flash" && !i.linked) ? "\u221E (\uBB34\uD55C\uB300 \uCD08\uC810)" : key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode === "estimate" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" ? "\uBBF8\uC0AC\uC6A9" : i[key]).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
+    lines.push(`| ${labels[key]} | ${String(key === "cameraDistance" && i.focusInfinity && !(scope === "flash" && !i.linked) ? "\u221E (\uBB34\uD55C\uB300 \uCD08\uC810)" : key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode !== "custom" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" ? "\uBBF8\uC0AC\uC6A9" : distanceKeys.has(key) ? metres(i[key]) : i[key]).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
   }
-  lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n", "\uAC70\uB9AC \uACB0\uACFC\uB294 1m \uC774\uD558\uC5D0\uC11C cm\uB85C \uC790\uB3D9 \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uC704 \uC785\uB825\uD45C\uC640 \uB0B4\uBD80 \uC800\uC7A5\uC758 \uAC70\uB9AC\uB294 \uC7AC\uD604\uC744 \uC704\uD574 m\uB97C \uC720\uC9C0\uD569\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD569\uB2C8\uB2E4. \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC774\uBBC0\uB85C \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+  lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n", "\uBAA8\uB4E0 \uAC70\uB9AC\uB294 \uC18C\uC218 \uCCAB\uC9F8 \uC790\uB9AC\uAE4C\uC9C0\uB9CC \uD45C\uC2DC\uD558\uACE0 1m \uC774\uD558\uB294 cm\uB85C \uC790\uB3D9 \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uB0B4\uBD80 \uC800\uC7A5 \uAC12\uACFC \uACC4\uC0B0\uC740 \uBC18\uC62C\uB9BC\uD558\uC9C0 \uC54A\uC73C\uBA70 \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD569\uB2C8\uB2E4. \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC774\uBBC0\uB85C \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
   if (scope !== "dof" && scope !== "zone") try {
     const f = flash(i);
     lines.push(`- \uC120\uD0DD \uCD9C\uB825 1/${i.denominator}: **${f.powerLabel}**`, `- \uC801\uC815 \uB178\uCD9C \uC608\uC0C1 \uAC70\uB9AC: ${metres(f.d)}`, `- \uD50C\uB798\uC2DC\u2013\uD53C\uC0AC\uCCB4 \uAC70\uB9AC: ${metres(f.r)} \xB7 \uB178\uCD9C \uCC28\uC774: ${fmt(f.ev)} EV (${f.ev > 0 ? "\uC608\uC0C1 \uACFC\uB2E4" : f.ev < 0 ? "\uC608\uC0C1 \uBD80\uC871" : "\uAE30\uC900 \uC801\uC815"})`, `- \uC720\uD6A8 GN(m): ${fmt(f.gn)}`, `- \xB1${i.tolerance}EV \uAC70\uB9AC \uAD6C\uAC04: ${metres(f.low)} ~ ${metres(f.high)}`, `- \uD544\uC694\uD55C \uC870\uB9AC\uAC1C f/${fmt(f.requiredAperture)} \xB7 \uD544\uC694 \uCD9C\uB825 ${fmt(f.needed * 100)}% \xB7 ${f.status}`, `- \uAD8C\uC7A5 \uC9C0\uC6D0 \uB2E8\uACC4 1/${f.nearest} \xB7 \uD574\uB2F9 \uB2E8\uACC4 \uC608\uC0C1 \uAC70\uB9AC ${metres(f.nearestDistance)}, \uB0A8\uB294 \uB178\uCD9C \uC624\uCC28 ${fmt(f.residual)} EV`);
@@ -855,36 +914,36 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
   if (scope !== "flash") try {
     const o = optics(i);
     lines.push(`
-- \uC2EC\uB3C4 \uADFC\uAC70\uB9AC ${metres(o.near)} / \uC6D0\uAC70\uB9AC ${metres(o.far)} / \uC804\uCCB4 ${metres(o.total)}`, `- \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(o.hyperfocal)} \xB7 CoC ${fmt(o.c, 5)} mm`, `- \uC218\uD3C9/\uC218\uC9C1/\uB300\uAC01 \uD654\uAC01 ${fmt(o.horizontal)}\xB0 / ${fmt(o.vertical)}\xB0 / ${fmt(o.diagonal)}\xB0`, `- \uC2E4\uCE58\uC218 \uB300\uAC01 \uAE30\uC900 \uD480\uD504\uB808\uC784 \uD658\uC0B0 \uCD08\uC810\uAC70\uB9AC ${fmt(o.equivalent)} mm`, `- \uD68C\uC808 Airy \uC9C0\uB984 (\uD30C\uC7A5 550nm) ${fmt(o.airy, 5)} mm, CoC \uB300\uBE44 ${fmt(o.airy / o.c)}\uBC30 (\uADFC\uC0AC)`);
+- \uC2EC\uB3C4 \uADFC\uAC70\uB9AC ${metres(o.near)} / \uC6D0\uAC70\uB9AC ${metres(o.far)} / \uC804\uCCB4 ${metres(o.total)}`, `- \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(o.hyperfocal)} \xB7 CoC ${fmt(o.c, 5)} mm`, `- \uC218\uD3C9/\uC218\uC9C1/\uB300\uAC01 \uD654\uAC01 ${fmt(o.horizontal)}\xB0 / ${fmt(o.vertical)}\xB0 / ${fmt(o.diagonal)}\xB0`, `- \uC2E4\uCE58\uC218 \uB300\uAC01 \uAE30\uC900 35mm \uD658\uC0B0 \uCD08\uC810\uAC70\uB9AC ${fmt(o.equivalent)} mm`, `- \uD68C\uC808 Airy \uC9C0\uB984 (\uD30C\uC7A5 550nm) ${fmt(o.airy, 5)} mm, CoC \uB300\uBE44 ${fmt(o.airy / o.c)}\uBC30 (\uADFC\uC0AC)`);
   } catch (e) {
     lines.push(`- \uAD11\uD559 \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
   }
   if (scope !== "flash") try {
     const e = equivalence(i);
     lines.push(`
-## \uD480\uD504\uB808\uC784 \uD658\uC0B0
-- ${e.basis} ${fmt(e.crop, 4)}\xD7 \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7`, `- \uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)} \u2192 \uD654\uAC01 \uD658\uC0B0 ${fmt(e.focal)}mm \xB7 \uC2EC\uB3C4 \uB300\uC751 \uC57D f/${fmt(e.aperture)}`, "- \uC2E4\uC81C \uB178\uCD9C \uC870\uB9AC\uAC1C\uB294 \uADF8\uB300\uB85C\uC785\uB2C8\uB2E4. \uAC19\uC740 \uC704\uCE58\xB7\uAD6C\uB3C4\xB7\uBE44\uAD50 \uAC10\uC0C1 \uC870\uAC74\uC758 \uADFC\uC0AC\uC774\uBA70 \uADFC\uC811 \uCD2C\uC601\xB7\uBE0C\uB9AC\uB529\xB7\uD654\uBA74\uBE44 \uCC28\uC774\uB294 \uBBF8\uBC18\uC601.", i.cocMode === "custom" ? "- \uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC: \uC815\uD655\uD55C \uC2EC\uB3C4 \uC77C\uCE58 \uC544\uB2D8." : "- CoC\uB294 \uC13C\uC11C \uB300\uAC01/1500. \uD480\uD504\uB808\uC784 CoC\uB3C4 \uB300\uC751\uC2DC\uCF1C \uBE44\uAD50\uD574\uC57C \uD569\uB2C8\uB2E4. \uBA85\uBAA9/\uC2E4\uCE58\uC218 \uCC28\uC774 \uC874\uC7AC.");
+## 35mm \uD658\uC0B0
+- ${e.basis} ${fmt(e.crop, 4)}\xD7 \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7`, `- \uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)} \u2192 35mm \uD654\uAC01 \uD658\uC0B0 ${fmt(e.focal)}mm \xB7 \uC2EC\uB3C4 \uB300\uC751 \uC57D f/${fmt(e.aperture)}`, "- \uC2E4\uC81C \uB178\uCD9C \uC870\uB9AC\uAC1C\uB294 \uADF8\uB300\uB85C\uC785\uB2C8\uB2E4. \uAC19\uC740 \uC704\uCE58\xB7\uAD6C\uB3C4\xB7\uBE44\uAD50 \uAC10\uC0C1 \uC870\uAC74\uC758 \uADFC\uC0AC\uC774\uBA70 \uADFC\uC811 \uCD2C\uC601\xB7\uBE0C\uB9AC\uB529\xB7\uD654\uBA74\uBE44 \uCC28\uC774\uB294 \uBBF8\uBC18\uC601.", i.cocMode === "custom" ? "- \uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC: \uC815\uD655\uD55C \uC2EC\uB3C4 \uC77C\uCE58 \uC544\uB2D8." : i.cocMode === "film" ? "- CoC\uB294 35mm \uD544\uB984 0.03mm(\uB2C8\uCF58 DOF \uB208\uAE08 \uAD00\uB840)\uB97C \uD504\uB808\uC784 \uB300\uAC01\uC5D0 \uBE44\uB840\uD574 \uD658\uC0B0. 35mm \uCABD CoC\uB3C4 \uAC19\uC740 \uAC10\uC0C1 \uAE30\uC900\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4." : "- CoC\uB294 \uD504\uB808\uC784 \uB300\uAC01/1500. 35mm CoC\uB3C4 \uB300\uC751\uC2DC\uCF1C \uBE44\uAD50\uD574\uC57C \uD569\uB2C8\uB2E4. \uBA85\uBAA9/\uC2E4\uCE58\uC218 \uCC28\uC774 \uC874\uC7AC.");
     if (i.zoneFlow === "target") {
       const r = solveZone(i);
       lines.push("\n## \uC874 \uD3EC\uCEE4\uC2F1 \uC5ED\uC0B0", `- \uBAA9\uD45C ${metres(r.target.near)} ~ ${metres(r.target.far)}`, `- ${r.possible ? "\uC81C\uC548 \uAC00\uB2A5" : "\uB2EC\uC131 \uBD88\uAC00 \xB7 \uC870\uB9AC\uAC1C \uC81C\uD55C"}: \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${metres(r.cameraDistance)}, \uC2E4\uC81C f/${fmt(r.aperture)}`, `- \uC81C\uC548 \uAC80\uC0B0 ${metres(r.actual.near)} ~ ${metres(r.actual.far)} \xB7 \uC774\uB860 \uD544\uC694 f/${fmt(r.required, 4)}`);
     }
-    lines.push("- \uC5ED\uC0B0 \uAC00\uC815: \uC720\uD55C \uAD6C\uAC04 a,b\uC5D0\uC11C s=2ab/(a+b), h=(2ab\u2212f(a+b))/(b\u2212a), N=f\xB2/(c\xB7h). \uBB34\uD55C\uB300\uB294 H\u22642a, \uC801\uC6A9 \uCD08\uC810=H. \uC2E4\uC81C \uC0AC\uC6A9 \uB2E8\uACC4 \uC911 \uAC00\uC7A5 \uAC1C\uBC29\uB41C \uC870\uB9AC\uAC1C\uBD80\uD130 \uAE30\uC874 \uC2EC\uB3C4 \uC5D4\uC9C4\uC73C\uB85C \uC7AC\uAC80\uC0B0. CoC \uD5C8\uC6A9 \uBC94\uC704\uC774\uBA70 \uC808\uB300 \uC120\uBA85\uB3C4 \uACBD\uACC4 \uC544\uB2D8.");
+    lines.push("- \uC5ED\uC0B0 \uAC00\uC815: \uBAA9\uD45C a,b\uB294 \uD544\uB984\uBA74 \uAE30\uC900. \uC720\uD55C \uAD6C\uAC04\uC740 \uB80C\uC988 \uAE30\uC900 \uD55C\uACC4 a\u2032=a\u2212v, b\u2032=b\u2212v (v=f\xB7s/(s\u2212f))\uC5D0\uC11C s=2a\u2032b\u2032/(a\u2032+b\u2032)\uB97C \uBC18\uBCF5\uD574 \uD480\uACE0, h=(2a\u2032b\u2032\u2212f(a\u2032+b\u2032))/(b\u2032\u2212a\u2032), N=f\xB2/(c\xB7h). \uBB34\uD55C\uB300\uB294 (h+f)/2+f(h+f)/h=a\uB97C \uD480\uBA70 \uC801\uC6A9 \uCD08\uC810\uC740 \uACFC\uCD08\uC810 \uB208\uAE08. \uC2E4\uC81C \uC0AC\uC6A9 \uB2E8\uACC4 \uC911 \uAC00\uC7A5 \uAC1C\uBC29\uB41C \uC870\uB9AC\uAC1C\uBD80\uD130 \uAE30\uC874 \uC2EC\uB3C4 \uC5D4\uC9C4\uC73C\uB85C \uC7AC\uAC80\uC0B0. CoC \uD5C8\uC6A9 \uBC94\uC704\uC774\uBA70 \uC808\uB300 \uC120\uBA85\uB3C4 \uACBD\uACC4 \uC544\uB2D8.");
   } catch (e) {
     lines.push(`- \uC874/\uD658\uC0B0 \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
   }
   if (scope === "all" || scope === "combined") try {
     const c = coverage(i);
-    lines.push(`- \uCE74\uBA54\uB77C \uD504\uB808\uC784 ${metres(c.camera.width)} \xD7 ${metres(c.camera.height)} (\uCE74\uBA54\uB77C \uAC70\uB9AC \uD3C9\uBA74)`, `- \uD50C\uB798\uC2DC \uC870\uC0AC \uBC94\uC704 ${metres(c.flash.width)} \xD7 ${metres(c.flash.height)} (\uD50C\uB798\uC2DC \uAC70\uB9AC \uD3C9\uBA74)`, `- \uC870\uC0AC\uAC01 ${fmt(c.h)}\xB0 \xD7 ${fmt(c.v)}\xB0 \xB7 ${i.coverage === "approx" ? "\uD480\uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815, \uC81C\uC870\uC0AC \uC0AC\uC591 \uC544\uB2D8" : "\uC218\uB3D9 \uC785\uB825 \uC870\uC0AC\uAC01"}`, `- ${i.linked ? c.narrow ? "\uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131" : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815\uC758 \uBC94\uC704 \uBE44\uAD50" : "\uC624\uD504\uCE74\uBA54\uB77C: \uC704\uCE58\xB7\uBC29\uD5A5 \uBBF8\uC785\uB825, \uACF5\uAC04 \uC911\uCCA9 \uBE44\uAD50 \uBD88\uAC00"}`);
+    lines.push(`- \uCE74\uBA54\uB77C \uD504\uB808\uC784 ${metres(c.camera.width)} \xD7 ${metres(c.camera.height)} (\uCD08\uC810 \uB9DE\uCD98 \uD3C9\uBA74)`, `- \uD50C\uB798\uC2DC \uC870\uC0AC \uBC94\uC704 ${metres(c.flash.width)} \xD7 ${metres(c.flash.height)} (\uD50C\uB798\uC2DC \uAC70\uB9AC \uD3C9\uBA74)`, `- \uC870\uC0AC\uAC01 ${fmt(c.h)}\xB0 \xD7 ${fmt(c.v)}\xB0 \xB7 ${i.coverage === "approx" ? "35mm \uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815, \uC81C\uC870\uC0AC \uC0AC\uC591 \uC544\uB2D8" : "\uC218\uB3D9 \uC785\uB825 \uC870\uC0AC\uAC01"}`, `- ${i.linked ? c.narrow ? "\uD504\uB808\uC784 \uAC00\uC7A5\uC790\uB9AC \uAD11\uB7C9 \uBD80\uC871 \uAC00\uB2A5\uC131" : "\uB3D9\uC77C \uC704\uCE58\xB7\uBC29\uD5A5 \uAC00\uC815\uC758 \uBC94\uC704 \uBE44\uAD50" : "\uC624\uD504\uCE74\uBA54\uB77C: \uC704\uCE58\xB7\uBC29\uD5A5 \uBBF8\uC785\uB825, \uACF5\uAC04 \uC911\uCCA9 \uBE44\uAD50 \uBD88\uAC00"}`);
   } catch (e) {
     lines.push(`- \uC870\uC0AC \uBC94\uC704 \uACC4\uC0B0 \uBD88\uAC00: ${e instanceof Error ? e.message : String(e)}`);
   }
   lines.push(
     "\n## \uC870\uAC74\uACFC \uD55C\uACC4\n",
     limitations,
-    "\uBE5B\uC740 \uC608\uC0C1 \uAC70\uB9AC\uC5D0\uC11C \uB05D\uB098\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uAC00\uAE4C\uC6B0\uBA74 \uACFC\uB2E4 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4. CoC=\uC13C\uC11C \uB300\uAC01/1500\uC740 \uAC10\uC0C1 \uD06C\uAE30\xB7\uC2DC\uB825\xB7\uD655\uB300\uC728\uC5D0 \uC758\uC874\uD558\uB294 \uACBD\uD5D8\uC801 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC9C1\uC120\uD22C\uC601 \uBC15\uB9C9\uB80C\uC988 \uBAA8\uB378\uC774\uBA70 \uADFC\uC811 \uCD2C\uC601\xB7\uD3EC\uCEE4\uC2A4 \uBE0C\uB9AC\uB529\xB7\uB3D9\uACF5 \uBC30\uC728\uC740 \uBC18\uC601\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+    "\uBE5B\uC740 \uC608\uC0C1 \uAC70\uB9AC\uC5D0\uC11C \uB05D\uB098\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uAC00\uAE4C\uC6B0\uBA74 \uACFC\uB2E4 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4. CoC(\uD544\uB984 0.03mm \uB610\uB294 \uD504\uB808\uC784 \uB300\uAC01/1500)\uB294 \uAC10\uC0C1 \uD06C\uAE30\xB7\uC2DC\uB825\xB7\uD655\uB300\uC728\uC5D0 \uC758\uC874\uD558\uB294 \uACBD\uD5D8\uC801 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC9C1\uC120\uD22C\uC601 \uBC15\uB9C9\uB80C\uC988 \uBAA8\uB378\uC774\uBA70 \uADFC\uC811 \uCD2C\uC601\xB7\uD3EC\uCEE4\uC2A4 \uBE0C\uB9AC\uB529\xB7\uB3D9\uACF5 \uBC30\uC728\uC740 \uBC18\uC601\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
     "\n## \uACF5\uC2DD\n",
     "\uC720\uD6A8 GN = G\u221Ap\u221A(ISO/100) \xD7 2^(\u2212L/2), d = \uC720\uD6A8 GN/N, \uD544\uC694 p = (Nr/G)\xB2(100/ISO)2^L, EV = 2log\u2082(d/r).",
-    "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f, Dnear=h\xB7s/(h+s\u2212f), Dfar=h\xB7s/(h\u2212s+f); s\u2265H\uC774\uBA74 \uC6D0\uAC70\uB9AC \u221E. \uAD11\uD559 \uAE38\uC774\uB294 mm\uB85C \uD1B5\uC77C \uD6C4 m\uB85C \uD45C\uC2DC. s\uB294 \uBC15\uB9C9\uB80C\uC988 \uC8FC\uD3C9\uBA74\uC5D0\uC11C \uD53C\uC0AC\uCCB4\uAE4C\uC9C0\uC758 \uAC70\uB9AC\uC774\uBA70 \uCE74\uBA54\uB77C \uC13C\uC11C\uBA74 \uAC70\uB9AC\uC640 \uB2E4\uB985\uB2C8\uB2E4. \uD654\uAC01\xB7\uD504\uB808\uC784\uC740 \uBB34\uD55C\uB300 \uCD08\uC810\uC758 \uC9C1\uC120\uD22C\uC601 \uADFC\uC0AC\uB85C \uADFC\uC811 \uCD2C\uC601\uC758 \uBC30\uC728 \uBCC0\uD654\uB294 \uBBF8\uBC18\uC601\uD569\uB2C8\uB2E4.",
+    "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f, \uB80C\uC988 \uAE30\uC900 \uADFC\uAC70\uB9AC h\xB7s/(h+s\u2212f), \uC6D0\uAC70\uB9AC h\xB7s/(h\u2212s+f); s\u2265H\uC774\uBA74 \uC6D0\uAC70\uB9AC \u221E. \uD45C\uC2DC\uD558\uB294 \uBAA8\uB4E0 \uAC70\uB9AC\uB294 \uB80C\uC988 \uAC70\uB9AC \uB208\uAE08\uACFC \uAC19\uC740 \uD544\uB984\uBA74 \uAE30\uC900\uC785\uB2C8\uB2E4: \uCD08\uC810 \uAC70\uB9AC D=s+v, v=f\xB7s/(s\u2212f), \uADFC\xB7\uC6D0\uAC70\uB9AC\uC640 \uACFC\uCD08\uC810\uC5D0\uB3C4 \uAC19\uC740 v\uB97C \uB354\uD569\uB2C8\uB2E4. \uAD11\uD559 \uAE38\uC774\uB294 mm\uB85C \uD1B5\uC77C \uD6C4 m\uB85C \uD45C\uC2DC. \uB4F1\uBC30\uBCF4\uB2E4 \uAC00\uAE4C\uC6B4 \uC811\uC0AC(D<4f)\uB294 \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uD654\uAC01\uC740 \uBB34\uD55C\uB300 \uCD08\uC810 \uAE30\uC900\uC774\uBA70 \uD504\uB808\uC784 \uD06C\uAE30\uB294 \uD544\uB984 \uD06C\uAE30\xF7\uBC30\uC728\uC785\uB2C8\uB2E4.",
     "\n## \uCD9C\uCC98\n",
     "\uC2EC\uB3C4\xB7\uD654\uAC01 \uD45C\uD604\uC758 \uAE30\uBC18: [depth-of-field](https://github.com/jherr/depth-of-field), Jack Herrington, Copyright (c) 2026 Jack Herrington, MIT. \uCC38\uACE0 SHA c75dd6d40e4a96e96fd38e57657fe4b9737bf776. \uBAA8\uBC14\uC77C\uC6A9 \uC7AC\uAD6C\uD604\xB7\uC218\uC815 \uBC0F \uD50C\uB798\uC2DC \uD655\uC7A5. \uACF5\uC2DD\xB7\uD6C4\uC6D0 \uD50C\uB7EC\uADF8\uC778\uC774 \uC544\uB2D9\uB2C8\uB2E4.",
     "[\uB80C\uC988 \uACB0\uC0C1\xB7\uCC29\uB780\uC6D0 MIT](https://people.csail.mit.edu/fredo/comp-photo-book/02-fundamentals-03-lens-image-formation.html) \xB7 [\uD654\uAC01 Edmund Optics](https://www.edmundoptics.com/knowledge-center/application-notes/imaging/understanding-focal-length-and-field-of-view/) \xB7 [Airy \uC9C0\uB984 Edmund Optics](https://www.edmundoptics.com/knowledge-center/application-notes/imaging/limitations-on-resolution-and-contrast-the-airy-disk/) \xB7 [GN \uAE30\uBCF8 \uAD00\uACC4 Nikon](https://download.nikonimglib.com/archive2/rOYAB007rd7k028ePIg11W7lyc97/SB-500_CH%28En%2904.pdf)"
@@ -894,6 +953,9 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
 
 // src/view.ts
 var VIEW = "photo-field-mobile";
+var FILM_SPEEDS = [12, 25, 50, 100, 200, 400, 800, 1600, 3200, 6400];
+var NIKKOR_FOCALS = [20, 24, 28, 35, 50, 85, 105, 135, 180, 200];
+var APERTURE_STOPS = [1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22];
 var nextControlId = 0;
 function node(parent, tag, text, cls) {
   const e = document.createElement(tag);
@@ -1141,7 +1203,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     }));
   }
   fieldLabel(k) {
-    return { sensor: "\uC13C\uC11C", width: "\uC13C\uC11C \uAC00\uB85C(mm)", height: "\uC13C\uC11C \uC138\uB85C(mm)", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C", iso: "ISO", denominator: "\uCD9C\uB825", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC", focusInfinity: "\uCD08\uC810 \uBB34\uD55C\uB300", flashDistance: "\uD50C\uB798\uC2DC \uAC70\uB9AC", linked: "\uAC70\uB9AC \uC5F0\uB3D9", gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44", gn: "GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C(mm)", zoom: "\uD50C\uB798\uC2DC \uC90C(mm)", conditions: "\uCE21\uC815 \uC870\uAC74", loss: "\uC190\uC2E4(stop)", tolerance: "\uD5C8\uC6A9 \uC624\uCC28(EV)", minDenominator: "\uCD5C\uC18C \uCD9C\uB825", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coc: "CoC(mm)", cocMode: "CoC \uAE30\uC900", coverage: "\uC870\uC0AC\uAC01 \uAE30\uC900", horizontal: "\uC218\uD3C9 \uC870\uC0AC\uAC01(\uB3C4)", vertical: "\uC218\uC9C1 \uC870\uC0AC\uAC01(\uB3C4)", mode: "\uB3D9\uC870\xB7\uBC1C\uAD11 \uC870\uAC74" }[k] ?? k;
+    return { sensor: "\uD544\uB984\xB7\uD3EC\uB9F7", width: "\uD504\uB808\uC784 \uAC00\uB85C(mm)", height: "\uD504\uB808\uC784 \uC138\uB85C(mm)", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)", aperture: "\uC2E4\uC81C \uC870\uB9AC\uAC1C", iso: "\uD544\uB984 \uAC10\uB3C4(ISO)", denominator: "\uCD9C\uB825", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC", focusInfinity: "\uCD08\uC810 \uBB34\uD55C\uB300", flashDistance: "\uD50C\uB798\uC2DC \uAC70\uB9AC", linked: "\uAC70\uB9AC \uC5F0\uB3D9", gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44", gn: "GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C(mm)", zoom: "\uD50C\uB798\uC2DC \uC90C(mm)", conditions: "\uCE21\uC815 \uC870\uAC74", loss: "\uC190\uC2E4(stop)", tolerance: "\uD5C8\uC6A9 \uC624\uCC28(EV)", minDenominator: "\uCD5C\uC18C \uCD9C\uB825", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coc: "CoC(mm)", cocMode: "CoC \uAE30\uC900", coverage: "\uC870\uC0AC\uAC01 \uAE30\uC900", horizontal: "\uC218\uD3C9 \uC870\uC0AC\uAC01(\uB3C4)", vertical: "\uC218\uC9C1 \uC870\uC0AC\uAC01(\uB3C4)", mode: "\uB3D9\uC870\xB7\uBC1C\uAD11 \uC870\uAC74" }[k] ?? k;
   }
   fieldValue(k, value) {
     if (k === "focusInfinity") return value ? "\u221E" : "\uB054";
@@ -1153,8 +1215,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     }
     if (k === "linked") return value ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C";
     if (k === "equipmentId") return this.plugin.state.equipment.find((e) => e.id === value)?.name ?? (value ? "\uCC38\uC870 \uC7A5\uBE44 \uC5C6\uC74C" : "\uC120\uD0DD \uC5C6\uC74C");
-    if (k === "sensor") return sensors[String(value)]?.name ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C";
-    const labels = { gnMode: { manual: "\uC218\uB3D9 GN", equipment: "\uC7A5\uBE44" }, cocMode: { estimate: "\uC13C\uC11C \uB300\uAC01 \uAE30\uC900", custom: "\uC0AC\uC6A9\uC790 CoC" }, coverage: { approx: "\uC90C \uAE30\uBC18 \uADFC\uC0AC", angles: "\uC9C1\uC811 \uC870\uC0AC\uAC01" }, mode: { manual: "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870", ttl: "TTL", hss: "HSS", bounce: "\uBC14\uC6B4\uC2A4", modifier: "\uAD11\uC9C8 \uC870\uC808 \uB3C4\uAD6C", near: "\uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0" } };
+    if (k === "sensor") return sensors[String(value)]?.name ?? "\uC0AC\uC6A9\uC790 \uD3EC\uB9F7";
+    const labels = { gnMode: { manual: "\uC218\uB3D9 GN", equipment: "\uC7A5\uBE44" }, cocMode: { film: "\uD544\uB984 \uAD00\uB840 0.03mm", estimate: "\uD504\uB808\uC784 \uB300\uAC01 \xF71500", custom: "\uC0AC\uC6A9\uC790 CoC" }, coverage: { approx: "\uC90C \uAE30\uBC18 \uADFC\uC0AC", angles: "\uC9C1\uC811 \uC870\uC0AC\uAC01" }, mode: { manual: "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870", ttl: "TTL (FM2 \uBBF8\uC9C0\uC6D0)", hss: "HSS (FM2 \uBBF8\uC9C0\uC6D0)", bounce: "\uBC14\uC6B4\uC2A4", modifier: "\uAD11\uC9C8 \uC870\uC808 \uB3C4\uAD6C", near: "\uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0" } };
     return labels[k]?.[String(value)] ?? String(value);
   }
   getViewType() {
@@ -1242,7 +1304,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       else if (event.key === "ArrowRight") distance = i.cameraDistance + 0.1;
       else return;
       event.preventDefault();
-      this.plugin.update("cameraDistance", Math.max(i.focal / 1e3 + 1e-3, distance));
+      this.plugin.update("cameraDistance", Math.max(minFocusDistance(i.focal), distance));
       this.syncNumeric("cameraDistance");
       this.changed();
       this.picture.querySelector("[data-pfm-subject]")?.focus();
@@ -1266,6 +1328,7 @@ var PhotoView = class extends import_obsidian.ItemView {
   rangeProgress(range) {
     const percent = (Number(range.value) - Number(range.min)) / (Number(range.max) - Number(range.min)) * 100;
     range.style.setProperty("--pfm-range-progress", `${percent}%`);
+    range.style.setProperty("--pfm-range-fraction", String(percent / 100));
   }
   number(parent, label, key, options) {
     const wrap = node(parent, "div", void 0, "pfm-field");
@@ -1287,21 +1350,38 @@ var PhotoView = class extends import_obsidian.ItemView {
     let scale = 1;
     let range;
     let infinityButton;
+    const stops = options?.stops;
+    const toRange = (v) => {
+      if (!stops) return String(v);
+      if (!Number.isFinite(v) || v <= 0) return "0";
+      let best = 0;
+      stops.forEach((stop, n) => {
+        if (Math.abs(Math.log(v / stop)) < Math.abs(Math.log(v / stops[best]))) best = n;
+      });
+      return String(best);
+    };
+    const fromRange = (r) => stops ? stops[Number(r.value)] : Number(r.value);
+    const rangeText = (v) => key === "aperture" ? `f/${fmt(stops ? stops[Number(toRange(v))] : v)}` : fmt(v);
     if (options) {
       wrap.classList.add("pfm-range-field");
       input.min = String(options.min);
       range = node(wrap, "input");
       range.type = "range";
-      range.min = String(options.min);
-      range.max = String(options.max);
-      range.step = String(options.step);
-      range.value = input.value;
+      range.min = stops ? "0" : String(options.min);
+      range.max = stops ? String(stops.length - 1) : String(options.max);
+      range.step = stops ? "1" : String(options.step);
+      range.value = stops ? toRange(this.plugin.state.inputs[key]) : input.value;
+      if (stops) {
+        range.dataset.stops = String(stops.length);
+        range.style.setProperty("--pfm-range-div", String(stops.length - 1));
+      }
       this.rangeProgress(range);
       range.setAttribute("aria-label", `${label} \uBE60\uB978 \uC870\uC808`);
       range.dataset.range = key;
+      if (stops) range.setAttribute("aria-valuetext", rangeText(this.plugin.state.inputs[key]));
       const r = range;
       this.listen(r, "input", () => {
-        this.plugin.update(key, Number(r.value));
+        this.plugin.update(key, fromRange(r));
         sync();
         input.setAttribute("aria-invalid", "false");
         this.changed();
@@ -1329,11 +1409,12 @@ var PhotoView = class extends import_obsidian.ItemView {
         input.dataset.displayUnit = unit;
         if (options) input.min = String(options.min * scale);
       }
-      input.value = infinite() ? "" : Number.isFinite(value) ? String(scale === 100 ? Number((value * scale).toPrecision(15)) : value) : "";
+      input.value = infinite() ? "" : Number.isFinite(value) ? String(isDistance && document.activeElement !== input ? Number((value * scale).toFixed(1)) : scale === 100 ? Number((value * scale).toPrecision(15)) : value) : "";
       infinityUi();
       if (range) {
-        range.value = String(value);
+        range.value = toRange(value);
         this.rangeProgress(range);
+        if (stops) range.setAttribute("aria-valuetext", rangeText(value));
       }
     };
     const apply = (value) => {
@@ -1342,7 +1423,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       sync();
       input.dispatchEvent(new Event("input", { bubbles: true }));
     };
-    const choices = { aperture: [0.7, 1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32], apertureMin: [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32], apertureMax: [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32], iso: [50, 100, 200, 400, 800, 1600, 3200, 6400], focal: [14, 24, 28, 35, 50, 85, 135, 200], cameraDistance: [0.3, 0.5, 1, 2, 3, 5, 10], flashDistance: [0.3, 0.5, 1, 2, 3, 5, 10], zoneNear: [0.3, 0.5, 1, 2, 3, 5], zoneFar: [1, 2, 3, 5, 10, 20], loss: [0, 0.5, 1, 2, 3], tolerance: [0.3, 0.5, 1, 2], diagramMax: [1, 3, 5, 10, 15, 30] };
+    const choices = { aperture: [1.2, 1.4, 1.8, 2, 2.8, 4, 5.6, 8, 11, 16, 22], apertureMin: [1.2, 1.4, 1.8, 2, 2.8, 4, 5.6], apertureMax: [5.6, 8, 11, 16, 22, 32], iso: FILM_SPEEDS, focal: NIKKOR_FOCALS, cameraDistance: [0.3, 0.5, 1, 2, 3, 5, 10], flashDistance: [0.3, 0.5, 1, 2, 3, 5, 10], zoneNear: [0.3, 0.5, 1, 2, 3, 5], zoneFar: [1, 2, 3, 5, 10, 20], loss: [0, 0.5, 1, 2, 3], tolerance: [0.3, 0.5, 1, 2], diagramMax: [1, 3, 5, 10, 15, 30] };
     const candidate = (direction) => {
       const value = this.plugin.state.inputs[key];
       if (input.disabled || !Number.isFinite(value)) return;
@@ -1356,10 +1437,11 @@ var PhotoView = class extends import_obsidian.ItemView {
         const next = direction > 0 ? steps.find((n) => n > value) : [...steps].reverse().find((n) => n < value);
         return next;
       }
-      const increment = isDistance ? value < 2 ? 0.01 : value < 10 ? 0.1 : 1 : key === "coc" ? 1e-3 : ["width", "height", "loss", "tolerance", "apertureMin", "apertureMax"].includes(key) ? 0.1 : 1;
-      const minimum = key === "loss" ? 0 : ["cameraDistance", "zoneNear"].includes(key) ? this.plugin.state.inputs.focal / 1e3 + 1e-3 : isDistance ? 0.01 : key === "coc" ? 1e-3 : increment;
+      const increment = isDistance ? value < 1 - 1e-9 ? 0.01 : value < 10 ? 0.1 : 1 : key === "coc" ? 1e-3 : ["width", "height", "loss", "tolerance", "apertureMin", "apertureMax"].includes(key) ? 0.1 : 1;
+      const minimum = key === "loss" ? 0 : ["cameraDistance", "zoneNear"].includes(key) ? minFocusDistance(this.plugin.state.inputs.focal) : isDistance ? 0.01 : key === "coc" ? 1e-3 : increment;
       const result = Math.min(key === "tolerance" ? 5 : Infinity, Math.max(minimum, Number((value + direction * increment).toPrecision(15))));
       if ((key === "horizontal" || key === "vertical") && result >= 180) return;
+      if (isDistance && (direction > 0 && value < 1 && result > 1 || direction < 0 && value > 1 && result < 1)) return (1 - value) * direction > 0 ? 1 : void 0;
       return (result - value) * direction > 0 ? result : void 0;
     };
     const adjust = (direction) => {
@@ -1420,7 +1502,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       this.plugin.update(key, v);
       if (key === "denominator") this.syncPower();
       if (range && Number.isFinite(v)) {
-        range.value = String(v);
+        range.value = toRange(v);
         this.rangeProgress(range);
       }
       input.setAttribute("aria-invalid", String(!Number.isFinite(v) || v < 0 || v === 0 && key !== "loss"));
@@ -1591,7 +1673,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       b.dataset.settingsJump = target;
     }
     this.number(quick, "\uCE74\uBA54\uB77C \u2192 \uD53C\uC0AC\uCCB4 \uAC70\uB9AC (m)", "cameraDistance", { min: 0.1, max: 30, step: 0.1 });
-    this.number(quick, "\uC870\uB9AC\uAC1C f-number", "aperture", { min: 0.7, max: 32, step: 0.1 });
+    this.number(quick, "\uC870\uB9AC\uAC1C f-number", "aperture", { min: 0.7, max: 32, step: 0.1, stops: APERTURE_STOPS });
     const power = this.select(quick, "\uCD9C\uB825 \uC120\uD0DD", "denominator", {}, () => {
       this.plugin.update("denominator", Number(power.value));
       this.syncNumeric("denominator");
@@ -1623,8 +1705,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (zone) this.fieldHost.before(zone);
     this.resultDetails = node(this.root, "section", void 0, "pfm-result-details");
     const camera = this.details("\uCE74\uBA54\uB77C\xB7\uB80C\uC988\xB7CoC", "camera");
-    node(camera, "p", "\uC13C\uC11C\uB294 \uD504\uB9AC\uC14B\uC73C\uB85C \uAC04\uB2E8\uD788 \uC120\uD0DD\uD558\uC138\uC694. \uCE58\uC218\uB97C \uC9C1\uC811 \uC218\uC815\uD558\uBA74 \uC0AC\uC6A9\uC790 \uC13C\uC11C\uB85C \uC804\uD658\uB429\uB2C8\uB2E4.");
-    this.select(quick, "\uC13C\uC11C \uD504\uB9AC\uC14B", "sensor", { ...Object.fromEntries(Object.entries(sensors).map(([k, v]) => [k, v.name])), custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815" }, () => {
+    node(camera, "p", "\uAE30\uBCF8\uC740 35mm \uD544\uB984 \uD504\uB808\uC784(36\xD724mm, FM2 \uAE30\uC900)\uC785\uB2C8\uB2E4. \uD558\uD504\uD504\uB808\uC784\xB7\uC911\uD615(645\xB76\xD76\xB76\xD77)\xB7\uB514\uC9C0\uD138(APS-C 23.6\xD715.6 \uB610\uB294 22.3\xD714.9, \uB9C8\uC774\uD06C\uB85C \uD3EC\uC11C\uC988 17.3\xD713mm) \uD3EC\uB9F7\uB3C4 \uACE0\uB97C \uC218 \uC788\uACE0, \uCE58\uC218\uB97C \uC9C1\uC811 \uC218\uC815\uD558\uBA74 \uC0AC\uC6A9\uC790 \uD3EC\uB9F7\uC73C\uB85C \uC804\uD658\uB429\uB2C8\uB2E4.");
+    this.select(quick, "\uD544\uB984\xB7\uD3EC\uB9F7 \uD504\uB9AC\uC14B", "sensor", { ...Object.fromEntries(Object.entries(sensors).map(([k, v]) => [k, v.name])), custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815" }, () => {
       const preset = sensors[this.plugin.state.inputs.sensor];
       if (preset) {
         this.plugin.update("width", preset.width);
@@ -1633,27 +1715,27 @@ var PhotoView = class extends import_obsidian.ItemView {
         this.syncNumeric("height");
       }
     });
-    this.select(camera, "\uD480\uD504\uB808\uC784 \uD658\uC0B0 \uAE30\uC900", "cropBasis", { nominal: "\uD504\uB9AC\uC14B \uBA85\uBAA9 \uACC4\uC218 (\uC0AC\uC6A9\uC790 \uC13C\uC11C\uB294 \uC2E4\uCE58\uC218)", dimensions: "\uC13C\uC11C \uC2E4\uCE58\uC218 \uB300\uAC01 \uBE44\uC728" });
-    this.number(camera, "\uC13C\uC11C \uAC00\uB85C (mm)", "width");
-    this.number(camera, "\uC13C\uC11C \uC138\uB85C (mm)", "height");
+    this.select(camera, "35mm \uD658\uC0B0 \uAE30\uC900", "cropBasis", { nominal: "\uD504\uB9AC\uC14B \uBA85\uBAA9 \uACC4\uC218 (\uC0AC\uC6A9\uC790 \uD3EC\uB9F7\uC740 \uC2E4\uCE58\uC218)", dimensions: "\uD504\uB808\uC784 \uC2E4\uCE58\uC218 \uB300\uAC01 \uBE44\uC728" });
+    this.number(camera, "\uD504\uB808\uC784 \uAC00\uB85C (mm)", "width");
+    this.number(camera, "\uD504\uB808\uC784 \uC138\uB85C (mm)", "height");
     for (const key of ["width", "height"]) this.listen(this.numeric.get(key).input, "input", () => {
       this.plugin.update("sensor", "custom");
       const s = this.root.querySelector("select[data-key=sensor]");
       if (s) s.value = "custom";
       this.changed();
     });
-    this.number(quick, "ISO", "iso");
-    this.number(quick, "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC (mm)", "focal", { min: 8, max: 200, step: 1 });
+    this.number(quick, "\uD544\uB984 \uAC10\uB3C4 (ISO)", "iso");
+    this.number(quick, "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC (mm)", "focal", { min: 14, max: 200, step: 1 });
     for (const selector of ["[data-field=cameraDistance]", "[data-field=aperture]", "label[data-field=denominator]:not(.pfm-custom-power)", "[data-field=iso]", "[data-field=focal]", "[data-field=sensor]", ".pfm-check", ".pfm-flash-distance", ".pfm-custom-power"]) {
       const field2 = quick.querySelector(selector);
       if (field2) quick.append(field2);
     }
-    this.select(camera, "CoC \uBC29\uC2DD", "cocMode", { estimate: "\uC13C\uC11C \uB300\uAC01 \xF71500 \uCD94\uC815", custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 mm" });
+    this.select(camera, "CoC \uBC29\uC2DD", "cocMode", { film: "\uD544\uB984 \uAD00\uB840 0.03mm (35mm \uAE30\uC900, \uD3EC\uB9F7\uC5D0 \uBE44\uB840)", estimate: "\uD504\uB808\uC784 \uB300\uAC01 \xF71500 \uCD94\uC815 (\uB514\uC9C0\uD138 \uAD00\uB840)", custom: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 mm" });
     this.number(camera, "\uC0AC\uC6A9\uC790 CoC (mm)", "coc");
-    node(camera, "p", "CoC\uB294 \uAC10\uC0C1 \uD06C\uAE30\xB7\uC2DC\uB825\xB7\uD655\uB300\uC728\uC5D0 \uB530\uB978 \uD5C8\uC6A9 \uCC29\uB780\uC6D0\uC785\uB2C8\uB2E4. \uB300\uAC01/1500\uC740 \uACBD\uD5D8\uC801 \uAE30\uBCF8\uAC12\uC774\uBA70 \uD53D\uC140 \uB2E8\uC704 \uC120\uBA85\uB3C4\uB97C \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. APS-C \uD06C\uAE30\uB294 \uC81C\uC870\uC0AC\uB9C8\uB2E4 \uB2E4\uB985\uB2C8\uB2E4.");
+    node(camera, "p", "CoC\uB294 \uAC10\uC0C1 \uD06C\uAE30\xB7\uC2DC\uB825\xB7\uD655\uB300\uC728\uC5D0 \uB530\uB978 \uD5C8\uC6A9 \uCC29\uB780\uC6D0\uC785\uB2C8\uB2E4. \uAE30\uBCF8\uAC12 0.03mm\uB294 \uB2C8\uCF58 \uB80C\uC988 \uC2EC\uB3C4 \uB208\uAE08\uC758 \uD544\uB984 \uAD00\uB840\uC774\uBA70 36\xD724mm \uAE30\uC900\uC785\uB2C8\uB2E4(\uB2E4\uB978 \uD3EC\uB9F7\uC740 \uB300\uAC01\uC5D0 \uBE44\uB840). \uB300\uAC01/1500\uC740 \uB514\uC9C0\uD138 \uAD00\uB840\uC758 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC808\uB300 \uC120\uBA85\uB3C4\uB97C \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     const fl = this.details("\uD50C\uB798\uC2DC\xB7GN \uC870\uAC74\xB7\uC870\uC0AC\uAC01", "flash");
     node(fl, "h3", "\uBC1C\uAD11 \uC870\uAC74");
-    this.select(fl, "\uBC1C\uAD11 \uC870\uAC74", "mode", { manual: "\uC218\uB3D9 \xB7 \uC9C1\uC811\uAD11 \xB7 \uC77C\uBC18 \uB3D9\uC870", ttl: "TTL (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", hss: "HSS (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", bounce: "\uBC14\uC6B4\uC2A4 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", modifier: "\uC18C\uD504\uD2B8\uBC15\uC2A4 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", near: "\uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)" });
+    this.select(fl, "\uBC1C\uAD11 \uC870\uAC74", "mode", { manual: "\uC218\uB3D9 \xB7 \uC9C1\uC811\uAD11 \xB7 \uC77C\uBC18 \uB3D9\uC870", ttl: "TTL (FM2 \uBCF8\uCCB4 \uBBF8\uC9C0\uC6D0)", hss: "HSS (FM2 \uBBF8\uC9C0\uC6D0 \xB7 \uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", bounce: "\uBC14\uC6B4\uC2A4 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", modifier: "\uC18C\uD504\uD2B8\uBC15\uC2A4 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)", near: "\uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0 (\uACC4\uC0B0 \uBBF8\uC9C0\uC6D0)" });
     this.select(fl, "GN \uC785\uB825 \uBAA8\uB4DC", "gnMode", { manual: "\uC218\uB3D9 GN", equipment: "\uC120\uD0DD \uC7A5\uBE44 \uD45C" }, () => {
       applyEquipment(this.plugin.state);
       this.syncNumeric("gn");
@@ -1694,10 +1776,10 @@ var PhotoView = class extends import_obsidian.ItemView {
       this.changed();
     });
     node(fl, "h3", "\uC870\uC0AC \uBC94\uC704");
-    this.select(fl, "\uC870\uC0AC\uAC01 \uC785\uB825 \uBC29\uC2DD", "coverage", { approx: "\uD480\uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815 (\uADFC\uC0AC)", angles: "\uC218\uD3C9\xB7\uC218\uC9C1 \uC870\uC0AC\uAC01 \uC9C1\uC811 \uC785\uB825" });
+    this.select(fl, "\uC870\uC0AC\uAC01 \uC785\uB825 \uBC29\uC2DD", "coverage", { approx: "35mm \uD504\uB808\uC784 \uCEE4\uBC84\uB9AC\uC9C0 \uAC00\uC815 (\uADFC\uC0AC)", angles: "\uC218\uD3C9\xB7\uC218\uC9C1 \uC870\uC0AC\uAC01 \uC9C1\uC811 \uC785\uB825" });
     this.number(fl, "\uC218\uD3C9 \uC870\uC0AC\uAC01 (\xB0)", "horizontal");
     this.number(fl, "\uC218\uC9C1 \uC870\uC0AC\uAC01 (\xB0)", "vertical");
-    node(fl, "p", "\uC90C mm \uADFC\uC0AC \uBAA8\uB4DC\uB294 36\xD724mm \uC9C1\uC120\uD22C\uC601 \uD654\uAC01\uC744 \uAC00\uC815\uD569\uB2C8\uB2E4. \uC81C\uC870\uC0AC \uAE30\uC900 \uD3EC\uB9F7\uC744 \uD655\uC778\uD55C \uC2E4\uCE21 \uC870\uC0AC\uAC01\uC774 \uC788\uC73C\uBA74 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.");
+    node(fl, "p", "FM2 \uD50C\uB798\uC2DC \uB3D9\uC870\uB294 \uC154\uD130 1/250\uCD08 \uC774\uD558(FM2n, \uCD08\uAE30 FM2\uB294 1/200\uCD08)\uC774\uBA70 HSS\xB7TTL\uC774 \uC5C6\uC2B5\uB2C8\uB2E4. \uC90C mm \uADFC\uC0AC \uBAA8\uB4DC\uB294 36\xD724mm \uC9C1\uC120\uD22C\uC601 \uD654\uAC01\uC744 \uAC00\uC815\uD569\uB2C8\uB2E4. \uC81C\uC870\uC0AC \uAE30\uC900 \uD3EC\uB9F7\uC744 \uD655\uC778\uD55C \uC2E4\uCE21 \uC870\uC0AC\uAC01\uC774 \uC788\uC73C\uBA74 \uC9C1\uC811 \uC785\uB825\uD558\uC138\uC694.");
     this.equipmentPanel();
     const advanced = this.details("\uD5C8\uC6A9 \uBC94\uC704\xB7\uADF8\uB9BC \uBC94\uC704\xB7\uACC4\uC0B0 \uADFC\uAC70", "advanced");
     this.number(advanced, "\uC801\uC815 \uB178\uCD9C \uD5C8\uC6A9 \uBC94\uC704 \xB1EV", "tolerance");
@@ -1705,8 +1787,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     const hyper = this.button(advanced, "\uACFC\uCD08\uC810\uAC70\uB9AC\uC5D0 \uCD08\uC810 \uB9DE\uCD94\uAE30", () => this.focusHyperfocal());
     hyper.className = "pfm-wide";
     node(advanced, "p", "\uC720\uD6A8 GN=G\u221Ap\u221A(ISO/100)\xD72^(\u2212L/2), \uC801\uC815 \uAC70\uB9AC=GN/f-number. \uD544\uC694 \uCD9C\uB825=(Nr/G)\xB2(100/ISO)2^L. \uB178\uCD9C \uCC28\uC774=2log\u2082(d/r). \uC591\uC218=\uC608\uC0C1 \uACFC\uB2E4, \uC74C\uC218=\uC608\uC0C1 \uBD80\uC871. \uBE5B\uC774 \uC774 \uAC70\uB9AC\uC5D0\uC11C \uB05D\uB098\uB294 \uAC83\uC740 \uC544\uB2D9\uB2C8\uB2E4.");
-    node(advanced, "p", "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f. \uADFC\uAC70\uB9AC=hs/(h+s\u2212f), \uC6D0\uAC70\uB9AC=hs/(h\u2212s+f). s\u2265H\uC774\uBA74 \u221E. \uAD11\uD559\uC740 mm, \uCD9C\uB825\uC740 m. \uC9C1\uC120\uD22C\uC601 \uD654\uAC01=2atan(\uC13C\uC11C \uAE38\uC774/2f). \uC870\uC0AC \uBC94\uC704=2r\xB7tan(\uAC01/2).");
-    node(advanced, "p", "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC\uB294 \uBC15\uB9C9\uB80C\uC988 \uC8FC\uD3C9\uBA74 \uAE30\uC900\uC774\uBA70 \uC13C\uC11C\uBA74 \uAE30\uC900 \uAC70\uB9AC\uC640 \uB2E4\uB985\uB2C8\uB2E4. \uD654\uAC01\xB7\uD504\uB808\uC784\uC740 \uBB34\uD55C\uB300 \uCD08\uC810\uC758 \uC9C1\uC120\uD22C\uC601 \uADFC\uC0AC\uB85C \uADFC\uC811 \uCD2C\uC601 \uBC30\uC728 \uBCC0\uD654\uB294 \uBBF8\uBC18\uC601\uD569\uB2C8\uB2E4.");
+    node(advanced, "p", "H=f\xB2/(N\xB7CoC)+f, h=H\u2212f. \uADFC\uAC70\uB9AC=hs/(h+s\u2212f), \uC6D0\uAC70\uB9AC=hs/(h\u2212s+f). s\u2265H\uC774\uBA74 \u221E. \uAD11\uD559\uC740 mm, \uCD9C\uB825\uC740 m. \uC9C1\uC120\uD22C\uC601 \uD654\uAC01=2atan(\uD504\uB808\uC784 \uAE38\uC774/2f). \uC870\uC0AC \uBC94\uC704=2r\xB7tan(\uAC01/2).");
+    node(advanced, "p", "\uBAA8\uB4E0 \uAC70\uB9AC\uB294 \uB80C\uC988 \uAC70\uB9AC \uB208\uAE08\uACFC \uAC19\uC740 \uD544\uB984\uBA74(\uBC14\uB514\uC758 \u29B5 \uD45C\uC2DC) \uAE30\uC900\uC785\uB2C8\uB2E4. \uBC15\uB9C9\uB80C\uC988 \uBAA8\uB378\uC774\uB77C \uC2E4\uC81C \uB80C\uC988\uC640 \uC870\uAE08 \uB2E4\uB97C \uC218 \uC788\uACE0, \uB4F1\uBC30\uBCF4\uB2E4 \uAC00\uAE4C\uC6B4 \uC811\uC0AC\uB294 \uACC4\uC0B0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uD654\uAC01\uC740 \uBB34\uD55C\uB300 \uCD08\uC810 \uAE30\uC900\uC774\uBA70 \uD504\uB808\uC784 \uD06C\uAE30\uB294 \uCD08\uC810 \uAC70\uB9AC\uC758 \uBC30\uC728\uB85C \uACC4\uC0B0\uD569\uB2C8\uB2E4.");
     node(advanced, "p", limitations);
     const about = this.details("\uD50C\uB7EC\uADF8\uC778 \uC815\uBCF4\xB7\uC6D0\uBCF8 \uC800\uC791\uAD8C");
     node(about, "p", `\uC0AC\uC9C4 \uCD2C\uC601 \uB3C4\uC6B0\uBBF8 ${this.plugin.manifest.version} \xB7 depth-of-field\uC758 \uC2EC\uB3C4\xB7\uD654\uAC01 \uC2DC\uAC01\uD654\uB97C \uBAA8\uBC14\uC77C Obsidian\uC6A9\uC73C\uB85C \uC218\uC815\xB7\uC7AC\uAD6C\uD604\uD558\uACE0 \uC218\uB3D9 \uD50C\uB798\uC2DC \uACC4\uC0B0\uC744 \uD655\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uC6D0\uC791\uC790\uC758 \uACF5\uC2DD \uB610\uB294 \uD6C4\uC6D0 \uD50C\uB7EC\uADF8\uC778\uC774 \uC544\uB2D9\uB2C8\uB2E4.`);
@@ -1747,7 +1829,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     openNote.hidden = !this.lastNote;
     const notes = node(footer, "details", void 0, "pfm-footer-notes");
     node(notes, "summary", "\uD45C\uC2DC\xB7\uC800\uC7A5 \uC548\uB0B4");
-    node(notes, "p", "1m \uC774\uD558 \uAC70\uB9AC\uB294 cm\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uAC70\uB9AC \uC785\uB825\uC740 \uC785\uB825\uCE78\uC758 \uB2E8\uC704\uB97C \uB530\uB974\uBA70 \uD3B8\uC9D1\uC744 \uB9C8\uCE58\uBA74 \uB2E8\uC704\uAC00 \uC790\uB3D9 \uC804\uD658\uB429\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD558\uBA70 \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC785\uB2C8\uB2E4. \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    node(notes, "p", "\uAC70\uB9AC\uB294 \uC18C\uC218 \uCCAB\uC9F8 \uC790\uB9AC\uAE4C\uC9C0\uB9CC \uD45C\uC2DC\uD558\uACE0 1m \uC774\uD558\uB294 cm\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4(\uB0B4\uBD80 \uAC12\uACFC \uACC4\uC0B0\uC740 \uADF8\uB300\uB85C). \uAC70\uB9AC \uC785\uB825\uC740 \uC785\uB825\uCE78\uC758 \uB2E8\uC704\uB97C \uB530\uB974\uBA70 \uD3B8\uC9D1\uC744 \uB9C8\uCE58\uBA74 \uB2E8\uC704\uAC00 \uC790\uB3D9 \uC804\uD658\uB429\uB2C8\uB2E4. \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD558\uBA70 \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC785\uB2C8\uB2E4. \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     node(notes, "p", "\uD604\uC7AC \uD0ED: \uC2EC\uB3C4\xB7\uD654\uAC01 \uB610\uB294 \uD50C\uB798\uC2DC \uACB0\uACFC\uB9CC \uC800\uC7A5 \xB7 \uD1B5\uD569/\uC804\uCCB4: \uBAA8\uB4E0 \uACC4\uC0B0 \uC870\uAC74 \uD544\uC694 \xB7 \uC77C\uBC18 Markdown \xB7 \uC0C8 \uB178\uD2B8 \uC0DD\uC131 \xB7 \uC624\uD504\uB77C\uC778");
     const version = node(this.root, "p", `v${this.plugin.manifest.version}`, "pfm-version");
     version.setAttribute("aria-label", `\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804 ${this.plugin.manifest.version}`);
@@ -1788,22 +1870,22 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.zoneResult.after(limits);
     const coc = this.button(lens, "CoC \uC124\uC815\uC73C\uB85C \uC774\uB3D9", () => this.jumpSettings("camera"));
     coc.dataset.zoneCoc = "true";
-    node(section, "p", "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC(m)\uB294 \uB80C\uC988\uC758 \uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)\uC640 \uB2E4\uB985\uB2C8\uB2E4. CoC \uAE30\uC900\uC758 \uD5C8\uC6A9 \uBC94\uC704\uC774\uBA70 \uC808\uB300\uC801\uC778 \uC120\uBA85\xB7\uD750\uB9BC \uACBD\uACC4\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uC774 \uB3C4\uAD6C\uB294 \uCD2C\uC601 \uCC38\uACE0\uC6A9 \uACC4\uC0B0\uC774\uBA70 \uCE74\uBA54\uB77C\xB7\uB80C\uC988\uB97C \uC81C\uC5B4\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    node(section, "p", "\uC870\uB9AC\uAC1C \uB2E8\uACC4 \uAE30\uBCF8\uAC12\uC740 \uB2C8\uCF58 AI/AI-S \uC870\uB9AC\uAC1C \uB9C1\uC758 \uC804 \uB2E8\uACC4 \uD074\uB9AD\uC785\uB2C8\uB2E4. \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC(m)\uB294 \uB80C\uC988\uC758 \uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC(mm)\uC640 \uB2E4\uB985\uB2C8\uB2E4. CoC \uAE30\uC900\uC758 \uD5C8\uC6A9 \uBC94\uC704\uC774\uBA70 \uC808\uB300\uC801\uC778 \uC120\uBA85\xB7\uD750\uB9BC \uACBD\uACC4\uAC00 \uC544\uB2D9\uB2C8\uB2E4. \uC774 \uB3C4\uAD6C\uB294 \uCD2C\uC601 \uCC38\uACE0\uC6A9 \uACC4\uC0B0\uC774\uBA70 \uCE74\uBA54\uB77C\xB7\uB80C\uC988\uB97C \uC81C\uC5B4\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
   }
   paintEquivalence() {
     const i = this.plugin.state.inputs;
     this.equivalent.replaceChildren();
     try {
       const e = equivalence(i);
-      node(this.equivalent, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)} \u2192 \uD480\uD504\uB808\uC784 \uD654\uAC01 ${fmt(e.focal, 2)}mm / \uC2EC\uB3C4 \uC57D f/${fmt(e.aperture, 2)}`);
+      node(this.equivalent, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm f/${fmt(i.aperture)} \u2192 35mm \uD658\uC0B0 \uD654\uAC01 ${fmt(e.focal, 2)}mm / \uC2EC\uB3C4 \uC57D f/${fmt(e.aperture, 2)}`);
       node(this.equivalent, "p", `\uB178\uCD9C\xB7\uD50C\uB798\uC2DC \uACC4\uC0B0\uC740 \uC2E4\uC81C \uC870\uB9AC\uAC1C f/${fmt(i.aperture)} \uC0AC\uC6A9`);
-      const detailText = `\uC2E4\uC81C \uC13C\uC11C ${fmt(i.width)}\xD7${fmt(i.height)}mm \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7. \uD654\uAC01\xB7\uC2E4\uC81C \uC2EC\uB3C4\uB294 \uC774 \uCE58\uC218\uB85C \uACC4\uC0B0\uD569\uB2C8\uB2E4. ${e.differentAspect ? "\uD654\uBA74\uBE44\uAC00 \uB2E4\uB974\uBBC0\uB85C \uB300\uAC01 \uAE30\uC900 \uD658\uC0B0\uC785\uB2C8\uB2E4. " : ""}\uC2E4\uC81C \uC870\uB9AC\uAC1C\uC640 \uB178\uCD9C\uC740 f/${fmt(i.aperture)}\uC774\uBA70 ISO\xB7\uD50C\uB798\uC2DC \uCD9C\uB825\uC740 \uBC14\uB00C\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`;
+      const detailText = `\uC2E4\uC81C \uD504\uB808\uC784 ${fmt(i.width)}\xD7${fmt(i.height)}mm \xB7 \uC2E4\uCE58\uC218 \uB300\uAC01 \uACC4\uC218 ${fmt(e.dimensional, 4)}\xD7. \uD654\uAC01\xB7\uC2E4\uC81C \uC2EC\uB3C4\uB294 \uC774 \uCE58\uC218\uB85C \uACC4\uC0B0\uD569\uB2C8\uB2E4. ${e.differentAspect ? "\uD654\uBA74\uBE44\uAC00 \uB2E4\uB974\uBBC0\uB85C \uB300\uAC01 \uAE30\uC900 \uD658\uC0B0\uC785\uB2C8\uB2E4. " : ""}\uC2E4\uC81C \uC870\uB9AC\uAC1C\uC640 \uB178\uCD9C\uC740 f/${fmt(i.aperture)}\uC774\uBA70 ISO\xB7\uD50C\uB798\uC2DC \uCD9C\uB825\uC740 \uBC14\uB00C\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`;
       if (i.cocMode === "custom") node(this.equivalent, "p", "\uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC \xB7 \uC2EC\uB3C4 \uB300\uC751\uAC12\uC740 \uC815\uD655\uD55C \uC77C\uCE58\uAC00 \uC544\uB2D9\uB2C8\uB2E4.", "pfm-equivalence-caveat");
       const details = node(this.equivalent, "details");
       node(details, "summary", "\uC2EC\uB3C4 \uB300\uC751 \uC870\uAC74\xB7\uD654\uAC01");
-      node(details, "small", `${sensors[i.sensor]?.name ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 ${e.basis} ${fmt(e.crop, 3)}\xD7. ${detailText}`);
+      node(details, "small", `${sensors[i.sensor]?.name ?? "\uC0AC\uC6A9\uC790 \uD3EC\uB9F7"} \xB7 ${e.basis} ${fmt(e.crop, 3)}\xD7. ${detailText}`);
       node(details, "p", "\uAC19\uC740 \uCD2C\uC601 \uC704\uCE58\xB7\uAD6C\uB3C4\uC640 \uBE44\uAD50 \uAC00\uB2A5\uD55C \uAC10\uC0C1 \uC870\uAC74\uC5D0\uC11C\uC758 \uADFC\uC0AC\uC785\uB2C8\uB2E4. \uADFC\uC811 \uCD2C\uC601\xB7\uD3EC\uCEE4\uC2A4 \uBE0C\uB9AC\uB529\xB7\uC11C\uB85C \uB2E4\uB978 \uD654\uBA74\uBE44\uC5D0\uC11C\uB294 \uC644\uC804 \uC77C\uCE58\uB97C \uBCF4\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-      node(details, "p", i.cocMode === "custom" ? "\uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC: \uBE44\uAD50 \uAC10\uC0C1 \uC870\uAC74\uC774 \uB2EC\uB77C \uAE30\uBCF8 \uC2EC\uB3C4 \uD658\uC0B0\uC744 \uC815\uD655\uD55C \uC77C\uCE58\uB85C \uBCFC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." : "\uAE30\uBCF8 CoC\uB294 \uC13C\uC11C \uB300\uAC01/1500. \uBE44\uAD50\uD560 \uD480\uD504\uB808\uC784 CoC\uB3C4 \uAC19\uC740 \uAC10\uC0C1 \uAE30\uC900\uC73C\uB85C \uB300\uC751\uD574\uC57C \uD569\uB2C8\uB2E4. \uBA85\uBAA9 \uACC4\uC218\uC640 \uC2E4\uCE58\uC218 \uACC4\uC218 \uCC28\uC774\uAC00 \uC788\uC5B4 \uC815\uD655\uD55C \uC2EC\uB3C4 \uC77C\uCE58\uB97C \uB73B\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      node(details, "p", i.cocMode === "custom" ? "\uC0AC\uC6A9\uC790 \uC9C0\uC815 CoC: \uBE44\uAD50 \uAC10\uC0C1 \uC870\uAC74\uC774 \uB2EC\uB77C \uAE30\uBCF8 \uC2EC\uB3C4 \uD658\uC0B0\uC744 \uC815\uD655\uD55C \uC77C\uCE58\uB85C \uBCFC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." : (i.cocMode === "film" ? "\uAE30\uBCF8 CoC\uB294 35mm \uD544\uB984 0.03mm\uB97C \uD504\uB808\uC784 \uB300\uAC01\uC5D0 \uBE44\uB840\uD574 \uD658\uC0B0\uD55C \uAC12\uC785\uB2C8\uB2E4." : "CoC\uB294 \uD504\uB808\uC784 \uB300\uAC01/1500\uC785\uB2C8\uB2E4.") + " \uBE44\uAD50\uD560 35mm CoC\uB3C4 \uAC19\uC740 \uAC10\uC0C1 \uAE30\uC900\uC73C\uB85C \uB300\uC751\uD574\uC57C \uD569\uB2C8\uB2E4. \uBA85\uBAA9 \uACC4\uC218\uC640 \uC2E4\uCE58\uC218 \uACC4\uC218 \uCC28\uC774\uAC00 \uC788\uC5B4 \uC815\uD655\uD55C \uC2EC\uB3C4 \uC77C\uCE58\uB97C \uB73B\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
       const o = optics(i);
       node(details, "p", `\uC2E4\uC81C \uD654\uAC01 \uC218\uD3C9 ${fmt(o.horizontal, 1)}\xB0 \xB7 \uC218\uC9C1 ${fmt(o.vertical, 1)}\xB0 \xB7 \uB300\uAC01 ${fmt(o.diagonal, 1)}\xB0`);
     } catch (e) {
@@ -1997,12 +2079,12 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.root.dataset.coverage = inputs.coverage;
     for (const key of ["coc", "horizontal", "vertical"]) {
       const pair = this.numeric.get(key);
-      if (pair) pair.input.disabled = key === "coc" ? inputs.cocMode === "estimate" : inputs.coverage === "approx";
+      if (pair) pair.input.disabled = key === "coc" ? inputs.cocMode !== "custom" : inputs.coverage === "approx";
     }
     const i = this.plugin.state.inputs;
     const selected = selectedEquipment(this.plugin.state);
     const compactFlash = field(this.plugin.state).simple && (i.tab === "flash" || i.tab === "combined");
-    this.context.textContent = compactFlash ? `\uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"}${i.mode === "manual" ? "" : " \xB7 GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : `${sensors[i.sensor]?.name.split(" (")[0] ?? "\uC0AC\uC6A9\uC790 \uC13C\uC11C"} \xB7 \uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)}${i.tab === "zone" ? "" : ` \xB7 ISO ${fmt(i.iso, 0)}`}${i.tab === "flash" || i.tab === "combined" ? ` / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"} \xB7 ${i.mode === "manual" ? "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870" : "GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : ""}`;
+    this.context.textContent = compactFlash ? `\uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"}${i.mode === "manual" ? "" : " \xB7 GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : `${sensors[i.sensor]?.name.split(" (")[0] ?? "\uC0AC\uC6A9\uC790 \uD3EC\uB9F7"} \xB7 \uC2E4\uC81C ${fmt(i.focal)}mm \xB7 f/${fmt(i.aperture)}${i.tab === "zone" ? "" : ` \xB7 ISO ${fmt(i.iso, 0)}`}${i.tab === "flash" || i.tab === "combined" ? ` / ${i.gnMode === "equipment" ? selected?.name ?? "\uC7A5\uBE44 \uBBF8\uC120\uD0DD" : "\uC218\uB3D9 GN"} \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"} \xB7 ${i.mode === "manual" ? "\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870" : "GN \uBAA8\uB378 \uBBF8\uC9C0\uC6D0"}` : ""}`;
     const tabSave = this.root.querySelector(".pfm-tab-save");
     if (tabSave) tabSave.textContent = `${{ flash: "\uD50C\uB798\uC2DC", dof: "\uC2EC\uB3C4\xB7\uD654\uAC01", combined: "\uD1B5\uD569", zone: "\uC874 \uD3EC\uCEE4\uC2F1" }[i.tab]} \uACB0\uACFC \uC800\uC7A5`;
     if (this.outputUndo && this.outputUndo.applied !== i.denominator) {
@@ -2070,6 +2152,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       const d = node(this.resultDetails, "details", void 0, "pfm-flash-details");
       node(d, "summary", "\uD544\uC694 \uCD9C\uB825\xB7\uC870\uB9AC\uAC1C\xB7\uAC70\uB9AC\uBCC4 \uD45C");
       node(d, "p", `${f.powerLabel} \xB7 ${i.gnMode === "equipment" ? "\uC7A5\uBE44 \uD45C" : "\uC218\uB3D9 GN"}`);
+      node(d, "p", "FM2 \uD50C\uB798\uC2DC \uB3D9\uC870: \uC154\uD130 1/250\uCD08 \uC774\uD558 (\uCD08\uAE30 FM2\uB294 1/200\uCD08) \xB7 TTL\xB7HSS \uC5C6\uC74C \xB7 \uC218\uB3D9 \uB610\uB294 \uC624\uD1A0 \uC0AC\uC774\uB9AC\uC2A4\uD130 \uD50C\uB798\uC2DC");
       node(d, "p", i.conditions);
       node(d, "p", `\xB1${fmt(i.tolerance)}EV: ${metres(f.low)} ~ ${metres(f.high)}. \uAC00\uAE4C\uC6B0\uBA74 \uACFC\uB2E4 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.`);
       node(d, "p", `\uD544\uC694 \uC870\uB9AC\uAC1C f/${fmt(f.requiredAperture)} \xB7 \uD544\uC694 \uCD9C\uB825 ${fmt(f.needed * 100)}% \xB7 ${f.status}`);
@@ -2111,7 +2194,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(od, "summary", "\uC804\uCCB4 \uC2EC\uB3C4\xB7\uACFC\uCD08\uC810\xB7\uD654\uAC01\xB7\uD68C\uC808");
       node(od, "p", `\uADFC\uAC70\uB9AC ${metres(o.near)} \xB7 \uC6D0\uAC70\uB9AC ${metres(o.far)} \xB7 \uC804\uCCB4 ${metres(o.total)} \xB7 \uACFC\uCD08\uC810 ${metres(o.hyperfocal)}`);
       node(od, "p", `\uD654\uAC01 \uC218\uD3C9 ${fmt(o.horizontal, 1)}\xB0 / \uC218\uC9C1 ${fmt(o.vertical, 1)}\xB0 / \uB300\uAC01 ${fmt(o.diagonal, 1)}\xB0`);
-      node(od, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm \u2192 \uC2E4\uCE58\uC218 \uB300\uAC01 \uAE30\uC900 \uD658\uC0B0 ${fmt(o.equivalent, 1)}mm \xB7 CoC ${fmt(o.c, 5)}mm`);
+      node(od, "p", `\uC2E4\uC81C ${fmt(i.focal)}mm \u2192 \uC2E4\uCE58\uC218 \uB300\uAC01 \uAE30\uC900 35mm \uD658\uC0B0 ${fmt(o.equivalent, 1)}mm \xB7 CoC ${fmt(o.c, 5)}mm`);
       node(od, "p", `\uD68C\uC808 \uADFC\uC0AC: \uD30C\uC7A5 550nm, Airy \uC9C0\uB984 ${fmt(o.airy, 5)}mm (${fmt(o.airy / o.c)}\xD7CoC). ${o.airy > o.c ? "CoC\uBCF4\uB2E4 \uCEE4\uC9C8 \uC218 \uC788\uC74C." : "CoC \uC774\uD558."} \uC808\uB300 \uC120\uBA85\uB3C4 \uD310\uC815\uC774 \uC544\uB2D9\uB2C8\uB2E4.`);
     } catch (e) {
       node(dof, "p", e instanceof Error ? e.message : String(e), "pfm-error");
