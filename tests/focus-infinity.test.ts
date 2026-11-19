@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {defaults as filmDefaults,assignInput} from '../src/model';import {digitalDefaults as defaults} from './digital-reference';
 import {optics,flash,coverage} from '../src/engine';
 import {restore} from '../src/storage';
-import {capture,applyShot,restoreField,field} from '../src/field';
+import {restoreField,shootingKeys} from '../src/field';
 import {note,validateNote} from '../src/note';
 import {solveZone} from '../src/zone';
 const close=(a:number,b:number,tol=1e-9)=>assert.ok(Math.abs(a-b)<tol,`${a} != ${b}`);
@@ -26,14 +26,12 @@ test('focusInfinity restores with false fallback',()=>{
  assert.equal(restore({version:2,inputs:{...defaults,focusInfinity:'yes'},equipment:[]}).inputs.focusInfinity,false);
 });
 test('shots: old shot without focusInfinity kept, round-trip with infinity, bad type rejected',()=>{
- const s=restore(null);const plain=capture(s,'old',true);const {focusInfinity:_,...values}=plain.values;
+ const values={...Object.fromEntries(shootingKeys.map(key=>[key,defaults[key]])),cameraDistance:3,flashDistance:4};
  const back=restoreField({version:1,shots:[{id:'a',name:'old',values},{id:'b',name:'bad',values:{...values,focusInfinity:'x'}}]});
  assert.deepEqual(back.shots.map(x=>x.id),['a']);assert.ok(!('focusInfinity' in back.shots[0].values));
- s.inputs.focusInfinity=true;const shot=capture(s,'inf',true);assert.equal(shot.values.focusInfinity,true);
+ const shot={id:'inf',name:'inf',values:{...values,focusInfinity:true}};
  const kept=restoreField(JSON.parse(JSON.stringify({version:1,shots:[shot]}))).shots[0];assert.equal(kept.values.focusInfinity,true);
- s.inputs.focusInfinity=false;applyShot(s,kept);assert.equal(s.inputs.focusInfinity,true);
- applyShot(s,back.shots[0]);assert.equal(s.inputs.focusInfinity,false);
- s.inputs.focusInfinity=true;applyShot(s,capture(s,'no distance',false));assert.equal(s.inputs.focusInfinity,true);
+
 });
 test('DOF/zone notes save with infinity and print it',()=>{
  const i={...defaults,focusInfinity:true};

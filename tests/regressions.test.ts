@@ -1,3 +1,4 @@
+import {presetDefaults} from '../src/shooting-presets';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -9,18 +10,18 @@ import {stepDistance} from '../src/units';
 
 const view=readFileSync(new URL('../src/view.ts',import.meta.url),'utf8');
 
-test('blank input preserves its last finite value while equipment and tab changes persist',()=>{
+test('blank input preserves its last finite value while equipment and mode changes persist',()=>{
  const equipment={id:'fixture',name:'test',conditions:'ISO100 full',source:'synthetic',table:{'50':40},minDenominator:256,steps:defaults.steps};
- const saved=snapshot({version:2,inputs:{...defaults,aperture:NaN,tab:'dof'},equipment:[equipment]}, {...defaults,aperture:8});
- assert.equal(saved.inputs.aperture,8);assert.equal(saved.inputs.tab,'dof');assert.deepEqual(restore(saved).equipment,[equipment]);assert.ok(!JSON.stringify(saved).includes('null'));
+ const saved=snapshot({...presetDefaults(),version:2,inputs:{...defaults,aperture:NaN,zoneOn:true},equipment:[equipment]}, {...defaults,aperture:8});
+ assert.equal(saved.inputs.aperture,8);assert.equal(saved.inputs.zoneOn,true);assert.deepEqual(restore(saved).equipment,[equipment]);assert.ok(!JSON.stringify(saved).includes('null'));
 });
 test('rapid valid then blank edits preserve latest finite snapshot',()=>{
- const one=snapshot({version:2,inputs:{...defaults,cameraDistance:7},equipment:[]},defaults);
- const two=snapshot({version:2,inputs:{...defaults,cameraDistance:NaN,flashDistance:NaN},equipment:[]},one.inputs);
+ const one=snapshot({...presetDefaults(),version:2,inputs:{...defaults,cameraDistance:7},equipment:[]},defaults);
+ const two=snapshot({...presetDefaults(),version:2,inputs:{...defaults,cameraDistance:NaN,flashDistance:NaN},equipment:[]},one.inputs);
  assert.equal(two.inputs.cameraDistance,7);assert.equal(two.inputs.flashDistance,5);
 });
 test('missing preset GN remains unavailable after persistence and restore',()=>{
- const saved=snapshot({version:2,inputs:{...defaults,gnZoom:0},equipment:[]},defaults);
+ const saved=snapshot({...presetDefaults(),version:2,inputs:{...defaults,gnZoom:0},equipment:[]},defaults);
  assert.throws(()=>flash(restore(saved).inputs),/GN 자료 없음/);
 });
 test('hyperfocal button distance reliably gives infinity across focal lengths and apertures',()=>{
@@ -54,8 +55,8 @@ test('저장 범위별 입력값 표는 구분선 바로 다음부터 연속된 
  }
  assert.match(note({...filmDefaults,zoneInfinity:false,zoneFar:5},new Date(0),{version:'시험',scope:'zone'}),/\| 목표 유한 원거리 \(무한대 선택 시 미사용\) \| 5 m \|/);
 });
-test('카메라 거리 슬라이더의 하한은 화면 갱신마다 현재 초점거리를 반영한다',()=>{
- assert.match(view,/const updateFocusScale=\(\)=>\{[\s\S]*?const \{focal\}=this\.plugin\.state\.inputs;[\s\S]*?axis=focusScale\(focal\);/);
+test('카메라 거리 슬라이더의 하한은 화면 갱신마다 초점거리와 선택 렌즈를 반영한다',()=>{
+ assert.match(view,/const updateFocusScale=\(\)=>\{[\s\S]*?const \{focal\}=this\.plugin\.state\.inputs;[\s\S]*?const floor=this\.minimumFocus\(\);[\s\S]*?axis=focusScale\(focal,floor\);/);
  assert.match(view,/const updateControls=\(limits\?:FocusLimits\)=>\{[\s\S]*?updateFocusScale\(\);/);
  assert.match(view,/for\(const pair of this\.numeric\.values\(\)\)pair\.updateControls\(focusLimits\)/);
 });
@@ -88,13 +89,4 @@ test('저장 파일명 시각은 기기 시간대와 날짜 경계를 반영한�
   if(previous===undefined)delete process.env.TZ;
   else process.env.TZ=previous;
  }
-});
-test('거리 칩과 출력 단계는 입력 동기화 후 한 번 갱신하고 포커스를 복원한다',()=>{
- const action=view.slice(view.indexOf('private fieldAction('),view.indexOf('private fieldPanel('));
- assert.equal(action.match(/this\.changed\(\)/g)?.length,1);
- assert.match(action,/if\(quick\)\{\s*this\.syncNumeric\(quick\.key\);[\s\S]*?setAttribute\('aria-invalid','false'\);\s*\}\s*this\.changed\(\);/);
- assert.match(action,/if\(quick\)\{[\s\S]*?target\?\.focus\(\{preventScroll:true\}\);\s*\}else this\.render\(\);/);
- assert.match(view,/\[data-distance-id=.*?\.pfm-distance-buttons details > summary/);
- assert.match(view,/this\.plugin\.update\(key,d\.metres\);[\s\S]*?\},\{key,focus\}\)/);
- assert.match(view,/\{key:'denominator',focus:`\[data-power-direction=\$\{dir\}\]:enabled`,fallback:'\[data-power-direction\]:enabled'\}/);
 });

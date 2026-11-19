@@ -2,11 +2,11 @@ import type {Shot} from './field';
 import {Equipment,Inputs,Saved,ManualFlash} from './model';
 import {positive,powerSteps} from './engine';
 import {feetToMetres} from './units';
-export function signature(e:Equipment):string{return JSON.stringify([e.conditions,e.source,e.minDenominator,e.steps,Object.entries(e.table).sort(([a],[b])=>Number(a)-Number(b))]);}
-export function issue(s:Saved,shot:Shot):string {
+function signature(e:Equipment):string{return JSON.stringify([e.conditions,e.source,e.minDenominator,e.steps,Object.entries(e.table).sort(([a],[b])=>Number(a)-Number(b))]);}
+function issue(s:Saved,shot:Shot):string {
  if(shot.values.gnMode!=='equipment')return '';
  const e=s.equipment.find(e=>e.id===shot.values.equipmentId);
- return !e?'참조 장비 삭제됨 · 내 장비에서 삭제 복구 또는 장비를 선택하고 즐겨찾기를 갱신하세요.':signature(e)!==shot.equipmentSignature?'참조 장비 사양 변경됨 · 현재 사양을 확인하고 즐겨찾기를 갱신하세요.':'';
+ return !e?'참조 장비 삭제됨 · 장비를 복구하거나 다시 선택하세요.':signature(e)!==shot.equipmentSignature?'참조 장비 사양 변경됨 · 현재 사양을 확인하고 장비를 다시 선택하세요.':'';
 }
 
 export function parseTable(text:string,unit:'m'|'ft'):Record<string,number> {
@@ -27,13 +27,13 @@ export function selectedEquipment(state:Saved):Equipment|undefined {return state
 export function applyEquipment(state:Saved):void {
   const i=state.inputs;if(i.gnMode!=='equipment')return;
   const e=selectedEquipment(state);
-  const active=state.field?.shots.find(s=>s.id===state.field?.activeShotId);const problem=active&&active.values.equipmentId===i.equipmentId?issue(state,active):'';if(problem){i.gn=0;i.gnZoom=0;i.conditions=problem;i.steps=e?.steps??'';if(e)i.minDenominator=e.minDenominator;return;}
+  const active=state.legacyShotDetached?undefined:state.field?.shots.find(s=>s.id===state.field?.activeShotId);const problem=active&&active.values.equipmentId===i.equipmentId?issue(state,active):'';if(problem){i.gn=0;i.gnZoom=0;i.conditions=problem;i.steps=e?.steps??'';if(e)i.minDenominator=e.minDenominator;return;}
   if(!e){i.steps='';i.gn=0;i.gnZoom=0;i.conditions='선택 장비를 찾을 수 없습니다. 장비 선택 또는 수동 모드가 필요합니다.';return;}
   const g=e.table[String(i.zoom)];Object.assign(i,{gn:g??0,gnUnit:'m',gnZoom:g===undefined?0:i.zoom,conditions:`${e.conditions} · 출처: ${e.source}`,minDenominator:e.minDenominator,steps:e.steps});
 }
 export function equipmentId(equipment:Equipment[]):string {let id=`equipment-${Date.now().toString(36)}`,n=1;while(equipment.some(e=>e.id===id))id=`equipment-${Date.now().toString(36)}-${n++}`;return id;}
 
-// Manufacturer nominal specification, not a measured calibration or a zoom table.
+// 제조사 공칭 사양으로, 고정 커버리지 한 위치를 등록한다.
 export function addQ20iii(state:Saved):Equipment {
   const spec:Omit<Equipment,'id'>={name:'LightPix Labs FlashQ Q20III',
     conditions:'제조사 공칭 GN20m · ISO100·최대 출력 · 고정 32mm 커버리지 (35mm판). 직광·일반 동조 계산용. 디퓨저·젤 손실 미측정, 실측값 아님.',
@@ -46,11 +46,12 @@ export function addQ20iii(state:Saved):Equipment {
 
 export function manualFlash(i:Inputs):ManualFlash {return {gn:i.gn,gnUnit:i.gnUnit,gnZoom:i.gnZoom,conditions:i.conditions,minDenominator:i.minDenominator,steps:i.steps};}
 export function selectEquipment(state:Saved,id:string):void {
-  if(state.field)delete state.field.activeShotId;
+  if(state.field?.activeShotId)state.legacyShotDetached=true;
   if(state.inputs.gnMode==='manual')state.manualFlash=manualFlash(state.inputs);
   Object.assign(state.inputs,{equipmentId:id,gnMode:'equipment'});applyEquipment(state);
 }
 export function setGnMode(state:Saved,mode:Inputs['gnMode']):void {
+  if(state.field?.activeShotId)state.legacyShotDetached=true;
   if(mode===state.inputs.gnMode)return;
   if(mode==='equipment'){state.manualFlash=manualFlash(state.inputs);state.inputs.gnMode=mode;applyEquipment(state);}
   else {state.inputs.gnMode=mode;if(state.manualFlash)Object.assign(state.inputs,state.manualFlash);}

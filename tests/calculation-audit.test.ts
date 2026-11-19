@@ -1,6 +1,9 @@
+import {presetDefaults} from '../src/shooting-presets';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {writeFileSync,mkdirSync} from 'node:fs';
+import {mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {defaults as filmDefaults,Inputs} from '../src/model';import {digitalDefaults as defaults} from './digital-reference';
 import {optics,flash,flashDistance,requiredPower,angle,coverage,exposureEV,footprint} from '../src/engine';
 import {solveZone,includesTarget,equivalence} from '../src/zone';
@@ -100,7 +103,7 @@ test('format never displays signed zero; roundoff does not alter internal judgem
 test('invalid domain separated from random physical cases; infinity intent and values survive JSON',()=>{
  for(const key of ['gn','iso','aperture','cameraDistance','denominator','minDenominator','tolerance']as const)for(const value of [0,-1,NaN,Infinity,-Infinity])assert.throws(()=>flash(input({[key]:value})),key+':'+value);
  for(const key of ['width','height','focal','aperture','cameraDistance','coc']as const)for(const value of [0,-1,NaN,Infinity,-Infinity])assert.throws(()=>optics(input({cocMode:'custom',[key]:value})),key+':'+value);
- for(let k=0;k<100;k++){const i=input({zoneInfinity:!!(k%2),zoneFar:5+random()*100,cropBasis:'dimensions',cameraDistance:1+random()*20});const s=restore(JSON.parse(JSON.stringify(snapshot({version:2,inputs:i,equipment:[]},defaults))));assert.deepEqual(s.inputs,i);assert.equal(solveZone(s.inputs).target.far,i.zoneInfinity?Infinity:i.zoneFar);}
+ for(let k=0;k<100;k++){const i=input({zoneInfinity:!!(k%2),zoneFar:5+random()*100,cropBasis:'dimensions',cameraDistance:1+random()*20});const s=restore(JSON.parse(JSON.stringify(snapshot({...presetDefaults(),version:2,inputs:i,equipment:[]},defaults))));assert.deepEqual(s.inputs,i);assert.equal(solveZone(s.inputs).target.far,i.zoneInfinity?Infinity:i.zoneFar);}
  assert.ok(Number.isNaN(parseNumber('')));assert.ok(Number.isNaN(parseNumber('NaN')));
  assert.throws(()=>footprint(1,180,20));
  const s=restore({version:2,inputs:input({gnMode:'equipment',equipmentId:'fixture',zoom:51}),equipment:[{id:'fixture',name:'fixture',source:'synthetic',conditions:'ISO100 full',table:{50:40,105:60},minDenominator:256,steps:defaults.steps}]});applyEquipment(s);assert.throws(()=>flash(s.inputs),/GN 자료 없음/);
@@ -118,4 +121,12 @@ test('finite/infinite zone scale and invalid boundaries reject without serializa
  assert.equal(flash(input({cameraDistance:10})).status,'장비 출력 범위 안');assert.equal(flash(input({cameraDistance:.625})).status,'장비 출력 범위 안');
  assert.match(flash(input({cameraDistance:10.000001})).status,/최대/);assert.match(flash(input({cameraDistance:.624999})).status,/최소/);
 });
-test('write independent numerical evidence',()=>{mkdirSync('docs/calculation-audit',{recursive:true});writeFileSync('docs/calculation-audit/numerical-results.json',JSON.stringify({seed:'0x50484f54',rows},null,2));});
+test('독립 계산 검증 결과를 JSON으로 직렬화할 수 있다',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'pfm-audit-'));
+ try{
+  const path=join(dir,'numerical-results.json');
+  const evidence=JSON.stringify({seed:'0x50484f54',rows},null,2);
+  writeFileSync(path,evidence);
+  assert.equal(readFileSync(path,'utf8'),evidence);
+ }finally{rmSync(dir,{recursive:true});}
+});

@@ -7,7 +7,7 @@ test('valid optics can be exported with missing GN, unsupported mode and invalid
  const i={...defaults,tab:'dof' as const,mode:'hss' as const,gn:0,zoom:105,horizontal:NaN,coverage:'angles' as const};
  validateNote(i,'dof');assert.throws(()=>validateNote(i));assert.throws(()=>validateNote(i,'combined'));
  const md=note(i,new Date(),{version:'1.2.0',scope:'dof'});
- assert.match(md,/현재 탭 · 심도·화각/);assert.match(md,/심도 근거리/);assert.match(md,/수평\/수직\/대각 화각/);
+ assert.match(md,/저장 범위: 심도·화각/);assert.match(md,/심도 근거리/);assert.match(md,/수평\/수직\/대각 화각/);
  assert.doesNotMatch(md,/적정 노출 예상 거리:|플래시 조사 범위|NaN|ISO100 최대 출력 GN \|/);
 });
 test('optics-only export still rejects invalid optics rather than exporting unavailable results',()=>{

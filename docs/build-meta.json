@@ -1,7 +1,7 @@
 {
   "inputs": {
     "src/model.ts": {
-      "bytes": 4030,
+      "bytes": 4282,
       "imports": [],
       "format": "esm"
     },
@@ -26,8 +26,24 @@
       ],
       "format": "esm"
     },
+    "src/field.ts": {
+      "bytes": 4135,
+      "imports": [
+        {
+          "path": "src/model.ts",
+          "kind": "import-statement",
+          "original": "./model"
+        },
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        }
+      ],
+      "format": "esm"
+    },
     "src/presets.ts": {
-      "bytes": 4586,
+      "bytes": 4637,
       "imports": [
         {
           "path": "./model",
@@ -47,32 +63,6 @@
       ],
       "format": "esm"
     },
-    "src/field.ts": {
-      "bytes": 6532,
-      "imports": [
-        {
-          "path": "src/model.ts",
-          "kind": "import-statement",
-          "original": "./model"
-        },
-        {
-          "path": "src/presets.ts",
-          "kind": "import-statement",
-          "original": "./presets"
-        },
-        {
-          "path": "src/presets.ts",
-          "kind": "import-statement",
-          "original": "./presets"
-        },
-        {
-          "path": "src/engine.ts",
-          "kind": "import-statement",
-          "original": "./engine"
-        }
-      ],
-      "format": "esm"
-    },
     "src/reciprocity.ts": {
       "bytes": 3695,
       "imports": [
@@ -84,8 +74,29 @@
       ],
       "format": "esm"
     },
+    "src/shooting-presets.ts": {
+      "bytes": 10833,
+      "imports": [
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        },
+        {
+          "path": "src/model.ts",
+          "kind": "import-statement",
+          "original": "./model"
+        },
+        {
+          "path": "src/reciprocity.ts",
+          "kind": "import-statement",
+          "original": "./reciprocity"
+        }
+      ],
+      "format": "esm"
+    },
     "src/storage.ts": {
-      "bytes": 5413,
+      "bytes": 6130,
       "imports": [
         {
           "path": "src/field.ts",
@@ -106,6 +117,11 @@
           "path": "src/reciprocity.ts",
           "kind": "import-statement",
           "original": "./reciprocity"
+        },
+        {
+          "path": "src/shooting-presets.ts",
+          "kind": "import-statement",
+          "original": "./shooting-presets"
         }
       ],
       "format": "esm"
@@ -132,7 +148,7 @@
       "format": "esm"
     },
     "src/diagram.ts": {
-      "bytes": 10848,
+      "bytes": 12906,
       "imports": [
         {
           "path": "./model",
@@ -157,71 +173,45 @@
       ],
       "format": "esm"
     },
-    "src/flash-tools.ts": {
-      "bytes": 5075,
-      "imports": [
-        {
-          "path": "src/engine.ts",
-          "kind": "import-statement",
-          "original": "./engine"
-        },
-        {
-          "path": "src/model.ts",
-          "kind": "import-statement",
-          "original": "./model"
-        },
-        {
-          "path": "src/units.ts",
-          "kind": "import-statement",
-          "original": "./units"
-        }
-      ],
-      "format": "esm"
-    },
-    "src/note.ts": {
-      "bytes": 16379,
-      "imports": [
-        {
-          "path": "src/model.ts",
-          "kind": "import-statement",
-          "original": "./model"
-        },
-        {
-          "path": "src/engine.ts",
-          "kind": "import-statement",
-          "original": "./engine"
-        },
-        {
-          "path": "src/zone.ts",
-          "kind": "import-statement",
-          "original": "./zone"
-        },
-        {
-          "path": "src/units.ts",
-          "kind": "import-statement",
-          "original": "./units"
-        },
-        {
-          "path": "src/flash-tools.ts",
-          "kind": "import-statement",
-          "original": "./flash-tools"
-        }
-      ],
-      "format": "esm"
-    },
     "src/scale.ts": {
-      "bytes": 1496,
+      "bytes": 1487,
       "imports": [
         {
           "path": "src/engine.ts",
           "kind": "import-statement",
           "original": "./engine"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/flash-tools.ts": {
+      "bytes": 5200,
+      "imports": [
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        },
+        {
+          "path": "src/model.ts",
+          "kind": "import-statement",
+          "original": "./model"
+        },
+        {
+          "path": "src/shooting-presets.ts",
+          "kind": "import-statement",
+          "original": "./shooting-presets"
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
         }
       ],
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 87436,
+      "bytes": 70576,
       "imports": [
         {
           "path": "src/field.ts",
@@ -232,6 +222,11 @@
           "path": "obsidian",
           "kind": "import-statement",
           "external": true
+        },
+        {
+          "path": "src/storage.ts",
+          "kind": "import-statement",
+          "original": "./storage"
         },
         {
           "path": "src/model.ts",
@@ -264,11 +259,6 @@
           "original": "./zone"
         },
         {
-          "path": "src/note.ts",
-          "kind": "import-statement",
-          "original": "./note"
-        },
-        {
           "path": "src/scale.ts",
           "kind": "import-statement",
           "original": "./scale"
@@ -282,12 +272,48 @@
           "path": "src/reciprocity.ts",
           "kind": "import-statement",
           "original": "./reciprocity"
+        },
+        {
+          "path": "src/shooting-presets.ts",
+          "kind": "import-statement",
+          "original": "./shooting-presets"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/note.ts": {
+      "bytes": 17054,
+      "imports": [
+        {
+          "path": "src/model.ts",
+          "kind": "import-statement",
+          "original": "./model"
+        },
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        },
+        {
+          "path": "src/zone.ts",
+          "kind": "import-statement",
+          "original": "./zone"
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
+        },
+        {
+          "path": "src/flash-tools.ts",
+          "kind": "import-statement",
+          "original": "./flash-tools"
         }
       ],
       "format": "esm"
     },
     "src/main.ts": {
-      "bytes": 6479,
+      "bytes": 6927,
       "imports": [
         {
           "path": "obsidian",
@@ -295,9 +321,9 @@
           "external": true
         },
         {
-          "path": "src/model.ts",
+          "path": "./model",
           "kind": "import-statement",
-          "original": "./model"
+          "external": true
         },
         {
           "path": "src/storage.ts",
@@ -323,6 +349,11 @@
           "path": "src/note.ts",
           "kind": "import-statement",
           "original": "./note"
+        },
+        {
+          "path": "src/shooting-presets.ts",
+          "kind": "import-statement",
+          "original": "./shooting-presets"
         }
       ],
       "format": "esm"
@@ -346,10 +377,10 @@
       "entryPoint": "src/main.ts",
       "inputs": {
         "src/main.ts": {
-          "bytesInOutput": 7043
+          "bytesInOutput": 7344
         },
         "src/model.ts": {
-          "bytesInOutput": 2149
+          "bytesInOutput": 2327
         },
         "src/units.ts": {
           "bytesInOutput": 1566
@@ -357,41 +388,44 @@
         "src/engine.ts": {
           "bytesInOutput": 8133
         },
-        "src/presets.ts": {
-          "bytesInOutput": 4951
-        },
         "src/field.ts": {
-          "bytesInOutput": 6282
+          "bytesInOutput": 3732
+        },
+        "src/presets.ts": {
+          "bytesInOutput": 4979
         },
         "src/reciprocity.ts": {
           "bytesInOutput": 4152
         },
+        "src/shooting-presets.ts": {
+          "bytesInOutput": 10053
+        },
         "src/storage.ts": {
-          "bytesInOutput": 5401
+          "bytesInOutput": 5963
         },
         "src/writer.ts": {
           "bytesInOutput": 1413
         },
         "src/view.ts": {
-          "bytesInOutput": 105143
+          "bytesInOutput": 77115
         },
         "src/zone.ts": {
           "bytesInOutput": 4498
         },
         "src/diagram.ts": {
-          "bytesInOutput": 12026
-        },
-        "src/flash-tools.ts": {
-          "bytesInOutput": 5268
-        },
-        "src/note.ts": {
-          "bytesInOutput": 21169
+          "bytesInOutput": 13906
         },
         "src/scale.ts": {
-          "bytesInOutput": 1440
+          "bytesInOutput": 1432
+        },
+        "src/flash-tools.ts": {
+          "bytesInOutput": 5291
+        },
+        "src/note.ts": {
+          "bytesInOutput": 21567
         }
       },
-      "bytes": 192942
+      "bytes": 175807
     }
   }
 }

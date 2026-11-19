@@ -1,9 +1,10 @@
 import {restoreField} from './field';
-import {defaults,Equipment,Inputs,Saved,emptyDraft,FM2_SHUTTERS,FILL_RATIOS} from './model';
+import {defaults,Equipment,Inputs,Saved,emptyDraft,FILL_RATIOS} from './model';
 import {equipmentValid,applyEquipment,manualFlash} from './presets';
 import {isReciprocityFilmId,validMeteredSeconds,validReciprocityExponent} from './reciprocity';
+import {cameraShutters,presetDefaults,restorePresets,selectedPreset} from './shooting-presets';
 export function restore(data:unknown):Saved {
-  const result:Saved={version:2,inputs:{...defaults,reciprocityOverrides:{}},equipment:[],field:restoreField(undefined)};
+  const result:Saved={version:2,inputs:{...defaults,reciprocityOverrides:{}},equipment:[],field:restoreField(undefined),legacyShotDetached:false,...presetDefaults()};
   if(!data||typeof data!=='object')return result;
   const d=data as Partial<Saved>;
   if(typeof d.version==='number'&&d.version>2)throw Error('이 데이터는 더 새 플러그인 버전에서 저장되었습니다. 덮어쓰지 않도록 로드를 중단합니다.');
@@ -14,6 +15,11 @@ export function restore(data:unknown):Saved {
       const value=d.inputs[key];
       if(typeof value===typeof defaults[key]&&(typeof value!=='number'||Number.isFinite(value)))Object.assign(result.inputs,{[key]:value});
     }
+    // 이전 탭을 새 토글 값이 없는 저장 데이터에서만 사용한다.
+    const tab=d.inputs.tab;
+    if(typeof d.inputs.flashOn!=='boolean')result.inputs.flashOn=tab==='flash'||tab==='combined';
+    if(typeof d.inputs.zoneOn!=='boolean')result.inputs.zoneOn=tab==='zone';
+    if(typeof d.inputs.flashWasEnabled!=='boolean')result.inputs.flashWasEnabled=result.inputs.flashOn;
     const overrides=d.inputs.reciprocityOverrides;
     if(overrides&&typeof overrides==='object'&&!Array.isArray(overrides)){
       for(const [id,p] of Object.entries(overrides)){
@@ -22,7 +28,9 @@ export function restore(data:unknown):Saved {
     }
   }
   const i=result.inputs;
-  if(!FM2_SHUTTERS.some(value=>value===i.shutter))i.shutter=defaults.shutter;
+  restorePresets(result,d);
+  const shutters=cameraShutters(selectedPreset(result,'cameras'));
+  if(!shutters.includes(i.shutter))i.shutter=shutters.includes(defaults.shutter)?defaults.shutter:shutters[0];
   if(!FILL_RATIOS.some(value=>value===i.fillRatio))i.fillRatio=defaults.fillRatio;
   if(!isReciprocityFilmId(i.reciprocityFilm))i.reciprocityFilm=defaults.reciprocityFilm;
   if(!validMeteredSeconds(i.meteredSeconds))i.meteredSeconds=defaults.meteredSeconds;
@@ -45,11 +53,12 @@ export function restore(data:unknown):Saved {
   if(d.deletedEquipment&&equipmentValid(d.deletedEquipment.equipment)&&typeof d.deletedEquipment.equipment.id==='string')result.deletedEquipment=JSON.parse(JSON.stringify(d.deletedEquipment));
   if(d.manualFlash&&typeof d.manualFlash==='object'){const m={...defaults};for(const k of Object.keys(manualFlash(defaults))as (keyof typeof d.manualFlash)[]){const v=d.manualFlash[k];if(typeof v===typeof defaults[k]&&(typeof v!=='number'||Number.isFinite(v)))Object.assign(m,{[k]:v});}result.manualFlash=manualFlash(m);}
   result.field=restoreField(d.field);
+  result.legacyShotDetached=d.legacyShotDetached===true;
   applyEquipment(result);
   return result;
 }
 
-// Transient blank edits must not prevent independent equipment/tab changes saving.
+// 입력값이 잠시 비어도 장비와 모드 변경은 저장한다.
 export function snapshot(state:Saved,previous:Inputs):Saved {
   const inputs={...state.inputs};
   for(const key of Object.keys(inputs) as (keyof Inputs)[]) {
@@ -61,7 +70,7 @@ export function snapshot(state:Saved,previous:Inputs):Saved {
   return JSON.parse(JSON.stringify({...state,...(manual?{manualFlash:manual}:{}),inputs,...(inputs.gnMode==='manual'?{manualFlash:manualFlash(inputs)}:{})})) as Saved;
 }
 
-/** Obsidian versions may resolve saveData even when the adapter write fails. */
+/** 일부 Obsidian 버전은 어댑터 쓰기 실패에도 saveData를 성공으로 반환한다. */
 export async function verifiedWrite(data:Saved,write:()=>Promise<void>,read:()=>Promise<string>):Promise<void> {
   await write();
   let actual:unknown;

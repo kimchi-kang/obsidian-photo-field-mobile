@@ -1,5 +1,7 @@
 import {effectiveGN,exposureEV,nearestPower,optics,positive,powerSteps} from './engine';
-import {FILL_RATIOS,FM2_SHUTTERS,FM2_SYNC_SHUTTER,FULL_STOP_APERTURES,Inputs} from './model';
+import {FILL_RATIOS,FULL_STOP_APERTURES,Inputs} from './model';
+import {cameraShutters,syncLimit} from './shooting-presets';
+import type {CameraPreset} from './shooting-presets';
 import {feetToMetres,metres} from './units';
 
 type DistanceRange={near:number;far:number};
@@ -55,13 +57,13 @@ function powerRecommendation(steps:readonly number[],targetEV:number) {
   return {...nearestPower(steps,targetEV),range};
 }
 
-export function fillFlash(i:Inputs) {
-  if(!FM2_SHUTTERS.some(value=>value===i.shutter))throw Error('FM2 셔터 속도를 선택하세요.');
+export function fillFlash(i:Inputs,camera?:CameraPreset) {
+  if(!cameraShutters(camera).includes(i.shutter))throw Error(`${camera?.name??'FM2'} 셔터 속도를 선택하세요.`);
   if(!FILL_RATIOS.some(value=>value===i.fillRatio))throw Error('필인 비율을 선택하세요.');
   if(i.linked&&i.focusInfinity)throw Error('무한대 초점에서는 거리 연동을 끄고 플래시 거리를 입력하세요.');
   const {fullGN,steps}=flashBasis(i),distance=i.linked?i.cameraDistance:i.flashDistance;
   const targetEV=exposureEV(distance,fullGN/i.aperture)+i.fillRatio;
-  return {...powerRecommendation(steps,targetEV),syncExceeded:i.shutter>FM2_SYNC_SHUTTER};
+  return {...powerRecommendation(steps,targetEV),syncExceeded:i.shutter>syncLimit(camera)};
 }
 
 const CHEATSHEET_DISTANCES=[0.7,1,1.5,2,3,5];

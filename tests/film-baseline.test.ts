@@ -4,7 +4,7 @@ import {defaults,sensors,FULL_STOP_APERTURES} from '../src/model';
 import {circleOfConfusion,optics,flash} from '../src/engine';
 import {solveZone} from '../src/zone';
 import {restore} from '../src/storage';
-import {restoreField,capture} from '../src/field';
+import {restoreField,shootingKeys} from '../src/field';
 import {note} from '../src/note';
 import {metres,distanceParts} from '../src/units';
 import {extension,filmBlur} from './film-plane';
@@ -48,7 +48,7 @@ test('saved user data keeps its own values; only missing keys take film defaults
  const {cocMode:_c,iso:_i,...partial}=defaults;const fresh=restore({version:2,field:{version:1,shots:[],zones:[],distances:[]},inputs:partial,equipment:[]});
  assert.equal(fresh.inputs.cocMode,'film');assert.equal(fresh.inputs.iso,400);
  assert.equal(restore({version:2,inputs:{...defaults,cocMode:'bogus'},equipment:[]}).inputs.cocMode,'film');
- for(const mode of ['film','estimate','custom']){const s=restore(null);s.inputs.cocMode=mode;const shot=capture(s,'m',false);assert.equal(restoreField({version:1,shots:[shot]}).shots.length,1,mode);}
+ for(const mode of ['film','estimate','custom']){const values={...Object.fromEntries(shootingKeys.map(key=>[key,defaults[key]])),cocMode:mode};const shot={id:'m',name:'m',values};assert.equal(restoreField({version:1,shots:[shot]}).shots.length,1,mode);}
 });
 test('notes state the film baseline and show every distance with at most one decimal',()=>{
  const text=note({...defaults,cameraDistance:3.14159,flashDistance:3.14159,diagramMax:12.3456,denominator:2},new Date(0),{version:'t'});

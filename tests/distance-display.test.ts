@@ -1,3 +1,4 @@
+import {presetDefaults} from '../src/shooting-presets';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {distanceParts,metres} from '../src/units';
@@ -13,7 +14,7 @@ test('distance display selects cm through exactly 1m and metres above it',()=>{
 test('formatting never rescales physical values or serialized settings',()=>{
  const i={...defaults,cameraDistance:.5,flashDistance:.5,focal:35};const before={flash:flash(i),optics:optics(i)};
  for(const value of [.01,.5,1,1.01])metres(value);
- assert.deepEqual({flash:flash(i),optics:optics(i)},before);assert.equal(restore(snapshot({version:2,inputs:i,equipment:[]},defaults)).inputs.cameraDistance,.5);
+ assert.deepEqual({flash:flash(i),optics:optics(i)},before);assert.equal(restore(snapshot({...presetDefaults(),version:2,inputs:i,equipment:[]},defaults)).inputs.cameraDistance,.5);
 });
 test('saved results use cm with explicit units while original metre inputs remain reproducible',()=>{
  const text=note({...defaults,cameraDistance:.5,flashDistance:.5,denominator:256});

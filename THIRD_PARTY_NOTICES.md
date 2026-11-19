@@ -46,7 +46,7 @@ The only external import is `obsidian`, supplied by the host application. The Ob
 
 ## Development tools (not included in the plugin runtime)
 
-esbuild: MIT; TypeScript: Apache-2.0; tsx: MIT; Playwright/playwright-core: Apache-2.0; @types/node: MIT; obsidian API types: MIT. Lockfile versions and transitive license metadata for both projects are recorded in `docs/dependency-license-audit.json`. The source archive includes package manifests/lockfile and no node_modules. npm reported zero known vulnerabilities at install time; that result is not a security guarantee.
+esbuild: MIT; TypeScript: Apache-2.0; tsx: MIT; Playwright/playwright-core: Apache-2.0; jsdom (테스트 전용): MIT; @types/node: MIT; obsidian API types: MIT. Lockfile versions and transitive license metadata for both projects are recorded in `docs/dependency-license-audit.json`. The source archive includes package manifests/lockfile and no node_modules. npm reported zero known vulnerabilities at install time; that result is not a security guarantee.
 
 ## NanumSquareRound (Hangul glyphs, embedded font subset)
 

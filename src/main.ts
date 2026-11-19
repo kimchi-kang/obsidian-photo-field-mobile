@@ -1,10 +1,11 @@
 import {Plugin,WorkspaceLeaf,Notice,normalizePath,TFolder} from 'obsidian';
-import {Inputs,Saved,assignInput} from './model';
+import {Inputs,Saved} from './model';
 import {restore,snapshot,verifiedWrite} from './storage';
 import {LatestWriter} from './writer';
 import {applyEquipment,selectedEquipment,setGnMode} from './presets';
 import {PhotoView,VIEW} from './view';
-import {cheatsheetNote,note,noteTimestamp,validateNote,NoteScope} from './note';
+import {cheatsheetNote,note,noteTimestamp,validateNote,modeNoteScope} from './note';
+import {selectedPreset,updateShootingInput} from './shooting-presets';
 export default class PhotoPlugin extends Plugin {
   state!:Saved;
   private writer!:LatestWriter<Saved>;
@@ -14,17 +15,21 @@ export default class PhotoPlugin extends Plugin {
   private stableInputs!:Inputs;
   private opening:Promise<void>|null=null;
   async onload():Promise<void> {
-    this.state=restore(await this.loadData());this.stableInputs={...this.state.inputs};this.active=true;
+    const data:unknown=await this.loadData();
+    this.state=restore(data);this.stableInputs={...this.state.inputs};this.active=true;
     this.writer=new LatestWriter(data=>verifiedWrite(data,()=>this.saveData(data),()=>this.app.vault.adapter.read(normalizePath(`${this.manifest.dir??`${this.app.vault.configDir}/plugins/${this.manifest.id}`}/data.json`))),()=>{if(this.writer.error&&!this.saveError)this.report(this.writer.error);this.saveError=this.writer.error?`설정 저장 실패: ${this.writer.error instanceof Error?this.writer.error.message:String(this.writer.error)} · 다시 저장하세요.`:'';for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.updateSaveStatus();});
     const flush=()=>{void this.flush().catch(e=>this.reportSaveError(e));};
     this.registerDomEvent(document,'visibilitychange',()=>{if(document.visibilityState==='hidden')flush();});
     this.registerDomEvent(window,'pagehide',flush);
     this.registerView(VIEW,(leaf:WorkspaceLeaf)=>new PhotoView(leaf,this));
     this.addCommand({id:'open',name:'촬영 계산 열기',icon:'camera',callback:()=>{void this.open().catch(e=>this.report(e));}});
-    this.addCommand({id:'save-note',name:'전체 계산을 노트로 저장',callback:()=>{void this.saveNote().catch(e=>this.report(e));}});
-    this.addCommand({id:'save-tab-note',name:'현재 탭 결과 저장',callback:()=>{void this.saveNote(this.state.inputs.tab).catch(e=>this.report(e));}});
+    this.addCommand({id:'save-note',name:'노트로 저장',callback:()=>{void this.saveNote().catch(e=>this.report(e));}});
     this.addCommand({id:'save-cheatsheet',name:'현재 장비로 거리별 치트시트 저장',callback:()=>{void this.saveCheatsheet().catch(e=>this.report(e));}});
     this.addRibbonIcon('camera','사진 촬영 도우미 열기',()=>{void this.open().catch(e=>this.report(e));});
+    const inputs=data&&typeof data==='object'&&'inputs' in data?data.inputs:undefined;
+    if(inputs&&typeof inputs==='object'&&(
+      !('flashOn' in inputs)||typeof inputs.flashOn!=='boolean'||!('zoneOn' in inputs)||typeof inputs.zoneOn!=='boolean'
+    ))void this.persist().catch(e=>this.reportSaveError(e));
   }
   report(e:unknown):void {console.error('Photo Field Mobile',e);new Notice(`사진 촬영 도우미: ${e instanceof Error?e.message:String(e)}`);}
   open():Promise<void> {
@@ -32,7 +37,7 @@ export default class PhotoPlugin extends Plugin {
     this.opening=this.openView().finally(()=>{this.opening=null;});return this.opening;
   }
   private async openView():Promise<void> {
-    // Obsidian replaces the last detached leaf on the next event-loop turn.
+    // Obsidian이 마지막으로 분리한 리프를 교체할 때까지 한 턴 기다린다.
     await new Promise<void>(resolve=>window.setTimeout(resolve,0));
     if(!this.active)return;
     let leaf=this.app.workspace.getLeavesOfType(VIEW)[0];
@@ -45,16 +50,21 @@ export default class PhotoPlugin extends Plugin {
   async flush():Promise<void>{if(this.writer)await this.writer.flush();}
   reportSaveError(e:unknown):void {if(!this.saveError){this.saveError='설정 저장 실패 · 다시 저장하세요.';this.report(e);}for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.updateSaveStatus();}
   refresh(source:PhotoView):void {for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView&&leaf.view!==source)leaf.view.render();}
-  saveNote(scope:NoteScope='all'):Promise<string> {
+  saveNote():Promise<string> {
     const i={...this.state.inputs},equipment=selectedEquipment(this.state),date=new Date();
+    const scope=modeNoteScope(i);
+    i.zoneFlow=i.zoneOn?'target':'current';
     try{
       validateNote(i,scope);
-      return this.writeNote(note(i,date,{version:this.manifest.version,equipment,scope}),date,'촬영 계산');
+      return this.writeNote(note(i,date,{version:this.manifest.version,equipment,scope,...this.notePresets()}),date,'촬영 계산');
     }catch(e){return Promise.reject(e);}
   }
   async saveCheatsheet():Promise<string> {
     const i={...this.state.inputs},equipment=selectedEquipment(this.state),date=new Date();
-    return this.writeNote(cheatsheetNote(i,date,{version:this.manifest.version,equipment}),date,'거리별 치트시트');
+    return this.writeNote(cheatsheetNote(i,date,{version:this.manifest.version,equipment,...this.notePresets()}),date,'거리별 치트시트');
+  }
+  private notePresets() {
+    return {camera:selectedPreset(this.state,'cameras'),lens:selectedPreset(this.state,'lenses'),film:selectedPreset(this.state,'films')};
   }
   private writeNote(content:string,date:Date,title:string):Promise<string> {
     const task=this.notes.catch(()=>undefined).then(async()=>{
@@ -68,11 +78,11 @@ export default class PhotoPlugin extends Plugin {
       }throw Error('새 노트 이름을 확보하지 못했습니다. 다시 저장하세요.');
     });this.notes=task;return task;
   }
-  update<K extends keyof Inputs>(key:K,value:Inputs[K]):void {if((key==='gnMode'||key==='equipmentId')&&this.state.field)delete this.state.field.activeShotId;if(key==='gnMode'){setGnMode(this.state,value as Inputs['gnMode']);return;}assignInput(this.state.inputs,key,value);if(key==='zoom')applyEquipment(this.state);
+  update<K extends keyof Inputs>(key:K,value:Inputs[K]):void {if(key==='gnMode'){setGnMode(this.state,value as Inputs['gnMode']);return;}updateShootingInput(this.state,key,value);if(key==='zoom')applyEquipment(this.state);
     if(['gn','gnZoom','conditions','steps','minDenominator'].includes(key)&&this.state.inputs.gnMode==='equipment'){this.state.inputs.gnMode='manual';}}
   setFocusInfinity(on:boolean):void {this.state.inputs.focusInfinity=on;}
   onunload():void {this.active=false;this.noteNotice?.hide();void this.flush().catch(e=>this.reportSaveError(e));
     for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.dispose();
-    // Leaves are kept so Obsidian can restore the view in place after an update or reload.
+    // 업데이트나 재로드 후 Obsidian이 같은 위치에 화면을 복원하도록 리프를 보존한다.
   }
 }

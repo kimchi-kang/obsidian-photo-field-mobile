@@ -28,8 +28,8 @@ test('선택자 검사에서 내장 글꼴 블록만 제외한다',()=>{
  assert.equal(withoutFontFaces(font+rule+font),rule);
 });
 test('사용자 지정 CoC 모드에서만 CoC 필드를 표시한다',()=>{
- assert.match(view,/this\.root\.dataset\.cocMode=inputs\.cocMode/);
- assert.match(body('.pfm-root:not([data-coc-mode=custom]) [data-field=coc],.pfm-root[data-coverage=approx] :is([data-field=horizontal],[data-field=vertical])'),/display:none/);
+ assert.match(view,/this\.root\.dataset\.cocMode=i\.cocMode/);
+ assert.match(body('.pfm-root:not([data-coc-mode=custom]) [data-field=coc]'),/display:none/);
 });
 test('370px 이하에서 카메라 거리의 5열 그리드를 줄인다',()=>{
  const selector='.pfm-root div.pfm-field[data-field=cameraDistance]';
@@ -55,8 +55,20 @@ test('야간 팔레트가 라이트·다크의 주요 색과 플래시 카드 �
  }
  for(const token of Object.keys(tokens('.theme-dark .pfm-root .pfm-flash-results')))assert.equal(card[token],'inherit',token);
  assert.equal(night['--pfm-signal-pressed'],'var(--pfm-signal)');
- assert.match(body('.pfm-root .pfm-field-viewbar .pfm-night-toggle'),/min-width:44px/);
- assert.match(body('.pfm-root .pfm-field-viewbar button'),/min-height:44px/);
+ assert.match(body('.pfm-root .pfm-mode-toggles button'),/min-width:44px/);
+ assert.match(body('.pfm-root .pfm-mode-toggles button'),/min-height:44px/);
  assert.match(view,/this\.root\.dataset\.night=String\(i\.nightMode\)/);
  assert.match(view,/night\.setAttribute\('aria-pressed',String\(i\.nightMode\)\)/);
+});
+
+test('모드 토글 위 장비 칩 3개는 44px 이상이며 한 줄 값은 말줄임 처리한다',()=>{
+ const chip=body('.pfm-root .pfm-gear-chip');
+ assert.match(chip,/min-width:44px/);
+ assert.match(chip,/min-height:44px/);
+ assert.match(body('.pfm-root .pfm-gear-chips'),/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(body('.pfm-root .pfm-gear-chip strong'),/overflow:hidden;text-overflow:ellipsis;white-space:nowrap/);
+ assert.match(body('.pfm-root .pfm-gear-option'),/min-height:44px/);
+ assert.match(view,/this\.gearBar\(\);\s+const modes=node\(this\.root,'div',undefined,'pfm-mode-toggles'\)/);
+ assert.doesNotMatch(view,/pfm-context/);
+ assert.doesNotMatch(withoutFontFaces(css),/pfm-context|content:['"]STATUS['"]/);
 });

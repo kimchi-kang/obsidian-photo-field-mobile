@@ -4,8 +4,7 @@ export const FOCUS_SCALE_MAX=30;
 export const FOCUS_SCALE_STEPS=1000;
 export const FOCUS_SCALE_TICKS=[0.5,0.7,1,1.5,2,3,5,10,Infinity] as const;
 
-export function focusScale(focal:number) {
-  const minimum=minFocusDistance(focal);
+export function focusScale(focal:number,minimum=minFocusDistance(focal)) {
   if(!Number.isFinite(focal)||focal<=0||minimum>=FOCUS_SCALE_MAX)return;
 
   const lower=Math.max(minimum,0.5);
