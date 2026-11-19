@@ -55,7 +55,7 @@ export function optics(i:Inputs) {
     equivalent,airy};
 }
 export function effectiveGN(g:number,p:number,iso:number,loss:number):number {
-  positive(g,p,iso);if(p>1||!Number.isFinite(loss)||loss<0)throw Error('출력은 0 초과 1 이하, 추가 손실은 0 이상이어야 합니다.');
+  positive(g,p,iso);if(p>1||!Number.isFinite(loss))throw Error('출력은 0 초과 1 이하, 광량 보정은 유한한 수여야 합니다.');
   const result=g*Math.sqrt(p)*Math.sqrt(iso/100)*2**(-loss/2);
   positive(result);return result;
 }
@@ -66,6 +66,11 @@ export function powerSteps(text:string,minDenominator:number):number[] {
   const list=text.split(',').map(v=>Number(v.trim()));
   if(!list.length||list.some(v=>!Number.isFinite(v)||v<1||v>minDenominator)||!list.includes(1)||!list.includes(minDenominator))throw Error('지원 출력 분모는 1과 최소 출력 분모를 포함하고 그 사이의 수여야 합니다.');
   return [...new Set(list)].sort((a,b)=>a-b);
+}
+export function nearestPower(steps:readonly number[],targetEV:number):{nearest:number;residual:number} {
+  const residualFor=(n:number)=>-Math.log2(n)-targetEV;
+  const nearest=steps.reduce((best,n)=>Math.abs(residualFor(n))<Math.abs(residualFor(best))?n:best);
+  return {nearest,residual:residualFor(nearest)};
 }
 export function flash(i:Inputs) {
   if(i.mode!=='manual')throw Error('선택 조건은 기본 GN 모델로 계산할 수 없습니다. 실측 또는 전용 자료가 필요합니다.');
@@ -84,12 +89,11 @@ export function flash(i:Inputs) {
   // log(a/b) can overflow even while both a, b and the EV result are representable.
   // Compute before squaring the power fraction: subnormal p has fewer significant bits.
   const neededEV=2*(Math.log2(i.aperture)+Math.log2(r)-Math.log2(effectiveGN(g,1,i.iso,i.loss)));
-  const residualFor=(n:number)=>-Math.log2(n)-neededEV;
-  const nearest=steps.reduce((best,v)=>Math.abs(residualFor(v))<Math.abs(residualFor(best))?v:best,steps[0]);
+  const {nearest,residual}=nearestPower(steps,neededEV);
   const low=d/2**(i.tolerance/2),high=d*2**(i.tolerance/2),requiredAperture=gn/r;
   positive(low,high,requiredAperture);
   return {gn,d,r,g,supported:steps.includes(i.denominator),powerLabel:steps.includes(i.denominator)?(i.gnMode==='equipment'?'장비 지원 출력':'수동 GN · 입력한 지원 단계'):'이론값·장비 미지원 출력',nearestDistance:flashDistance(g,1/nearest,i.iso,i.aperture,i.loss),ev:exposureEV(d,r),needed,requiredAperture,nearest,
-    residual:residualFor(nearest),low,high,
+    residual,low,high,
     status:needed>1?'최대 출력으로도 부족':needed<1/i.minDenominator?'최소 출력보다 낮은 출력 필요':'장비 출력 범위 안',steps,
     distances:steps.map(n=>({n,d:flashDistance(g,1/n,i.iso,i.aperture,i.loss)}))};
 }

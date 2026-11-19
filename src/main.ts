@@ -4,7 +4,7 @@ import {restore,snapshot,verifiedWrite} from './storage';
 import {LatestWriter} from './writer';
 import {applyEquipment,selectedEquipment,setGnMode} from './presets';
 import {PhotoView,VIEW} from './view';
-import {note,noteTimestamp,validateNote,NoteScope} from './note';
+import {cheatsheetNote,note,noteTimestamp,validateNote,NoteScope} from './note';
 export default class PhotoPlugin extends Plugin {
   state!:Saved;
   private writer!:LatestWriter<Saved>;
@@ -23,6 +23,7 @@ export default class PhotoPlugin extends Plugin {
     this.addCommand({id:'open',name:'촬영 계산 열기',icon:'camera',callback:()=>{void this.open().catch(e=>this.report(e));}});
     this.addCommand({id:'save-note',name:'전체 계산을 노트로 저장',callback:()=>{void this.saveNote().catch(e=>this.report(e));}});
     this.addCommand({id:'save-tab-note',name:'현재 탭 결과 저장',callback:()=>{void this.saveNote(this.state.inputs.tab).catch(e=>this.report(e));}});
+    this.addCommand({id:'save-cheatsheet',name:'현재 장비로 거리별 치트시트 저장',callback:()=>{void this.saveCheatsheet().catch(e=>this.report(e));}});
     this.addRibbonIcon('camera','사진 촬영 도우미 열기',()=>{void this.open().catch(e=>this.report(e));});
   }
   report(e:unknown):void {console.error('Photo Field Mobile',e);new Notice(`사진 촬영 도우미: ${e instanceof Error?e.message:String(e)}`);}
@@ -46,12 +47,21 @@ export default class PhotoPlugin extends Plugin {
   refresh(source:PhotoView):void {for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView&&leaf.view!==source)leaf.view.render();}
   saveNote(scope:NoteScope='all'):Promise<string> {
     const i={...this.state.inputs},equipment=selectedEquipment(this.state),date=new Date();
-    let content:string;try{validateNote(i,scope);content=note(i,date,{version:this.manifest.version,equipment,scope});}catch(e){return Promise.reject(e);}
+    try{
+      validateNote(i,scope);
+      return this.writeNote(note(i,date,{version:this.manifest.version,equipment,scope}),date,'촬영 계산');
+    }catch(e){return Promise.reject(e);}
+  }
+  async saveCheatsheet():Promise<string> {
+    const i={...this.state.inputs},equipment=selectedEquipment(this.state),date=new Date();
+    return this.writeNote(cheatsheetNote(i,date,{version:this.manifest.version,equipment}),date,'거리별 치트시트');
+  }
+  private writeNote(content:string,date:Date,title:string):Promise<string> {
     const task=this.notes.catch(()=>undefined).then(async()=>{
       const folder=normalizePath('사진 촬영 계산');
       if(!this.app.vault.getAbstractFileByPath(folder))try{await this.app.vault.createFolder(folder);}catch(e){if(!(this.app.vault.getAbstractFileByPath(folder) instanceof TFolder))throw e;}
       if(!(this.app.vault.getAbstractFileByPath(folder) instanceof TFolder))throw Error('저장 폴더 경로에 파일이 있습니다. 다른 이름으로 옮겨주세요.');
-      const base=`${folder}/촬영 계산 ${noteTimestamp(date)}`;
+      const base=`${folder}/${title} ${noteTimestamp(date)}`;
       for(let n=0;n<1000;n++){
         const path=`${base}${n?'-'+n:''}.md`;if(this.app.vault.getAbstractFileByPath(path))continue;
         try{await this.app.vault.create(path,content);this.noteNotice?.hide();this.noteNotice=new Notice(`저장 완료: ${path}`,2500);return path;}catch(e){if(!this.app.vault.getAbstractFileByPath(path))throw e;}
@@ -62,6 +72,7 @@ export default class PhotoPlugin extends Plugin {
     if(['gn','gnZoom','conditions','steps','minDenominator'].includes(key)&&this.state.inputs.gnMode==='equipment'){this.state.inputs.gnMode='manual';}}
   setFocusInfinity(on:boolean):void {this.state.inputs.focusInfinity=on;}
   onunload():void {this.active=false;this.noteNotice?.hide();void this.flush().catch(e=>this.reportSaveError(e));
+    for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.dispose();
     // Leaves are kept so Obsidian can restore the view in place after an update or reload.
   }
 }

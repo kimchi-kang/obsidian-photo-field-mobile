@@ -1,3 +1,5 @@
+import type {ReciprocityFilmId,ReciprocityOverrides} from './reciprocity';
+
 export type Mode = 'manual'|'ttl'|'hss'|'bounce'|'modifier'|'near';
 export interface Inputs {
   gnMode: 'manual'|'equipment'; equipmentId: string;
@@ -7,6 +9,9 @@ export interface Inputs {
   denominator: number; loss: number; tolerance: number; minDenominator: number; steps: string;
   coverage: 'approx'|'angles'; horizontal: number; vertical: number; mode: Mode;
   diagramMax: number; tab: 'flash'|'dof'|'combined'|'zone';
+  nightMode: boolean;
+  shutter: number; fillRatio: number;
+  reciprocityFilm: ReciprocityFilmId; meteredSeconds: number; reciprocityOverrides: ReciprocityOverrides;
   cropBasis:'nominal'|'dimensions'; zoneFlow:'current'|'target'; zoneNear:number; zoneFar:number; zoneInfinity:boolean; apertureMin:number; apertureMax:number; apertureSteps:string;
 }
 export interface Equipment {id:string; name: string; conditions: string; source: string; table: Record<string, number>; minDenominator: number; steps: string}
@@ -16,12 +21,16 @@ export type ManualFlash=Pick<Inputs,'gn'|'gnUnit'|'gnZoom'|'conditions'|'minDeno
 export interface Saved {field?:import('./field').FieldData; version: 2; inputs: Inputs; equipment: Equipment[]; manualFlash?:ManualFlash; draft?:EquipmentDraft; deletedEquipment?:{equipment:Equipment;index:number}; migrationBackup?:unknown}
 /** Nikkor AI/AI-S aperture rings click in full stops; 1.8 is kept for the common 50mm f/1.8 kit lens. */
 export const FULL_STOP_APERTURES='1.2,1.4,1.8,2,2.8,4,5.6,8,11,16,22,32';
+export const FM2_SHUTTERS=[1,2,4,8,15,30,60,125,250,500,1000,2000,4000] as const;
+export const FM2_SYNC_SHUTTER=250;
+export const FILL_RATIOS=[-1,-1.5,-2,-3] as const;
 export const defaults: Inputs = {
   gnMode:'manual',equipmentId:'',sensor:'ff',width:36,height:24,focal:50,aperture:4,iso:400,cameraDistance:5,focusInfinity:false,linked:true,flashDistance:5,
   cocMode:'film',coc:0.03,gn:40,gnUnit:'m',gnZoom:50,zoom:50,
   conditions:'연습용 가상 GN · 장비 사양 아님 · ISO100·최대출력·직접광·50mm',
+  reciprocityFilm:'vision3-500t',meteredSeconds:4,reciprocityOverrides:{},
   denominator:4,loss:0,tolerance:1,minDenominator:256,steps:'1,2,4,8,16,32,64,128,256',
-  coverage:'approx',horizontal:40,vertical:27,mode:'manual',diagramMax:15,tab:'combined',cropBasis:'nominal',zoneFlow:'current',zoneNear:2,zoneFar:5,zoneInfinity:false,apertureMin:1.4,apertureMax:16,apertureSteps:FULL_STOP_APERTURES
+  coverage:'approx',horizontal:40,vertical:27,mode:'manual',diagramMax:15,tab:'combined',nightMode:false,shutter:125,fillRatio:-1.5,cropBasis:'nominal',zoneFlow:'current',zoneNear:2,zoneFar:5,zoneInfinity:false,apertureMin:1.4,apertureMax:16,apertureSteps:FULL_STOP_APERTURES
 };
 /** Any explicit finite-distance edit turns infinity focus off; the flag itself is set directly. */
 export function assignInput<K extends keyof Inputs>(i:Inputs,key:K,value:Inputs[K]):void {i[key]=value;if(key==='cameraDistance')i.focusInfinity=false;}

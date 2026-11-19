@@ -122,7 +122,7 @@
 .pfm-root .pfm-stat{padding:8px 6px;background:var(--pfm-surface);text-align:left;}
 .pfm-root .pfm-stat[data-stat=total]{position:relative;background:var(--pfm-ink);color:var(--pfm-bg);}
 .pfm-root .pfm-stat[data-stat=total]::after{content:'';position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--pfm-signal);}
-.theme-dark .pfm-root .pfm-stat[data-stat=total]::after{background:#c4291c;}
+.theme-dark .pfm-root .pfm-stat[data-stat=total]::after{background:var(--pfm-signal-pressed,#c4291c);}
 .pfm-root .pfm-stat span{display:block;margin-bottom:4px;font-size:var(--pfm-tag);font-weight:700;color:var(--pfm-muted);}
 .pfm-root .pfm-stat[data-stat=total] span{color:inherit;opacity:.7;}
 .pfm-root .pfm-stat strong{display:block;font-size:clamp(.9375rem,4.3vw,1.125rem);line-height:1.15;font-weight:480;letter-spacing:-.025em;font-variant-numeric:tabular-nums;}
@@ -187,7 +187,7 @@
 .pfm-root .pfm-field-tools button{min-height:44px;padding:8px 14px;border-color:var(--pfm-ink);background:var(--pfm-surface);font-variant-numeric:tabular-nums;white-space:normal;overflow-wrap:anywhere;max-width:100%;height:auto;}
 .pfm-root .pfm-field-tools button[aria-pressed=true]{position:relative;background:var(--pfm-ink);border-color:var(--pfm-ink);color:var(--pfm-bg);}
 .pfm-root .pfm-field-tools button[aria-pressed=true]::after{content:'';position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--pfm-signal);}
-.theme-dark .pfm-root .pfm-field-tools button[aria-pressed=true]::after{background:#c4291c;}
+.theme-dark .pfm-root .pfm-field-tools button[aria-pressed=true]::after{background:var(--pfm-signal-pressed,#c4291c);}
 .pfm-root .pfm-distance-buttons{margin-top:4px;padding-top:var(--pfm-space-3);border-top:1px solid var(--pfm-line);}
 .pfm-root .pfm-distance-buttons p{margin:0 0 8px;font-size:var(--pfm-small);font-weight:800;color:var(--pfm-ink);}
 .pfm-root .pfm-distance-buttons>button{margin:0 0 0 -1px;padding-inline:2px;font-family:var(--pfm-round);font-size:var(--pfm-label);font-weight:600;white-space:nowrap;}
@@ -373,7 +373,92 @@
 .pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-infinity-toggle{grid-column:4;grid-row:1;width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:0;border:1px solid var(--pfm-ink);border-radius:0;background:var(--pfm-surface);color:var(--pfm-ink);font-family:var(--pfm-round);font-size:1.375rem;font-weight:400;line-height:1;}
 .pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-infinity-toggle[aria-pressed=true]{position:relative;background:var(--pfm-ink);color:var(--pfm-bg);}
 .pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-infinity-toggle[aria-pressed=true]::after{content:'';position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--pfm-signal);}
-.theme-dark .pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-infinity-toggle[aria-pressed=true]::after{background:#c4291c;}
+.theme-dark .pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-infinity-toggle[aria-pressed=true]::after{background:var(--pfm-signal-pressed,#c4291c);}
 .pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-value-picker{grid-column:5;grid-row:1;}
 .pfm-root div.pfm-field[data-field=cameraDistance][data-focus-infinity=true]>input[type=range]{opacity:.4;}
 .pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-number-entry>input::placeholder{color:var(--pfm-ink);opacity:1;}
+
+/* 거리 눈금은 슬라이더 손잡이 중심이 움직이는 폭에 맞춘다. */
+.pfm-root input[data-range=cameraDistance]::-webkit-slider-runnable-track{height:2px;background:var(--pfm-control-line);}
+.pfm-root input[data-range=cameraDistance]::-webkit-slider-thumb{margin-top:-15px;}
+.pfm-root input[data-range=cameraDistance]::-moz-range-track{height:2px;margin-inline:16px;background:var(--pfm-control-line);}
+.pfm-root input[data-range=cameraDistance]::-moz-range-progress{background:transparent;}
+.pfm-root input[data-range=cameraDistance]::-webkit-slider-thumb{border-radius:0;}
+.pfm-root input[data-range=cameraDistance]::-moz-range-thumb{border-radius:0;}
+.pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-focus-ruler{grid-column:2/5;grid-row:3;margin:-8px 16px 0;}
+.pfm-root .pfm-focus-ticks{position:relative;height:32px;color:var(--pfm-muted);font-size:var(--pfm-tag);line-height:1.15;font-variant-numeric:tabular-nums;}
+.pfm-root .pfm-focus-ticks span{position:absolute;top:0;padding-top:7px;transform:translateX(-50%);white-space:nowrap;}
+.pfm-root .pfm-focus-ticks span:nth-child(even){padding-top:19px;}
+.pfm-root .pfm-focus-ticks span::before{content:'';position:absolute;top:0;left:50%;width:1px;height:5px;background:var(--pfm-control-line);}
+.pfm-root .pfm-focus-ticks span:nth-child(even)::before{height:16px;}
+.pfm-root .pfm-focus-depth{position:relative;height:10px;margin-top:4px;border-block:1px solid var(--pfm-line);}
+.pfm-root .pfm-focus-depth::before{content:'';position:absolute;inset-block:1px;left:var(--pfm-depth-near);right:calc(100% - var(--pfm-depth-far));background:var(--pfm-dof);}
+.pfm-root .pfm-focus-depth::after{content:'';position:absolute;inset-block:-3px;left:var(--pfm-depth-focus);width:1px;background:var(--pfm-signal);}
+
+.pfm-root .pfm-field-viewbar .pfm-night-toggle{flex:0 0 auto;min-width:44px;padding-inline:8px;border-color:var(--pfm-control-line);white-space:nowrap;}
+.pfm-root .pfm-field-viewbar .pfm-night-toggle::before{display:none;}
+.pfm-root .pfm-field-viewbar .pfm-night-toggle[aria-pressed=true]{background:var(--pfm-ink);border-color:var(--pfm-ink);color:var(--pfm-bg);}
+
+/* 테마와 카드의 반전색을 야간 팔레트로 덮어쓴다. */
+.pfm-root[data-night=true]{
+ --pfm-bg:#000;--pfm-surface:#090100;--pfm-surface-2:#220603;
+ --pfm-ink:#a52c20;--pfm-muted:#802118;--pfm-line:#43100b;--pfm-control-line:#762016;
+ --pfm-accent:#8a2419;--pfm-accent-ink:#000;--pfm-dof:#762016;--pfm-beam:#762016;
+ --pfm-error:#b83325;--pfm-warning:#a52c20;--pfm-warning-bg:#220603;--pfm-ok:#a52c20;
+ --pfm-signal:#b83325;--pfm-signal-pressed:var(--pfm-signal);--pfm-lcd:#000;--pfm-lcd-dot:#43100b45;
+ --text-normal:var(--pfm-ink);--text-muted:var(--pfm-muted);--text-faint:var(--pfm-muted);
+ --text-selection:var(--pfm-surface-2);--interactive-normal:var(--pfm-surface);--interactive-hover:var(--pfm-surface-2);
+ --background-modifier-border-hover:var(--pfm-control-line);--background-modifier-border-focus:var(--pfm-signal);
+ --icon-color:var(--pfm-ink);--icon-color-hover:var(--pfm-signal);--icon-color-active:var(--pfm-signal);
+ --scrollbar-thumb-bg:var(--pfm-line);--scrollbar-active-thumb-bg:var(--pfm-control-line);
+ --link-color:var(--pfm-muted);--link-color-hover:var(--pfm-ink);--link-external-color:var(--pfm-muted);--link-external-color-hover:var(--pfm-ink);
+ caret-color:var(--pfm-signal);
+}
+.pfm-root[data-night=true] .pfm-flash-results{
+ --pfm-bg:inherit;--pfm-surface:inherit;--pfm-surface-2:inherit;--pfm-ink:inherit;--pfm-muted:inherit;
+ --pfm-line:inherit;--pfm-control-line:inherit;--pfm-accent:inherit;--pfm-accent-ink:inherit;
+ --pfm-error:inherit;--pfm-warning:inherit;--pfm-warning-bg:inherit;--pfm-signal:inherit;
+ border:1px solid var(--pfm-line);
+}
+.pfm-root[data-night=true] ::selection{background:var(--pfm-ink);color:var(--pfm-bg);}
+.pfm-root[data-night=true] :is(input,textarea)::placeholder{color:var(--pfm-muted);}
+.pfm-root[data-night=true] option{background:var(--pfm-bg);color:var(--pfm-ink);}
+.pfm-root[data-night=true] a{color:var(--pfm-muted);}
+
+.pfm-root .pfm-safe-range{
+ order:3;margin:0;padding:var(--pfm-space-2) var(--pfm-space-3);
+ border:1px solid var(--pfm-line);background:var(--pfm-surface);font-weight:750;
+}
+.pfm-root .pfm-safe-range:is([data-state=range],[data-state=empty]){border-inline-start-color:var(--pfm-signal);}
+.pfm-root .pfm-safe-band{fill:none;stroke:var(--pfm-signal);stroke-width:1px;vector-effect:non-scaling-stroke;pointer-events:none;}
+.pfm-root .pfm-key-safe::before{border:1px solid var(--pfm-signal);}
+.pfm-root .pfm-flash-tools{margin-top:var(--pfm-space-3);}
+.pfm-root:not(:is([data-tab=flash],[data-tab=combined])) .pfm-flash-tools,
+.pfm-root:not([data-tab=combined]) .pfm-cheatsheet-save{display:none;}
+.pfm-root .pfm-fill{padding:0 var(--pfm-space-3);border:1px solid var(--pfm-line);background:var(--pfm-surface);}
+.pfm-root :is(.pfm-fill,.pfm-calibration)>button,.pfm-root .pfm-cheatsheet-save{
+ width:100%;margin:0 0 var(--pfm-space-2);min-height:var(--pfm-control);
+}
+.pfm-root .pfm-cheatsheet-save{margin-top:var(--pfm-space-2);}
+.pfm-root :is(.pfm-fill,.pfm-calibration)>label.pfm-field{
+ display:grid;grid-template-columns:minmax(0,1fr);gap:var(--pfm-space-1);margin:0 0 var(--pfm-space-2);
+}
+.pfm-root :is(.pfm-fill,.pfm-calibration)>.pfm-flash-warning{color:var(--pfm-error);}
+
+/* 장노출 도구는 테마의 전경색과 배경색으로 종료를 알린다. */
+.pfm-root .pfm-reciprocity>label.pfm-field{display:grid;grid-template-columns:minmax(0,1fr);}
+.pfm-root .pfm-reciprocity>button{width:100%;margin-inline:0;}
+.pfm-root .pfm-reciprocity p:empty:not([role=status]){display:none;}
+.pfm-root .pfm-reciprocity p[role=status]:empty{margin:0;}
+.pfm-root .pfm-reciprocity .pfm-reciprocity-error{font-weight:750;}
+.pfm-root .pfm-reciprocity input[aria-invalid=true]{border-color:var(--pfm-ink);}
+.pfm-root .pfm-exposure-time,.pfm-root .pfm-reciprocity .pfm-bulb-countdown{
+ font-size:1.5rem;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;
+}
+.pfm-root .pfm-reciprocity .pfm-bulb-countdown{
+ padding:var(--pfm-space-3);background:var(--pfm-ink);color:var(--pfm-bg);font-size:2.25rem;text-align:center;
+}
+.pfm-root .pfm-bulb-flash{
+ position:fixed;inset:0;z-index:10;pointer-events:none;background:var(--pfm-ink);opacity:0;
+}
+.pfm-root[data-bulb-ended=true] .pfm-bulb-countdown{background:var(--pfm-bg);color:var(--pfm-ink);outline:1px solid var(--pfm-ink);}

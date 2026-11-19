@@ -38,3 +38,25 @@ test('370px 이하에서 카메라 거리의 5열 그리드를 줄인다',()=>{
  assert.ok(css.includes(wide));
  assert.ok(css.lastIndexOf(narrow)>css.lastIndexOf(wide));
 });
+
+test('야간 팔레트가 라이트·다크의 주요 색과 플래시 카드 반전색을 덮어쓴다',()=>{
+ const source=withoutFontFaces(css);
+ const selector='.pfm-root[data-night=true]';
+ assert.ok(source.indexOf(selector+'{')>source.indexOf('.theme-dark .pfm-root{'));
+ assert.ok(source.indexOf(selector+' .pfm-flash-results{')>source.indexOf('.theme-dark .pfm-root .pfm-flash-results{'));
+ const night=tokens(selector),card=tokens(selector+' .pfm-flash-results');
+ assert.equal(night['--pfm-bg'],'#000');
+ for(const token of ['ink','muted','line','control-line','surface','surface-2','accent','accent-ink','dof','beam','error','warning','warning-bg','ok','signal','lcd','lcd-dot']) {
+   const color=night['--pfm-'+token];
+   assert.match(color,/^#(?:000|[\da-f]{6}(?:[\da-f]{2})?)$/i,token);
+   if(color==='#000')continue;
+   const red=parseInt(color.slice(1,3),16),green=parseInt(color.slice(3,5),16),blue=parseInt(color.slice(5,7),16);
+   assert.ok(red<=184&&red>green&&green>=blue,token);
+ }
+ for(const token of Object.keys(tokens('.theme-dark .pfm-root .pfm-flash-results')))assert.equal(card[token],'inherit',token);
+ assert.equal(night['--pfm-signal-pressed'],'var(--pfm-signal)');
+ assert.match(body('.pfm-root .pfm-field-viewbar .pfm-night-toggle'),/min-width:44px/);
+ assert.match(body('.pfm-root .pfm-field-viewbar button'),/min-height:44px/);
+ assert.match(view,/this\.root\.dataset\.night=String\(i\.nightMode\)/);
+ assert.match(view,/night\.setAttribute\('aria-pressed',String\(i\.nightMode\)\)/);
+});

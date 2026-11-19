@@ -1,7 +1,7 @@
 {
   "inputs": {
     "src/model.ts": {
-      "bytes": 3502,
+      "bytes": 4030,
       "imports": [],
       "format": "esm"
     },
@@ -11,7 +11,7 @@
       "format": "esm"
     },
     "src/engine.ts": {
-      "bytes": 8479,
+      "bytes": 8657,
       "imports": [
         {
           "path": "./model",
@@ -73,8 +73,19 @@
       ],
       "format": "esm"
     },
+    "src/reciprocity.ts": {
+      "bytes": 3695,
+      "imports": [
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
+        }
+      ],
+      "format": "esm"
+    },
     "src/storage.ts": {
-      "bytes": 4584,
+      "bytes": 5413,
       "imports": [
         {
           "path": "src/field.ts",
@@ -90,6 +101,11 @@
           "path": "src/presets.ts",
           "kind": "import-statement",
           "original": "./presets"
+        },
+        {
+          "path": "src/reciprocity.ts",
+          "kind": "import-statement",
+          "original": "./reciprocity"
         }
       ],
       "format": "esm"
@@ -116,7 +132,7 @@
       "format": "esm"
     },
     "src/diagram.ts": {
-      "bytes": 10094,
+      "bytes": 10848,
       "imports": [
         {
           "path": "./model",
@@ -132,6 +148,27 @@
           "path": "src/zone.ts",
           "kind": "import-statement",
           "original": "./zone"
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/flash-tools.ts": {
+      "bytes": 5075,
+      "imports": [
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        },
+        {
+          "path": "src/model.ts",
+          "kind": "import-statement",
+          "original": "./model"
         },
         {
           "path": "src/units.ts",
@@ -142,12 +179,12 @@
       "format": "esm"
     },
     "src/note.ts": {
-      "bytes": 11626,
+      "bytes": 16379,
       "imports": [
         {
-          "path": "./model",
+          "path": "src/model.ts",
           "kind": "import-statement",
-          "external": true
+          "original": "./model"
         },
         {
           "path": "src/engine.ts",
@@ -163,12 +200,28 @@
           "path": "src/units.ts",
           "kind": "import-statement",
           "original": "./units"
+        },
+        {
+          "path": "src/flash-tools.ts",
+          "kind": "import-statement",
+          "original": "./flash-tools"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/scale.ts": {
+      "bytes": 1496,
+      "imports": [
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
         }
       ],
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 68511,
+      "bytes": 87436,
       "imports": [
         {
           "path": "src/field.ts",
@@ -214,12 +267,27 @@
           "path": "src/note.ts",
           "kind": "import-statement",
           "original": "./note"
+        },
+        {
+          "path": "src/scale.ts",
+          "kind": "import-statement",
+          "original": "./scale"
+        },
+        {
+          "path": "src/flash-tools.ts",
+          "kind": "import-statement",
+          "original": "./flash-tools"
+        },
+        {
+          "path": "src/reciprocity.ts",
+          "kind": "import-statement",
+          "original": "./reciprocity"
         }
       ],
       "format": "esm"
     },
     "src/main.ts": {
-      "bytes": 5805,
+      "bytes": 6479,
       "imports": [
         {
           "path": "obsidian",
@@ -278,16 +346,16 @@
       "entryPoint": "src/main.ts",
       "inputs": {
         "src/main.ts": {
-          "bytesInOutput": 6332
+          "bytesInOutput": 7043
         },
         "src/model.ts": {
-          "bytesInOutput": 1869
+          "bytesInOutput": 2149
         },
         "src/units.ts": {
           "bytesInOutput": 1566
         },
         "src/engine.ts": {
-          "bytesInOutput": 8012
+          "bytesInOutput": 8133
         },
         "src/presets.ts": {
           "bytesInOutput": 4951
@@ -295,26 +363,35 @@
         "src/field.ts": {
           "bytesInOutput": 6282
         },
+        "src/reciprocity.ts": {
+          "bytesInOutput": 4152
+        },
         "src/storage.ts": {
-          "bytesInOutput": 4637
+          "bytesInOutput": 5401
         },
         "src/writer.ts": {
           "bytesInOutput": 1413
         },
         "src/view.ts": {
-          "bytesInOutput": 85479
+          "bytesInOutput": 105143
         },
         "src/zone.ts": {
           "bytesInOutput": 4498
         },
         "src/diagram.ts": {
-          "bytesInOutput": 11189
+          "bytesInOutput": 12026
+        },
+        "src/flash-tools.ts": {
+          "bytesInOutput": 5268
         },
         "src/note.ts": {
-          "bytesInOutput": 16222
+          "bytesInOutput": 21169
+        },
+        "src/scale.ts": {
+          "bytesInOutput": 1440
         }
       },
-      "bytes": 154695
+      "bytes": 192942
     }
   }
 }

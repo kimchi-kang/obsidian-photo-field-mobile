@@ -1,19 +1,31 @@
 import {restoreField} from './field';
-import {defaults,Equipment,Inputs,Saved,emptyDraft} from './model';
+import {defaults,Equipment,Inputs,Saved,emptyDraft,FM2_SHUTTERS,FILL_RATIOS} from './model';
 import {equipmentValid,applyEquipment,manualFlash} from './presets';
+import {isReciprocityFilmId,validMeteredSeconds,validReciprocityExponent} from './reciprocity';
 export function restore(data:unknown):Saved {
-  const result:Saved={version:2,inputs:{...defaults},equipment:[],field:restoreField(undefined)};
+  const result:Saved={version:2,inputs:{...defaults,reciprocityOverrides:{}},equipment:[],field:restoreField(undefined)};
   if(!data||typeof data!=='object')return result;
   const d=data as Partial<Saved>;
   if(typeof d.version==='number'&&d.version>2)throw Error('이 데이터는 더 새 플러그인 버전에서 저장되었습니다. 덮어쓰지 않도록 로드를 중단합니다.');
   if(d.version!==2||!d.field)result.migrationBackup=JSON.parse(JSON.stringify(data));else if(d.migrationBackup)result.migrationBackup=d.migrationBackup;
   if(d.inputs&&typeof d.inputs==='object') {
     for(const key of Object.keys(defaults) as (keyof Inputs)[]) {
+      if(key==='reciprocityOverrides')continue;
       const value=d.inputs[key];
       if(typeof value===typeof defaults[key]&&(typeof value!=='number'||Number.isFinite(value)))Object.assign(result.inputs,{[key]:value});
     }
+    const overrides=d.inputs.reciprocityOverrides;
+    if(overrides&&typeof overrides==='object'&&!Array.isArray(overrides)){
+      for(const [id,p] of Object.entries(overrides)){
+        if(isReciprocityFilmId(id)&&validReciprocityExponent(p))result.inputs.reciprocityOverrides[id]=p;
+      }
+    }
   }
   const i=result.inputs;
+  if(!FM2_SHUTTERS.some(value=>value===i.shutter))i.shutter=defaults.shutter;
+  if(!FILL_RATIOS.some(value=>value===i.fillRatio))i.fillRatio=defaults.fillRatio;
+  if(!isReciprocityFilmId(i.reciprocityFilm))i.reciprocityFilm=defaults.reciprocityFilm;
+  if(!validMeteredSeconds(i.meteredSeconds))i.meteredSeconds=defaults.meteredSeconds;
   if(!['nominal','dimensions'].includes(i.cropBasis))i.cropBasis='nominal';
   if(!['current','target'].includes(i.zoneFlow))i.zoneFlow='current';
   if(typeof d.inputs==='object'&&d.inputs&&!('zoneFlow' in d.inputs)&&!result.migrationBackup)result.migrationBackup=JSON.parse(JSON.stringify(data));

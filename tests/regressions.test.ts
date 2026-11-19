@@ -55,10 +55,9 @@ test('저장 범위별 입력값 표는 구분선 바로 다음부터 연속된 
  assert.match(note({...filmDefaults,zoneInfinity:false,zoneFar:5},new Date(0),{version:'시험',scope:'zone'}),/\| 목표 유한 원거리 \(무한대 선택 시 미사용\) \| 5 m \|/);
 });
 test('카메라 거리 슬라이더의 하한은 화면 갱신마다 현재 초점거리를 반영한다',()=>{
- assert.match(view,/'cameraDistance',\{min:\(\)=>minFocusDistance\(i\.focal\)/);
- assert.match(view,/const updateRangeMinimum=\(\)=>\{[\s\S]*?const next=options\.min\(\);[\s\S]*?range\.min=String\(minimum\);/);
- assert.match(view,/const updateControls=\(\)=>\{updateRangeMinimum\(\)/);
- assert.match(view,/for\(const pair of this\.numeric\.values\(\)\)pair\.updateControls\(\)/);
+ assert.match(view,/const updateFocusScale=\(\)=>\{[\s\S]*?const \{focal\}=this\.plugin\.state\.inputs;[\s\S]*?axis=focusScale\(focal\);/);
+ assert.match(view,/const updateControls=\(limits\?:FocusLimits\)=>\{[\s\S]*?updateFocusScale\(\);/);
+ assert.match(view,/for\(const pair of this\.numeric\.values\(\)\)pair\.updateControls\(focusLimits\)/);
 });
 test('거리 증감은 1m와 10m 양쪽에서 되돌릴 수 있고 최소 초점거리를 지킨다',()=>{
  for(const [boundary,below,above] of [[1,.99,1.1],[10,9.9,11]]){
