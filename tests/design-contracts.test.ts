@@ -2,6 +2,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const css=readFileSync(new URL('../styles.css',import.meta.url),'utf8');
+const view=readFileSync(new URL('../src/view.ts',import.meta.url),'utf8');
+const withoutFontFaces=(source:string)=>source.replace(/@font-face\s*\{[^{}]*\}/g,'');
 function body(selector:string):string {const at=css.indexOf(selector+'{');assert.ok(at>=0,selector);return css.slice(at+selector.length+1,css.indexOf('}',at));}
 function tokens(selector:string):Record<string,string>{return Object.fromEntries([...body(selector).matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map(m=>[m[1],m[2].trim()]));}
 function luminance(hex:string):number {const raw=hex.replace('#','');const full=raw.length===3?[...raw].map(c=>c+c).join(''):raw;assert.match(full,/^[\da-f]{6}$/i);const channel=(offset:number)=>{const n=parseInt(full.slice(offset,offset+2),16)/255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;};return channel(0)*.2126+channel(2)*.7152+channel(4)*.0722;}
@@ -17,6 +19,22 @@ test('body, error, warning, primary action and focus colors meet their numeric c
 });
 test('every plugin CSS selector remains scoped and contains no remote asset import',()=>{
  const source=css.replace(/\/\*[\s\S]*?\*\//g,'');
- for(const match of source.matchAll(/([^{}]+)\{/g)){const selector=match[1].trim();if(selector.startsWith('@'))continue;for(const branch of selector.split(/,(?![^()]*\))/)){assert.match(branch,/\.pfm-(root|container)\b/,branch);}}
+ for(const match of withoutFontFaces(source).matchAll(/([^{}]+)\{/g)){const selector=match[1].trim();if(selector.startsWith('@'))continue;for(const branch of selector.split(/,(?![^()]*\))/)){assert.match(branch,/\.pfm-(root|container)\b/,branch);}}
  assert.doesNotMatch(source,/@import|https?:\/\//i);
+});
+test('선택자 검사에서 내장 글꼴 블록만 제외한다',()=>{
+ const rule='.pfm-root .example{display:none;}';
+ const font='@font-face {font-family:test;src:url(data:font/woff2;base64,AAAA);}';
+ assert.equal(withoutFontFaces(font+rule+font),rule);
+});
+test('사용자 지정 CoC 모드에서만 CoC 필드를 표시한다',()=>{
+ assert.match(view,/this\.root\.dataset\.cocMode=inputs\.cocMode/);
+ assert.match(body('.pfm-root:not([data-coc-mode=custom]) [data-field=coc],.pfm-root[data-coverage=approx] :is([data-field=horizontal],[data-field=vertical])'),/display:none/);
+});
+test('370px 이하에서 카메라 거리의 5열 그리드를 줄인다',()=>{
+ const selector='.pfm-root div.pfm-field[data-field=cameraDistance]';
+ const wide=selector+'{grid-template-columns:44px minmax(0,1fr) 92px 44px 44px;}';
+ const narrow='@media(max-width:370px){'+selector+'{grid-template-columns:44px minmax(0,1fr) 80px 44px 44px;}}';
+ assert.ok(css.includes(wide));
+ assert.ok(css.lastIndexOf(narrow)>css.lastIndexOf(wide));
 });

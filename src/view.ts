@@ -3,7 +3,7 @@ import {ItemView,WorkspaceLeaf,Notice} from 'obsidian';
 import type PhotoPlugin from './main';
 import {Inputs,sensors,Equipment,emptyDraft} from './model';
 import {flash,optics,coverage,exposureEV,powerSteps,minFocusDistance} from './engine';
-import {fmt,metres,distanceParts,parseNumber,feetToMetres,metresToFeet} from './units';
+import {fmt,metres,distanceParts,parseNumber,feetToMetres,metresToFeet,stepDistance} from './units';
 import {diagram,SCENE,sceneDistance} from './diagram';
 import {equipmentValid,parseTable,selectedEquipment,applyEquipment,equipmentId,selectEquipment,addQ20iii} from './presets';
 import {equivalence,solveZone,includesTarget} from './zone';
@@ -32,7 +32,20 @@ export class PhotoView extends ItemView {
   private fieldMessage='';
   private deletedField?:{kind:'shots'|'zones';value:Shot|ZoneFavorite;index:number};
   private closeFieldManager():void {const d=this.fieldExtras?.querySelector('details');if(d)d.open=false;this.detailState.set('즐겨찾기·내 거리 관리',false);}
-  private fieldAction(fn:()=>void):void {try{fn();this.changed();this.render();}catch(e){this.plugin.report(e);}}
+  private fieldAction(fn:()=>void,quick?:{key:NumericKey;focus:string;fallback?:string}):void {
+    try{
+      fn();
+      if(quick){
+        this.syncNumeric(quick.key);
+        this.numeric.get(quick.key)?.input.setAttribute('aria-invalid','false');
+      }
+      this.changed();
+      if(quick){
+        const target=this.root.querySelector<HTMLElement>(quick.focus)??(quick.fallback?this.root.querySelector<HTMLElement>(quick.fallback):null);
+        target?.focus({preventScroll:true});
+      }else this.render();
+    }catch(e){this.plugin.report(e);}
+  }
   private fieldPanel():void {
     const s=this.plugin.state,f=field(s),i=s.inputs;
     const bar=node(this.root,'nav',undefined,'pfm-field-viewbar');
@@ -53,10 +66,25 @@ export class PhotoView extends ItemView {
     let review:HTMLDetailsElement|undefined;if(this.fieldMessage){review=node(h,'details',undefined,'pfm-field-review');node(review,'summary',this.fieldMessage.includes(' 적용 · ')?'촬영 적용 내역 확인':this.fieldMessage.startsWith('촬영 적용 취소 만료')?'촬영 취소 만료 · 설정 변경됨':this.fieldMessage.startsWith('권장 출력 적용 취소 만료')?'권장 적용 취소 만료 · 출력 변경됨':this.fieldMessage);node(review,'p',this.fieldMessage);if(this.shotChanges)node(review,'p',this.shotChanges,'pfm-field-status');}
     const distance=node(h,'div',undefined,'pfm-distance-buttons');this.distanceButtons=distance;const key=distanceKey(i);
     node(distance,'p',key==='flashDistance'?`내 거리 · 플래시 → 피사체 ${metres(i.flashDistance)} (카메라 초점 유지)`:`내 거리 · 초점 맞출 거리 ${i.focusInfinity?'∞':metres(i.cameraDistance)}${i.linked&&(i.tab==='flash'||i.tab==='combined')?' · 플래시 연동':''}`);
-    const addDistances=(parent:HTMLElement,start:number,end:number)=>{for(const d of f.distances.slice(start,end)){const b=this.fieldButton(parent,metres(d.metres),()=>this.fieldAction(()=>{this.plugin.update(key,d.metres);const more=distance.querySelector('details');if(more)more.open=false;this.detailState.set('거리 더보기',false);}));b.dataset.distanceId=d.id;b.setAttribute('aria-pressed',String(Object.is(i[key],d.metres)&&!(key==='cameraDistance'&&i.focusInfinity)));}};
+    const addDistances=(parent:HTMLElement,start:number,end:number)=>{
+      for(const d of f.distances.slice(start,end)){
+        const focus=start===0?`[data-distance-id="${CSS.escape(d.id)}"]`:'.pfm-distance-buttons details > summary';
+        const b=this.fieldButton(parent,metres(d.metres),()=>this.fieldAction(()=>{
+          this.plugin.update(key,d.metres);
+          const more=distance.querySelector('details');if(more)more.open=false;
+          this.detailState.set('거리 더보기',false);
+        },{key,focus}));
+        b.dataset.distanceId=d.id;b.setAttribute('aria-pressed',String(Object.is(i[key],d.metres)&&!(key==='cameraDistance'&&i.focusInfinity)));
+      }
+    };
     addDistances(distance,0,5);if(f.distances.length>5){const more=node(distance,'details');node(more,'summary','거리 더보기');addDistances(more,5,f.distances.length);}
     const actions=this.powerAdjust;actions.replaceChildren();
-    for(const [dir,label]of [['weaker','출력 약하게'],['stronger','출력 강하게']] as const){const n=nextPower(i,dir);const b=this.fieldButton(actions,label,()=>this.fieldAction(()=>{if(n!==undefined)this.plugin.update('denominator',n);}));b.disabled=n===undefined;b.dataset.powerDirection=dir;}
+    for(const [dir,label]of [['weaker','출력 약하게'],['stronger','출력 강하게']] as const){
+      const n=nextPower(i,dir);
+      const b=this.fieldButton(actions,label,()=>{if(n!==undefined)this.fieldAction(()=>this.plugin.update('denominator',n),
+        {key:'denominator',focus:`[data-power-direction=${dir}]:enabled`,fallback:'[data-power-direction]:enabled'});});
+      b.disabled=n===undefined;b.dataset.powerDirection=dir;
+    }
     actions.classList.add('pfm-field-power','pfm-field-buttons');if(f.simple&&(i.tab==='flash'||i.tab==='combined')){const action=this.root.querySelector('.pfm-output-action');if(action)action.append(actions);else this.root.querySelector('.pfm-quick')?.prepend(actions);if(review&&this.fieldMessage.startsWith('권장 출력 적용 취소 만료'))action?.append(review);}
     const manage=node(this.fieldExtras,'details',undefined,'pfm-field-manage');node(manage,'summary','즐겨찾기·내 거리 관리');
     node(manage,'p','장비 프리셋은 사양, 촬영 즐겨찾기는 조건 묶음, 존 즐겨찾기는 목표 구간입니다.');
@@ -133,23 +161,35 @@ export class PhotoView extends ItemView {
   }
   private button(parent:HTMLElement,text:string,fn:()=>void):HTMLButtonElement {const b=node(parent,'button',text);b.type='button';this.listen(b,'click',fn);return b;}
   private rangeProgress(range:HTMLInputElement):void {
-    const percent=(Number(range.value)-Number(range.min))/(Number(range.max)-Number(range.min))*100;
+    const span=Number(range.max)-Number(range.min);
+    const percent=span>0?(Number(range.value)-Number(range.min))/span*100:0;
     range.style.setProperty('--pfm-range-progress',`${percent}%`);range.style.setProperty('--pfm-range-fraction',String(percent/100));
   }
-  private number(parent:HTMLElement,label:string,key:NumericKey,options?:{min:number;max:number;step:number;stops?:number[]}):void {
+  private number(parent:HTMLElement,label:string,key:NumericKey,options?:{min:number|(()=>number);max:number;step:number;stops?:number[]}):void {
     const wrap=node(parent,'div',undefined,'pfm-field');wrap.dataset.field=key;const infinite=()=>key==='cameraDistance'&&this.plugin.state.inputs.focusInfinity;const compact:Partial<Record<NumericKey,string>>={cameraDistance:'초점 맞출 거리 (m)',aperture:'실제 조리개 (f/)',focal:'초점거리 (mm)'};const caption=node(wrap,'label',compact[key]??label);
     const entry=node(wrap,'div',undefined,'pfm-number-entry');
     const input=node(wrap,'input');input.type='number';input.inputMode='decimal';input.step='any';input.value=Number.isFinite(this.plugin.state.inputs[key])?String(this.plugin.state.inputs[key]):'';input.dataset.key=key;input.setAttribute('aria-label',label);
     input.id=`pfm-control-${++nextControlId}`;caption.htmlFor=input.id;
     const isDistance=['cameraDistance','flashDistance','zoneNear','zoneFar','diagramMax'].includes(key);
-    let scale=1;
+    let scale=1,minimum=typeof options?.min==='number'?options.min:0.1;
     let range:HTMLInputElement|undefined;let infinityButton:HTMLButtonElement|undefined;
     // A slider with `stops` snaps to those values like a clicking aperture ring: the range position is the stop index.
     const stops=options?.stops;
     const toRange=(v:number):string=>{if(!stops)return String(v);if(!Number.isFinite(v)||v<=0)return '0';let best=0;stops.forEach((stop,n)=>{if(Math.abs(Math.log(v/stop))<Math.abs(Math.log(v/stops[best])))best=n;});return String(best);};
     const fromRange=(r:HTMLInputElement):number=>stops?stops[Number(r.value)]:Number(r.value);
     const rangeText=(v:number):string=>key==='aperture'?`f/${fmt(stops?stops[Number(toRange(v))]:v)}`:fmt(v);
-    if(options){wrap.classList.add('pfm-range-field');input.min=String(options.min);range=node(wrap,'input');range.type='range';range.min=stops?'0':String(options.min);range.max=stops?String(stops.length-1):String(options.max);range.step=stops?'1':String(options.step);range.value=stops?toRange(this.plugin.state.inputs[key]):input.value;
+    const updateRangeMinimum=()=>{
+      if(!range||typeof options?.min!=='function')return;
+      const next=options.min();
+      if(!Number.isFinite(next)||next<=0||next===minimum)return;
+      minimum=next;
+      range.max=String(Math.max(options.max,minimum));
+      range.min=String(minimum);
+      input.min=String(minimum*scale);
+      range.value=toRange(this.plugin.state.inputs[key]);
+      this.rangeProgress(range);
+    };
+    if(options){wrap.classList.add('pfm-range-field');input.min=String(minimum);range=node(wrap,'input');range.type='range';range.min=stops?'0':String(minimum);range.max=stops?String(stops.length-1):String(options.max);range.step=stops?'1':String(options.step);range.value=stops?toRange(this.plugin.state.inputs[key]):input.value;
       if(stops){range.dataset.stops=String(stops.length);range.style.setProperty('--pfm-range-div',String(stops.length-1));}
       this.rangeProgress(range);range.setAttribute('aria-label',`${label} 빠른 조절`);range.dataset.range=key;if(stops)range.setAttribute('aria-valuetext',rangeText(this.plugin.state.inputs[key]));
       const r=range;this.listen(r,'input',()=>{this.plugin.update(key,fromRange(r));sync();input.setAttribute('aria-invalid','false');this.changed();});
@@ -161,7 +201,7 @@ export class PhotoView extends ItemView {
       const value=this.plugin.state.inputs[key];
       if(isDistance&&Number.isFinite(value)&&value>=0)scale=value<=1?100:1;
       const unit=scale===100?'cm':'m';
-      if(isDistance){caption.textContent=(compact[key]??label).replace('(m)',`(${unit})`);input.setAttribute('aria-label',label.replace('(m)',`(${unit})`));input.dataset.displayUnit=unit;if(options)input.min=String(options.min*scale);}
+      if(isDistance){caption.textContent=(compact[key]??label).replace('(m)',`(${unit})`);input.setAttribute('aria-label',label.replace('(m)',`(${unit})`));input.dataset.displayUnit=unit;if(options)input.min=String(minimum*scale);}
       input.value=infinite()?'':Number.isFinite(value)?String(isDistance&&document.activeElement!==input?Number((value*scale).toFixed(1)):scale===100?Number((value*scale).toPrecision(15)):value):'';
       infinityUi();
       if(range){range.value=toRange(value);this.rangeProgress(range);if(stops)range.setAttribute('aria-valuetext',rangeText(value));}
@@ -175,12 +215,10 @@ export class PhotoView extends ItemView {
       if(steps&&!isDistance&&key!=='loss'&&key!=='tolerance'){
         const next=direction>0?steps.find(n=>n>value):[...steps].reverse().find(n=>n<value);return next;
       }
-      const increment=isDistance?(value<1-1e-9?.01:value<10?.1:1):key==='coc'?.001:['width','height','loss','tolerance','apertureMin','apertureMax'].includes(key)?.1:1;
-      const minimum=key==='loss'?0:['cameraDistance','zoneNear'].includes(key)?minFocusDistance(this.plugin.state.inputs.focal):isDistance?.01:key==='coc'?.001:increment;
-      const result=Math.min(key==='tolerance'?5:Infinity,Math.max(minimum,Number((value+direction*increment).toPrecision(15))));
+      if(isDistance)return stepDistance(value,direction,key==='cameraDistance'||key==='zoneNear'?minFocusDistance(this.plugin.state.inputs.focal):.01);
+      const increment=key==='coc'?.001:['width','height','loss','tolerance','apertureMin','apertureMax'].includes(key)?.1:1;
+      const result=Math.min(key==='tolerance'?5:Infinity,Math.max(key==='loss'?0:increment,Number((value+direction*increment).toPrecision(15))));
       if((key==='horizontal'||key==='vertical')&&result>=180)return;
-      // Distances show one decimal: land exactly on 1 m when crossing it so the step is visible.
-      if(isDistance&&((direction>0&&value<1&&result>1)||(direction<0&&value>1&&result<1)))return (1-value)*direction>0?1:undefined;
       return (result-value)*direction>0?result:undefined;
     };
     const adjust=(direction:number)=>{if(infinite()){if(direction<0)apply(this.plugin.state.inputs[key]);return;}const value=candidate(direction);if(value!==undefined)apply(value);};
@@ -188,7 +226,7 @@ export class PhotoView extends ItemView {
     const plus=this.button(entry,'+',()=>adjust(1));plus.dataset.step='up';plus.setAttribute('aria-label',`${label} 늘리기`);
     let picker:HTMLSelectElement|undefined;
     if(choices[key]){picker=node(wrap,'select',undefined,'pfm-value-picker');picker.dataset.preset=key;picker.setAttribute('aria-label',`${label} 자주 쓰는 값`);const placeholder=node(picker,'option','자주 쓰는 값');placeholder.value='';for(const value of choices[key]){const option=node(picker,'option',isDistance?metres(value):key==='aperture'?`f/${value}`:key==='focal'?`${value} mm`:String(value));option.value=String(value);}const control=picker;this.listen(control,'change',()=>{if(control.value!=='')apply(Number(control.value));control.value='';});}
-    const updateControls=()=>{infinityUi();minus.disabled=infinite()?false:candidate(-1)===undefined;plus.disabled=infinite()||candidate(1)===undefined;if(picker)picker.disabled=input.disabled;};
+    const updateControls=()=>{updateRangeMinimum();infinityUi();minus.disabled=infinite()?false:candidate(-1)===undefined;plus.disabled=infinite()||candidate(1)===undefined;if(picker)picker.disabled=input.disabled;};
     if(key==='cameraDistance'){const b=node(wrap,'button','∞','pfm-infinity-toggle');b.type='button';b.dataset.focusInfinity='true';b.setAttribute('aria-label','무한대 초점');infinityButton=b;this.listen(b,'click',()=>{this.plugin.setFocusInfinity(!this.plugin.state.inputs.focusInfinity);sync();this.changed();b.focus({preventScroll:true});});}
     this.numeric.set(key,{input,range,sync,updateControls});sync();
     this.listen(input,'input',()=>{const v=parseNumber(input.value)/scale;this.plugin.update(key,v);if(key==='denominator')this.syncPower();if(range&&Number.isFinite(v)){range.value=toRange(v);this.rangeProgress(range);}input.setAttribute('aria-invalid',String(!Number.isFinite(v)||v<0||(v===0&&key!=='loss')));this.changed();});
@@ -247,7 +285,7 @@ export class PhotoView extends ItemView {
     const quick=node(this.root,'section',undefined,'pfm-quick');node(quick,'h2','빠른 조절');this.powerAdjust=node(quick,'div',undefined,'pfm-field-power');
     const shortcuts=node(quick,'nav',undefined,'pfm-settings-shortcuts');shortcuts.setAttribute('aria-label','상세 설정 바로가기');
     for(const [target,text]of [['camera','카메라 설정'],['flash','플래시 설정'],['equipment','내 장비']]as const){const b=this.button(shortcuts,text,()=>{this.jumpSettings(target);});b.dataset.settingsJump=target;}
-    this.number(quick,'카메라 → 피사체 거리 (m)','cameraDistance',{min:0.1,max:30,step:0.1});
+    this.number(quick,'카메라 → 피사체 거리 (m)','cameraDistance',{min:()=>minFocusDistance(i.focal),max:30,step:0.1});
     this.number(quick,'조리개 f-number','aperture',{min:0.7,max:32,step:0.1,stops:APERTURE_STOPS});
     const power=this.select(quick,'출력 선택','denominator',{},()=>{this.plugin.update('denominator',Number(power.value));this.syncNumeric('denominator');});
     this.power=power;this.syncPower();

@@ -4,7 +4,7 @@ import {restore,snapshot,verifiedWrite} from './storage';
 import {LatestWriter} from './writer';
 import {applyEquipment,selectedEquipment,setGnMode} from './presets';
 import {PhotoView,VIEW} from './view';
-import {note,validateNote,NoteScope} from './note';
+import {note,noteTimestamp,validateNote,NoteScope} from './note';
 export default class PhotoPlugin extends Plugin {
   state!:Saved;
   private writer!:LatestWriter<Saved>;
@@ -45,13 +45,13 @@ export default class PhotoPlugin extends Plugin {
   reportSaveError(e:unknown):void {if(!this.saveError){this.saveError='설정 저장 실패 · 다시 저장하세요.';this.report(e);}for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.updateSaveStatus();}
   refresh(source:PhotoView):void {for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView&&leaf.view!==source)leaf.view.render();}
   saveNote(scope:NoteScope='all'):Promise<string> {
-    const i={...this.state.inputs},equipment=selectedEquipment(this.state);
-    let content:string;try{validateNote(i,scope);content=note(i,new Date(),{version:this.manifest.version,equipment,scope});}catch(e){return Promise.reject(e);}
+    const i={...this.state.inputs},equipment=selectedEquipment(this.state),date=new Date();
+    let content:string;try{validateNote(i,scope);content=note(i,date,{version:this.manifest.version,equipment,scope});}catch(e){return Promise.reject(e);}
     const task=this.notes.catch(()=>undefined).then(async()=>{
       const folder=normalizePath('사진 촬영 계산');
       if(!this.app.vault.getAbstractFileByPath(folder))try{await this.app.vault.createFolder(folder);}catch(e){if(!(this.app.vault.getAbstractFileByPath(folder) instanceof TFolder))throw e;}
       if(!(this.app.vault.getAbstractFileByPath(folder) instanceof TFolder))throw Error('저장 폴더 경로에 파일이 있습니다. 다른 이름으로 옮겨주세요.');
-      const base=`${folder}/촬영 계산 ${new Date().toISOString().replace(/[:.]/g,'-')}`;
+      const base=`${folder}/촬영 계산 ${noteTimestamp(date)}`;
       for(let n=0;n<1000;n++){
         const path=`${base}${n?'-'+n:''}.md`;if(this.app.vault.getAbstractFileByPath(path))continue;
         try{await this.app.vault.create(path,content);this.noteNotice?.hide();this.noteNotice=new Notice(`저장 완료: ${path}`,2500);return path;}catch(e){if(!this.app.vault.getAbstractFileByPath(path))throw e;}

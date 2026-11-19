@@ -4,6 +4,10 @@ import {equivalence,solveZone} from './zone';
 import {fmt,metres} from './units';
 export const limitations='필름 카메라(Nikon FM2) 기준: 플래시 동조는 셔터 1/250초 이하(FM2n, 초기 FM2는 1/200초)이며 TTL·HSS가 없습니다. 수동 플래시·직접광·일반 동조·중심부 노출의 추정입니다. 점광원 역제곱 근사이며 근거리 대형 광원에는 부적절합니다. 실제 배광·반사율·환경광·장비 편차를 포함하지 않습니다. TTL, HSS, 바운스, 소프트박스, 근거리 대형 광원은 이 기본 모델로 확정할 수 없습니다. 손실 보정은 추정이며 GN에 이미 포함된 손실을 중복 적용하지 마세요.';
 export type NoteScope='all'|Inputs['tab'];
+export function noteTimestamp(date:Date):string {
+  const pad=(value:number)=>String(value).padStart(2,'0');
+  return `${String(date.getFullYear()).padStart(4,'0')}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+}
 export function validateNote(i:Inputs,scope:NoteScope='all'):void {
   if(scope!=='flash')optics(i);
   if(scope==='zone'&&i.zoneFlow==='target')solveZone(i);
@@ -12,14 +16,24 @@ export function validateNote(i:Inputs,scope:NoteScope='all'):void {
 }
 export function note(i:Inputs,date=new Date(),context?:{version:string;equipment?:Equipment;scope?:NoteScope}):string {
   const scope=context?.scope??'all';
-  const lines=['# 사진 촬영 계산',`\n날짜: ${date.toISOString()} (${date.toLocaleString('ko-KR')}, 기기 현지 시각)`,`\n## 입력값\n`,`| 항목 | 값 |`,`| --- | --- |`];
+  const lines=['# 사진 촬영 계산',`\n날짜: ${date.toISOString()} (${date.toLocaleString('ko-KR')}, 기기 현지 시각)`];
   lines.push(`저장 범위: ${scope==='zone'?'현재 탭 · 존 포커싱 (플래시 제외)':scope==='dof'?'현재 탭 · 심도·화각 (플래시·조사 범위 제외)':scope==='flash'?'현재 탭 · 플래시 (심도·조사 범위 제외)':scope==='combined'?'현재 탭 · 통합 (전체 계산)':'전체 계산'}`);
   lines.push(`플러그인 버전: ${context?.version??'개발/미지정'}`,`GN 입력 모드: ${i.gnMode==='equipment'?'장비 표':'수동 GN'}`,`선택 장비: ${context?.equipment?.name??'없음 · 수동 GN'}`,`장비 출처: ${context?.equipment?.source??'GN 조건 참조'}`);
+  lines.push('\n## 입력값\n','| 항목 | 값 |','| --- | --- |');
   const labels:Record<keyof Inputs,string>={gnMode:'GN 모드',equipmentId:'장비 ID (수동 모드에서는 적용 안 함)',sensor:'필름·포맷 프리셋',width:'프레임 가로 mm',height:'프레임 세로 mm',focal:'실제 초점거리 mm',aperture:'조리개 f/',iso:'필름 감도 ISO',cameraDistance:'카메라 거리',focusInfinity:'무한대 초점 (켜면 카메라 거리는 마지막 유한값 보존)',linked:'온카메라 연동',flashDistance:'별도 플래시 거리',cocMode:'CoC 방식',coc:'사용자 CoC mm',gn:'ISO100 최대 출력 GN',gnUnit:'GN 단위',gnZoom:'GN 측정 줌 mm',zoom:'선택 플래시 줌 mm',conditions:'GN 조건',denominator:'출력 1/n의 n',loss:'추가 손실 stop',tolerance:'허용 오차 ±EV',minDenominator:'최소 출력 1/n의 n',steps:'지원 출력 분모',coverage:'조사각 방식 (approx=35mm 프레임 가정)',horizontal:'직접 입력 수평 조사각 °',vertical:'직접 입력 수직 조사각 °',mode:'발광 조건',diagramMax:'그림 최대 거리',tab:'화면',cropBasis:'35mm 환산 기준',zoneFlow:'존 흐름',zoneNear:'목표 근거리',zoneFar:'목표 유한 원거리 (무한대 선택 시 미사용)',zoneInfinity:'목표 원거리 무한대',apertureMin:'렌즈 최대 개방 f값',apertureMax:'렌즈 최소 개방 f값',apertureSteps:'사용 가능한 실제 조리개 단계'};
   const opticalKeys:ReadonlySet<keyof Inputs>=new Set(['sensor','width','height','focal','aperture','cameraDistance','focusInfinity','cocMode','coc','tab','cropBasis']);
   const flashKeys:ReadonlySet<keyof Inputs>=new Set(['gnMode','equipmentId','aperture','iso','linked','cameraDistance','focusInfinity','flashDistance','gn','gnUnit','gnZoom','zoom','conditions','denominator','loss','tolerance','minDenominator','steps','mode','tab']);
   const distanceKeys:ReadonlySet<keyof Inputs>=new Set(['cameraDistance','flashDistance','zoneNear','zoneFar','diagramMax']);
-  for(const key of Object.keys(labels) as (keyof Inputs)[]){if(((scope==='dof'||scope==='zone')&&!opticalKeys.has(key)&&!['zoneFlow','zoneNear','zoneFar','zoneInfinity','apertureMin','apertureMax','apertureSteps'].includes(key))||(scope==='flash'&&!flashKeys.has(key)))continue;lines.push(`| ${labels[key]} | ${String((key==='cameraDistance'&&i.focusInfinity&&!(scope==='flash'&&!i.linked))?'∞ (무한대 초점)':(key==='flashDistance'&&i.linked)||(key==='cameraDistance'&&scope==='flash'&&!i.linked)||(key==='coc'&&i.cocMode!=='custom')||(['horizontal','vertical'].includes(key)&&i.coverage==='approx')?'미사용':distanceKeys.has(key)?metres(i[key] as number):i[key]).replace(/\|/g,'\\|').replace(/\n/g,' / ')} |`);}
+  const zoneKeys:ReadonlySet<keyof Inputs>=new Set(['zoneFlow','zoneNear','zoneFar','zoneInfinity','apertureMin','apertureMax','apertureSteps']);
+  for(const key of Object.keys(labels) as (keyof Inputs)[]){
+    if((scope==='dof'||scope==='zone')&&!opticalKeys.has(key)&&!(scope==='zone'&&zoneKeys.has(key)))continue;
+    if(scope==='flash'&&!flashKeys.has(key))continue;
+    const unused=(key==='flashDistance'&&i.linked)||(key==='cameraDistance'&&scope==='flash'&&!i.linked)
+      ||(key==='coc'&&i.cocMode!=='custom')||(['horizontal','vertical'].includes(key)&&i.coverage==='approx')
+      ||(key==='zoneFar'&&i.zoneInfinity);
+    const value=unused?'미사용':key==='cameraDistance'&&i.focusInfinity?'∞ (무한대 초점)':distanceKeys.has(key)?metres(i[key] as number):i[key];
+    lines.push(`| ${labels[key]} | ${String(value).replace(/\|/g,'\\|').replace(/\n/g,' / ')} |`);
+  }
   lines.push('\n## 계산 결과\n','모든 거리는 소수 첫째 자리까지만 표시하고 1m 이하는 cm로 자동 표시합니다. 내부 저장 값과 계산은 반올림하지 않으며 표시 숫자만 반올림합니다. 포함·출력 경계·노출 판정은 반올림 전 값이므로 같은 표시 숫자라도 판정이 다를 수 있습니다.');
   if(scope!=='dof'&&scope!=='zone')try {const f=flash(i);lines.push(`- 선택 출력 1/${i.denominator}: **${f.powerLabel}**`,`- 적정 노출 예상 거리: ${metres(f.d)}`,`- 플래시–피사체 거리: ${metres(f.r)} · 노출 차이: ${fmt(f.ev)} EV (${f.ev>0?'예상 과다':f.ev<0?'예상 부족':'기준 적정'})`,`- 유효 GN(m): ${fmt(f.gn)}`,`- ±${i.tolerance}EV 거리 구간: ${metres(f.low)} ~ ${metres(f.high)}`,`- 필요한 조리개 f/${fmt(f.requiredAperture)} · 필요 출력 ${fmt(f.needed*100)}% · ${f.status}`,`- 권장 지원 단계 1/${f.nearest} · 해당 단계 예상 거리 ${metres(f.nearestDistance)}, 남는 노출 오차 ${fmt(f.residual)} EV`);
     lines.push('\n### 출력별 거리\n','| 출력 | 적정 노출 예상 거리 |','| --- | --- |',...f.distances.map(x=>`| 1/${x.n} | ${metres(x.d)} |`));

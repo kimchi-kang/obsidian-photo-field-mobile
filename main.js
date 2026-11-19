@@ -119,6 +119,14 @@ function fmt(v, digits = 2) {
   return (Math.abs(v) < 0.5 * 10 ** -digits ? 0 : v).toLocaleString("ko-KR", { maximumFractionDigits: digits });
 }
 var DISTANCE_DIGITS = 1;
+function stepDistance(value, direction, minimum) {
+  const nearBoundary = (boundary2) => Math.abs(value - boundary2) <= 1e-9;
+  const distance = nearBoundary(1) ? 1 : nearBoundary(10) ? 10 : value;
+  const increment = distance < 1 || distance === 1 && direction < 0 ? 0.01 : distance < 10 || distance === 10 && direction < 0 ? 0.1 : 1;
+  const next = Math.max(minimum, Number((distance + direction * increment).toPrecision(15)));
+  const boundary = [1, 10].find((b) => b >= minimum && (b - distance) * direction > 0 && (next - b) * direction > 0);
+  return (next - value) * direction > 0 ? boundary ?? next : void 0;
+}
 function distanceParts(v, digits = DISTANCE_DIGITS) {
   if (v === Infinity) return { value: "\u221E", unit: "" };
   if (!Number.isFinite(v) || v < 0) return { value: "\u2014", unit: "" };
@@ -881,6 +889,10 @@ function diagram(host, i) {
 
 // src/note.ts
 var limitations = "\uD544\uB984 \uCE74\uBA54\uB77C(Nikon FM2) \uAE30\uC900: \uD50C\uB798\uC2DC \uB3D9\uC870\uB294 \uC154\uD130 1/250\uCD08 \uC774\uD558(FM2n, \uCD08\uAE30 FM2\uB294 1/200\uCD08)\uC774\uBA70 TTL\xB7HSS\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4. \uC218\uB3D9 \uD50C\uB798\uC2DC\xB7\uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870\xB7\uC911\uC2EC\uBD80 \uB178\uCD9C\uC758 \uCD94\uC815\uC785\uB2C8\uB2E4. \uC810\uAD11\uC6D0 \uC5ED\uC81C\uACF1 \uADFC\uC0AC\uC774\uBA70 \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC5D0\uB294 \uBD80\uC801\uC808\uD569\uB2C8\uB2E4. \uC2E4\uC81C \uBC30\uAD11\xB7\uBC18\uC0AC\uC728\xB7\uD658\uACBD\uAD11\xB7\uC7A5\uBE44 \uD3B8\uCC28\uB97C \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. TTL, HSS, \uBC14\uC6B4\uC2A4, \uC18C\uD504\uD2B8\uBC15\uC2A4, \uADFC\uAC70\uB9AC \uB300\uD615 \uAD11\uC6D0\uC740 \uC774 \uAE30\uBCF8 \uBAA8\uB378\uB85C \uD655\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC190\uC2E4 \uBCF4\uC815\uC740 \uCD94\uC815\uC774\uBA70 GN\uC5D0 \uC774\uBBF8 \uD3EC\uD568\uB41C \uC190\uC2E4\uC744 \uC911\uBCF5 \uC801\uC6A9\uD558\uC9C0 \uB9C8\uC138\uC694.";
+function noteTimestamp(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${String(date.getFullYear()).padStart(4, "0")}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+}
 function validateNote(i, scope = "all") {
   if (scope !== "flash") optics(i);
   if (scope === "zone" && i.zoneFlow === "target") solveZone(i);
@@ -890,18 +902,21 @@ function validateNote(i, scope = "all") {
 function note(i, date = /* @__PURE__ */ new Date(), context) {
   const scope = context?.scope ?? "all";
   const lines = ["# \uC0AC\uC9C4 \uCD2C\uC601 \uACC4\uC0B0", `
-\uB0A0\uC9DC: ${date.toISOString()} (${date.toLocaleString("ko-KR")}, \uAE30\uAE30 \uD604\uC9C0 \uC2DC\uAC01)`, `
-## \uC785\uB825\uAC12
-`, `| \uD56D\uBAA9 | \uAC12 |`, `| --- | --- |`];
+\uB0A0\uC9DC: ${date.toISOString()} (${date.toLocaleString("ko-KR")}, \uAE30\uAE30 \uD604\uC9C0 \uC2DC\uAC01)`];
   lines.push(`\uC800\uC7A5 \uBC94\uC704: ${scope === "zone" ? "\uD604\uC7AC \uD0ED \xB7 \uC874 \uD3EC\uCEE4\uC2F1 (\uD50C\uB798\uC2DC \uC81C\uC678)" : scope === "dof" ? "\uD604\uC7AC \uD0ED \xB7 \uC2EC\uB3C4\xB7\uD654\uAC01 (\uD50C\uB798\uC2DC\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "flash" ? "\uD604\uC7AC \uD0ED \xB7 \uD50C\uB798\uC2DC (\uC2EC\uB3C4\xB7\uC870\uC0AC \uBC94\uC704 \uC81C\uC678)" : scope === "combined" ? "\uD604\uC7AC \uD0ED \xB7 \uD1B5\uD569 (\uC804\uCCB4 \uACC4\uC0B0)" : "\uC804\uCCB4 \uACC4\uC0B0"}`);
   lines.push(`\uD50C\uB7EC\uADF8\uC778 \uBC84\uC804: ${context?.version ?? "\uAC1C\uBC1C/\uBBF8\uC9C0\uC815"}`, `GN \uC785\uB825 \uBAA8\uB4DC: ${i.gnMode === "equipment" ? "\uC7A5\uBE44 \uD45C" : "\uC218\uB3D9 GN"}`, `\uC120\uD0DD \uC7A5\uBE44: ${context?.equipment?.name ?? "\uC5C6\uC74C \xB7 \uC218\uB3D9 GN"}`, `\uC7A5\uBE44 \uCD9C\uCC98: ${context?.equipment?.source ?? "GN \uC870\uAC74 \uCC38\uC870"}`);
+  lines.push("\n## \uC785\uB825\uAC12\n", "| \uD56D\uBAA9 | \uAC12 |", "| --- | --- |");
   const labels = { gnMode: "GN \uBAA8\uB4DC", equipmentId: "\uC7A5\uBE44 ID (\uC218\uB3D9 \uBAA8\uB4DC\uC5D0\uC11C\uB294 \uC801\uC6A9 \uC548 \uD568)", sensor: "\uD544\uB984\xB7\uD3EC\uB9F7 \uD504\uB9AC\uC14B", width: "\uD504\uB808\uC784 \uAC00\uB85C mm", height: "\uD504\uB808\uC784 \uC138\uB85C mm", focal: "\uC2E4\uC81C \uCD08\uC810\uAC70\uB9AC mm", aperture: "\uC870\uB9AC\uAC1C f/", iso: "\uD544\uB984 \uAC10\uB3C4 ISO", cameraDistance: "\uCE74\uBA54\uB77C \uAC70\uB9AC", focusInfinity: "\uBB34\uD55C\uB300 \uCD08\uC810 (\uCF1C\uBA74 \uCE74\uBA54\uB77C \uAC70\uB9AC\uB294 \uB9C8\uC9C0\uB9C9 \uC720\uD55C\uAC12 \uBCF4\uC874)", linked: "\uC628\uCE74\uBA54\uB77C \uC5F0\uB3D9", flashDistance: "\uBCC4\uB3C4 \uD50C\uB798\uC2DC \uAC70\uB9AC", cocMode: "CoC \uBC29\uC2DD", coc: "\uC0AC\uC6A9\uC790 CoC mm", gn: "ISO100 \uCD5C\uB300 \uCD9C\uB825 GN", gnUnit: "GN \uB2E8\uC704", gnZoom: "GN \uCE21\uC815 \uC90C mm", zoom: "\uC120\uD0DD \uD50C\uB798\uC2DC \uC90C mm", conditions: "GN \uC870\uAC74", denominator: "\uCD9C\uB825 1/n\uC758 n", loss: "\uCD94\uAC00 \uC190\uC2E4 stop", tolerance: "\uD5C8\uC6A9 \uC624\uCC28 \xB1EV", minDenominator: "\uCD5C\uC18C \uCD9C\uB825 1/n\uC758 n", steps: "\uC9C0\uC6D0 \uCD9C\uB825 \uBD84\uBAA8", coverage: "\uC870\uC0AC\uAC01 \uBC29\uC2DD (approx=35mm \uD504\uB808\uC784 \uAC00\uC815)", horizontal: "\uC9C1\uC811 \uC785\uB825 \uC218\uD3C9 \uC870\uC0AC\uAC01 \xB0", vertical: "\uC9C1\uC811 \uC785\uB825 \uC218\uC9C1 \uC870\uC0AC\uAC01 \xB0", mode: "\uBC1C\uAD11 \uC870\uAC74", diagramMax: "\uADF8\uB9BC \uCD5C\uB300 \uAC70\uB9AC", tab: "\uD654\uBA74", cropBasis: "35mm \uD658\uC0B0 \uAE30\uC900", zoneFlow: "\uC874 \uD750\uB984", zoneNear: "\uBAA9\uD45C \uADFC\uAC70\uB9AC", zoneFar: "\uBAA9\uD45C \uC720\uD55C \uC6D0\uAC70\uB9AC (\uBB34\uD55C\uB300 \uC120\uD0DD \uC2DC \uBBF8\uC0AC\uC6A9)", zoneInfinity: "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300", apertureMin: "\uB80C\uC988 \uCD5C\uB300 \uAC1C\uBC29 f\uAC12", apertureMax: "\uB80C\uC988 \uCD5C\uC18C \uAC1C\uBC29 f\uAC12", apertureSteps: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC2E4\uC81C \uC870\uB9AC\uAC1C \uB2E8\uACC4" };
   const opticalKeys = /* @__PURE__ */ new Set(["sensor", "width", "height", "focal", "aperture", "cameraDistance", "focusInfinity", "cocMode", "coc", "tab", "cropBasis"]);
   const flashKeys = /* @__PURE__ */ new Set(["gnMode", "equipmentId", "aperture", "iso", "linked", "cameraDistance", "focusInfinity", "flashDistance", "gn", "gnUnit", "gnZoom", "zoom", "conditions", "denominator", "loss", "tolerance", "minDenominator", "steps", "mode", "tab"]);
   const distanceKeys = /* @__PURE__ */ new Set(["cameraDistance", "flashDistance", "zoneNear", "zoneFar", "diagramMax"]);
+  const zoneKeys = /* @__PURE__ */ new Set(["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity", "apertureMin", "apertureMax", "apertureSteps"]);
   for (const key of Object.keys(labels)) {
-    if ((scope === "dof" || scope === "zone") && !opticalKeys.has(key) && !["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity", "apertureMin", "apertureMax", "apertureSteps"].includes(key) || scope === "flash" && !flashKeys.has(key)) continue;
-    lines.push(`| ${labels[key]} | ${String(key === "cameraDistance" && i.focusInfinity && !(scope === "flash" && !i.linked) ? "\u221E (\uBB34\uD55C\uB300 \uCD08\uC810)" : key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode !== "custom" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" ? "\uBBF8\uC0AC\uC6A9" : distanceKeys.has(key) ? metres(i[key]) : i[key]).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
+    if ((scope === "dof" || scope === "zone") && !opticalKeys.has(key) && !(scope === "zone" && zoneKeys.has(key))) continue;
+    if (scope === "flash" && !flashKeys.has(key)) continue;
+    const unused = key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode !== "custom" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" || key === "zoneFar" && i.zoneInfinity;
+    const value = unused ? "\uBBF8\uC0AC\uC6A9" : key === "cameraDistance" && i.focusInfinity ? "\u221E (\uBB34\uD55C\uB300 \uCD08\uC810)" : distanceKeys.has(key) ? metres(i[key]) : i[key];
+    lines.push(`| ${labels[key]} | ${String(value).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
   }
   lines.push("\n## \uACC4\uC0B0 \uACB0\uACFC\n", "\uBAA8\uB4E0 \uAC70\uB9AC\uB294 \uC18C\uC218 \uCCAB\uC9F8 \uC790\uB9AC\uAE4C\uC9C0\uB9CC \uD45C\uC2DC\uD558\uACE0 1m \uC774\uD558\uB294 cm\uB85C \uC790\uB3D9 \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uB0B4\uBD80 \uC800\uC7A5 \uAC12\uACFC \uACC4\uC0B0\uC740 \uBC18\uC62C\uB9BC\uD558\uC9C0 \uC54A\uC73C\uBA70 \uD45C\uC2DC \uC22B\uC790\uB9CC \uBC18\uC62C\uB9BC\uD569\uB2C8\uB2E4. \uD3EC\uD568\xB7\uCD9C\uB825 \uACBD\uACC4\xB7\uB178\uCD9C \uD310\uC815\uC740 \uBC18\uC62C\uB9BC \uC804 \uAC12\uC774\uBBC0\uB85C \uAC19\uC740 \uD45C\uC2DC \uC22B\uC790\uB77C\uB3C4 \uD310\uC815\uC774 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
   if (scope !== "dof" && scope !== "zone") try {
@@ -986,11 +1001,18 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (d) d.open = false;
     this.detailState.set("\uC990\uACA8\uCC3E\uAE30\xB7\uB0B4 \uAC70\uB9AC \uAD00\uB9AC", false);
   }
-  fieldAction(fn) {
+  fieldAction(fn, quick) {
     try {
       fn();
+      if (quick) {
+        this.syncNumeric(quick.key);
+        this.numeric.get(quick.key)?.input.setAttribute("aria-invalid", "false");
+      }
       this.changed();
-      this.render();
+      if (quick) {
+        const target = this.root.querySelector(quick.focus) ?? (quick.fallback ? this.root.querySelector(quick.fallback) : null);
+        target?.focus({ preventScroll: true });
+      } else this.render();
     } catch (e) {
       this.plugin.report(e);
     }
@@ -1079,12 +1101,13 @@ var PhotoView = class extends import_obsidian.ItemView {
     node(distance, "p", key === "flashDistance" ? `\uB0B4 \uAC70\uB9AC \xB7 \uD50C\uB798\uC2DC \u2192 \uD53C\uC0AC\uCCB4 ${metres(i.flashDistance)} (\uCE74\uBA54\uB77C \uCD08\uC810 \uC720\uC9C0)` : `\uB0B4 \uAC70\uB9AC \xB7 \uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC ${i.focusInfinity ? "\u221E" : metres(i.cameraDistance)}${i.linked && (i.tab === "flash" || i.tab === "combined") ? " \xB7 \uD50C\uB798\uC2DC \uC5F0\uB3D9" : ""}`);
     const addDistances = (parent, start, end) => {
       for (const d of f.distances.slice(start, end)) {
+        const focus = start === 0 ? `[data-distance-id="${CSS.escape(d.id)}"]` : ".pfm-distance-buttons details > summary";
         const b = this.fieldButton(parent, metres(d.metres), () => this.fieldAction(() => {
           this.plugin.update(key, d.metres);
           const more = distance.querySelector("details");
           if (more) more.open = false;
           this.detailState.set("\uAC70\uB9AC \uB354\uBCF4\uAE30", false);
-        }));
+        }, { key, focus }));
         b.dataset.distanceId = d.id;
         b.setAttribute("aria-pressed", String(Object.is(i[key], d.metres) && !(key === "cameraDistance" && i.focusInfinity)));
       }
@@ -1099,9 +1122,12 @@ var PhotoView = class extends import_obsidian.ItemView {
     actions.replaceChildren();
     for (const [dir, label2] of [["weaker", "\uCD9C\uB825 \uC57D\uD558\uAC8C"], ["stronger", "\uCD9C\uB825 \uAC15\uD558\uAC8C"]]) {
       const n = nextPower(i, dir);
-      const b = this.fieldButton(actions, label2, () => this.fieldAction(() => {
-        if (n !== void 0) this.plugin.update("denominator", n);
-      }));
+      const b = this.fieldButton(actions, label2, () => {
+        if (n !== void 0) this.fieldAction(
+          () => this.plugin.update("denominator", n),
+          { key: "denominator", focus: `[data-power-direction=${dir}]:enabled`, fallback: "[data-power-direction]:enabled" }
+        );
+      });
       b.disabled = n === void 0;
       b.dataset.powerDirection = dir;
     }
@@ -1326,7 +1352,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     return b;
   }
   rangeProgress(range) {
-    const percent = (Number(range.value) - Number(range.min)) / (Number(range.max) - Number(range.min)) * 100;
+    const span = Number(range.max) - Number(range.min);
+    const percent = span > 0 ? (Number(range.value) - Number(range.min)) / span * 100 : 0;
     range.style.setProperty("--pfm-range-progress", `${percent}%`);
     range.style.setProperty("--pfm-range-fraction", String(percent / 100));
   }
@@ -1347,7 +1374,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     input.id = `pfm-control-${++nextControlId}`;
     caption.htmlFor = input.id;
     const isDistance = ["cameraDistance", "flashDistance", "zoneNear", "zoneFar", "diagramMax"].includes(key);
-    let scale = 1;
+    let scale = 1, minimum = typeof options?.min === "number" ? options.min : 0.1;
     let range;
     let infinityButton;
     const stops = options?.stops;
@@ -1362,12 +1389,23 @@ var PhotoView = class extends import_obsidian.ItemView {
     };
     const fromRange = (r) => stops ? stops[Number(r.value)] : Number(r.value);
     const rangeText = (v) => key === "aperture" ? `f/${fmt(stops ? stops[Number(toRange(v))] : v)}` : fmt(v);
+    const updateRangeMinimum = () => {
+      if (!range || typeof options?.min !== "function") return;
+      const next = options.min();
+      if (!Number.isFinite(next) || next <= 0 || next === minimum) return;
+      minimum = next;
+      range.max = String(Math.max(options.max, minimum));
+      range.min = String(minimum);
+      input.min = String(minimum * scale);
+      range.value = toRange(this.plugin.state.inputs[key]);
+      this.rangeProgress(range);
+    };
     if (options) {
       wrap.classList.add("pfm-range-field");
-      input.min = String(options.min);
+      input.min = String(minimum);
       range = node(wrap, "input");
       range.type = "range";
-      range.min = stops ? "0" : String(options.min);
+      range.min = stops ? "0" : String(minimum);
       range.max = stops ? String(stops.length - 1) : String(options.max);
       range.step = stops ? "1" : String(options.step);
       range.value = stops ? toRange(this.plugin.state.inputs[key]) : input.value;
@@ -1407,7 +1445,7 @@ var PhotoView = class extends import_obsidian.ItemView {
         caption.textContent = (compact[key] ?? label).replace("(m)", `(${unit})`);
         input.setAttribute("aria-label", label.replace("(m)", `(${unit})`));
         input.dataset.displayUnit = unit;
-        if (options) input.min = String(options.min * scale);
+        if (options) input.min = String(minimum * scale);
       }
       input.value = infinite() ? "" : Number.isFinite(value) ? String(isDistance && document.activeElement !== input ? Number((value * scale).toFixed(1)) : scale === 100 ? Number((value * scale).toPrecision(15)) : value) : "";
       infinityUi();
@@ -1437,11 +1475,10 @@ var PhotoView = class extends import_obsidian.ItemView {
         const next = direction > 0 ? steps.find((n) => n > value) : [...steps].reverse().find((n) => n < value);
         return next;
       }
-      const increment = isDistance ? value < 1 - 1e-9 ? 0.01 : value < 10 ? 0.1 : 1 : key === "coc" ? 1e-3 : ["width", "height", "loss", "tolerance", "apertureMin", "apertureMax"].includes(key) ? 0.1 : 1;
-      const minimum = key === "loss" ? 0 : ["cameraDistance", "zoneNear"].includes(key) ? minFocusDistance(this.plugin.state.inputs.focal) : isDistance ? 0.01 : key === "coc" ? 1e-3 : increment;
-      const result = Math.min(key === "tolerance" ? 5 : Infinity, Math.max(minimum, Number((value + direction * increment).toPrecision(15))));
+      if (isDistance) return stepDistance(value, direction, key === "cameraDistance" || key === "zoneNear" ? minFocusDistance(this.plugin.state.inputs.focal) : 0.01);
+      const increment = key === "coc" ? 1e-3 : ["width", "height", "loss", "tolerance", "apertureMin", "apertureMax"].includes(key) ? 0.1 : 1;
+      const result = Math.min(key === "tolerance" ? 5 : Infinity, Math.max(key === "loss" ? 0 : increment, Number((value + direction * increment).toPrecision(15))));
       if ((key === "horizontal" || key === "vertical") && result >= 180) return;
-      if (isDistance && (direction > 0 && value < 1 && result > 1 || direction < 0 && value > 1 && result < 1)) return (1 - value) * direction > 0 ? 1 : void 0;
       return (result - value) * direction > 0 ? result : void 0;
     };
     const adjust = (direction) => {
@@ -1477,6 +1514,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       });
     }
     const updateControls = () => {
+      updateRangeMinimum();
       infinityUi();
       minus.disabled = infinite() ? false : candidate(-1) === void 0;
       plus.disabled = infinite() || candidate(1) === void 0;
@@ -1672,7 +1710,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       });
       b.dataset.settingsJump = target;
     }
-    this.number(quick, "\uCE74\uBA54\uB77C \u2192 \uD53C\uC0AC\uCCB4 \uAC70\uB9AC (m)", "cameraDistance", { min: 0.1, max: 30, step: 0.1 });
+    this.number(quick, "\uCE74\uBA54\uB77C \u2192 \uD53C\uC0AC\uCCB4 \uAC70\uB9AC (m)", "cameraDistance", { min: () => minFocusDistance(i.focal), max: 30, step: 0.1 });
     this.number(quick, "\uC870\uB9AC\uAC1C f-number", "aperture", { min: 0.7, max: 32, step: 0.1, stops: APERTURE_STOPS });
     const power = this.select(quick, "\uCD9C\uB825 \uC120\uD0DD", "denominator", {}, () => {
       this.plugin.update("denominator", Number(power.value));
@@ -2317,11 +2355,11 @@ var PhotoPlugin = class extends import_obsidian2.Plugin {
     for (const leaf of this.app.workspace.getLeavesOfType(VIEW)) if (leaf.view instanceof PhotoView && leaf.view !== source) leaf.view.render();
   }
   saveNote(scope = "all") {
-    const i = { ...this.state.inputs }, equipment = selectedEquipment(this.state);
+    const i = { ...this.state.inputs }, equipment = selectedEquipment(this.state), date = /* @__PURE__ */ new Date();
     let content;
     try {
       validateNote(i, scope);
-      content = note(i, /* @__PURE__ */ new Date(), { version: this.manifest.version, equipment, scope });
+      content = note(i, date, { version: this.manifest.version, equipment, scope });
     } catch (e) {
       return Promise.reject(e);
     }
@@ -2333,7 +2371,7 @@ var PhotoPlugin = class extends import_obsidian2.Plugin {
         if (!(this.app.vault.getAbstractFileByPath(folder) instanceof import_obsidian2.TFolder)) throw e;
       }
       if (!(this.app.vault.getAbstractFileByPath(folder) instanceof import_obsidian2.TFolder)) throw Error("\uC800\uC7A5 \uD3F4\uB354 \uACBD\uB85C\uC5D0 \uD30C\uC77C\uC774 \uC788\uC2B5\uB2C8\uB2E4. \uB2E4\uB978 \uC774\uB984\uC73C\uB85C \uC62E\uACA8\uC8FC\uC138\uC694.");
-      const base = `${folder}/\uCD2C\uC601 \uACC4\uC0B0 ${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}`;
+      const base = `${folder}/\uCD2C\uC601 \uACC4\uC0B0 ${noteTimestamp(date)}`;
       for (let n = 0; n < 1e3; n++) {
         const path = `${base}${n ? "-" + n : ""}.md`;
         if (this.app.vault.getAbstractFileByPath(path)) continue;

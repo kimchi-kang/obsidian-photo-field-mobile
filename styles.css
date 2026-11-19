@@ -278,7 +278,7 @@
 .pfm-root .pfm-field-row{display:flex;flex-wrap:wrap;gap:6px;padding-block:10px;border-top:1px solid var(--pfm-line);}
 .pfm-root .pfm-field-row .pfm-field{flex-basis:100%;min-width:0;}
 .pfm-root .pfm-field-row>button{flex:1 1 auto;}
-.pfm-root[data-coc-mode=estimate] [data-field=coc],.pfm-root[data-coverage=approx] :is([data-field=horizontal],[data-field=vertical]){display:none;}
+.pfm-root:not([data-coc-mode=custom]) [data-field=coc],.pfm-root[data-coverage=approx] :is([data-field=horizontal],[data-field=vertical]){display:none;}
 .pfm-root:is([data-tab=dof],[data-tab=zone]) :is([data-pfm-settings=flash],[data-pfm-settings=equipment],[data-settings-jump=flash],[data-settings-jump=equipment]){display:none;}
 .pfm-root table{width:100%;margin:var(--pfm-space-2) 0;font-size:var(--pfm-label);font-variant-numeric:tabular-nums;border-collapse:collapse;border-top:1.5px solid var(--pfm-ink);}
 .pfm-root th{font-family:var(--pfm-round);font-size:var(--pfm-tag);font-weight:700;letter-spacing:.06em;color:var(--pfm-muted);}
@@ -364,6 +364,7 @@
 
 /* Infinity focus: toggle beside the focus-distance value (appended; monochrome Bauhaus tokens) */
 .pfm-root div.pfm-field[data-field=cameraDistance]{grid-template-columns:44px minmax(0,1fr) 92px 44px 44px;}
+@media(max-width:370px){.pfm-root div.pfm-field[data-field=cameraDistance]{grid-template-columns:44px minmax(0,1fr) 80px 44px 44px;}}
 .pfm-root div.pfm-field[data-field=cameraDistance]>label{grid-column:1/3;grid-row:1;}
 .pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-number-entry>input{grid-column:3/4;grid-row:1;}
 .pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-number-entry>[data-step=down]{grid-column:1;grid-row:2;}
