@@ -139,7 +139,7 @@ export function diagram(
     el('text',{x:SCENE.start,y:axisY+65,class:'pfm-axis-label'},`${i.linked?'플래시':'플래시 독립 거리 축'} · 허용 ${out(f.low)} ~ ${out(f.high)}`);
   }else if(showFlash)el('text',{x:SCENE.start,y:axisY+51,class:'pfm-axis-label'},'플래시 거리: 현재 조건에서 계산 불가');
   const legend=document.createElement('figcaption');legend.className='pfm-scene-legend';
-  const items=[['pfm-key-camera','카메라 화각'],['pfm-key-dof','실제 심도']];
+  const items=[['pfm-key-camera','카메라 화각'],['pfm-key-dof','선명 구간']];
   if(zone)items.push(['pfm-key-target','목표 구간'],['pfm-key-miss','심도 밖 목표']);
   if(showFlash&&i.linked)items.push(['pfm-key-flash','플래시 조사각']);
   if(safe?.kind==='range'&&safe.near<=max)items.push(['pfm-key-safe','안전 촬영 구간']);

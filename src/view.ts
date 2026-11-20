@@ -1125,17 +1125,22 @@ export class PhotoView extends ItemView {
   }
   private paintDepth(limits:FocusLimits|undefined,error:string):void {
     const card=node(this.results,'div',undefined,'pfm-dof-results');
-    node(card,'h2','심도·화각');
+    node(card,'h2','선명하게 나오는 거리');
     if(!limits){node(card,'p',error,'pfm-error');return;}
-    const grid=node(card,'div',undefined,'pfm-stat-grid');
-    for(const [key,label,value] of [['near','근거리',limits.near],['far','원거리',limits.far],['total','전체 심도',limits.total],['hyperfocal','과초점',limits.hyperfocal]] as const){
-      const stat=node(grid,'div',undefined,'pfm-stat');
+    // 네 칸 대신 "시작 — 끝" 한 줄과 범위 한 줄로 줄인다. 과초점은 버튼 하나로 합친다.
+    const range=node(card,'div',undefined,'pfm-dof-range');
+    for(const [key,label,value] of [['near','시작',limits.near],['far','끝',limits.far]] as const){
+      const stat=node(range,'div',undefined,'pfm-stat');
       stat.dataset.stat=key;node(stat,'span',label);node(stat,'strong',metres(value));
+      if(key==='near')node(range,'span','—','pfm-dof-dash');
     }
-    const bar=node(card,'div',undefined,'pfm-dof-bar');
+    const total=node(card,'p',undefined,'pfm-stat pfm-dof-total');total.dataset.stat='total';
+    node(total,'span','범위 ');node(total,'strong',metres(limits.total));
     // 과초점: 이 거리에 초점을 맞추면 그 절반 거리부터 무한대까지 선명하다.
-    node(bar,'p','과초점에 맞추면 그 절반 거리부터 ∞까지 선명','pfm-dof-hint');
-    const focus=node(bar,'button','과초점 맞추기');focus.type='button';focus.dataset.pfmHyperfocal='true';
+    const bar=node(card,'div',undefined,'pfm-dof-bar');
+    const focus=node(bar,'button',Number.isFinite(limits.hyperfocal)?`∞까지 선명하게 · ${metres(limits.hyperfocal)}에 맞추기`:'∞까지 선명하게');
+    focus.type='button';focus.dataset.pfmHyperfocal='true';focus.dataset.stat='hyperfocal';
+    focus.setAttribute('aria-label',Number.isFinite(limits.hyperfocal)?`과초점 ${metres(limits.hyperfocal)}에 맞추기: 약 ${metres(limits.hyperfocal/2)}부터 무한대까지 선명`:'과초점에 맞추기');
     focus.onclick=()=>{
       this.focusHyperfocal();
       this.results.querySelector<HTMLButtonElement>('[data-pfm-hyperfocal]')?.focus({preventScroll:true});

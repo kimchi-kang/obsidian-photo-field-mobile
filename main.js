@@ -1154,7 +1154,7 @@ function diagram(host, i, max, depth, light, safe) {
   } else if (showFlash) el("text", { x: SCENE.start, y: axisY + 51, class: "pfm-axis-label" }, "\uD50C\uB798\uC2DC \uAC70\uB9AC: \uD604\uC7AC \uC870\uAC74\uC5D0\uC11C \uACC4\uC0B0 \uBD88\uAC00");
   const legend = document.createElement("figcaption");
   legend.className = "pfm-scene-legend";
-  const items = [["pfm-key-camera", "\uCE74\uBA54\uB77C \uD654\uAC01"], ["pfm-key-dof", "\uC2E4\uC81C \uC2EC\uB3C4"]];
+  const items = [["pfm-key-camera", "\uCE74\uBA54\uB77C \uD654\uAC01"], ["pfm-key-dof", "\uC120\uBA85 \uAD6C\uAC04"]];
   if (zone) items.push(["pfm-key-target", "\uBAA9\uD45C \uAD6C\uAC04"], ["pfm-key-miss", "\uC2EC\uB3C4 \uBC16 \uBAA9\uD45C"]);
   if (showFlash && i.linked) items.push(["pfm-key-flash", "\uD50C\uB798\uC2DC \uC870\uC0AC\uAC01"]);
   if (safe?.kind === "range" && safe.near <= max) items.push(["pfm-key-safe", "\uC548\uC804 \uCD2C\uC601 \uAD6C\uAC04"]);
@@ -2833,23 +2833,29 @@ var PhotoView = class extends import_obsidian.ItemView {
   }
   paintDepth(limits, error) {
     const card = node(this.results, "div", void 0, "pfm-dof-results");
-    node(card, "h2", "\uC2EC\uB3C4\xB7\uD654\uAC01");
+    node(card, "h2", "\uC120\uBA85\uD558\uAC8C \uB098\uC624\uB294 \uAC70\uB9AC");
     if (!limits) {
       node(card, "p", error, "pfm-error");
       return;
     }
-    const grid = node(card, "div", void 0, "pfm-stat-grid");
-    for (const [key, label, value] of [["near", "\uADFC\uAC70\uB9AC", limits.near], ["far", "\uC6D0\uAC70\uB9AC", limits.far], ["total", "\uC804\uCCB4 \uC2EC\uB3C4", limits.total], ["hyperfocal", "\uACFC\uCD08\uC810", limits.hyperfocal]]) {
-      const stat = node(grid, "div", void 0, "pfm-stat");
+    const range = node(card, "div", void 0, "pfm-dof-range");
+    for (const [key, label, value] of [["near", "\uC2DC\uC791", limits.near], ["far", "\uB05D", limits.far]]) {
+      const stat = node(range, "div", void 0, "pfm-stat");
       stat.dataset.stat = key;
       node(stat, "span", label);
       node(stat, "strong", metres(value));
+      if (key === "near") node(range, "span", "\u2014", "pfm-dof-dash");
     }
+    const total = node(card, "p", void 0, "pfm-stat pfm-dof-total");
+    total.dataset.stat = "total";
+    node(total, "span", "\uBC94\uC704 ");
+    node(total, "strong", metres(limits.total));
     const bar = node(card, "div", void 0, "pfm-dof-bar");
-    node(bar, "p", "\uACFC\uCD08\uC810\uC5D0 \uB9DE\uCD94\uBA74 \uADF8 \uC808\uBC18 \uAC70\uB9AC\uBD80\uD130 \u221E\uAE4C\uC9C0 \uC120\uBA85", "pfm-dof-hint");
-    const focus = node(bar, "button", "\uACFC\uCD08\uC810 \uB9DE\uCD94\uAE30");
+    const focus = node(bar, "button", Number.isFinite(limits.hyperfocal) ? `\u221E\uAE4C\uC9C0 \uC120\uBA85\uD558\uAC8C \xB7 ${metres(limits.hyperfocal)}\uC5D0 \uB9DE\uCD94\uAE30` : "\u221E\uAE4C\uC9C0 \uC120\uBA85\uD558\uAC8C");
     focus.type = "button";
     focus.dataset.pfmHyperfocal = "true";
+    focus.dataset.stat = "hyperfocal";
+    focus.setAttribute("aria-label", Number.isFinite(limits.hyperfocal) ? `\uACFC\uCD08\uC810 ${metres(limits.hyperfocal)}\uC5D0 \uB9DE\uCD94\uAE30: \uC57D ${metres(limits.hyperfocal / 2)}\uBD80\uD130 \uBB34\uD55C\uB300\uAE4C\uC9C0 \uC120\uBA85` : "\uACFC\uCD08\uC810\uC5D0 \uB9DE\uCD94\uAE30");
     focus.onclick = () => {
       this.focusHyperfocal();
       this.results.querySelector("[data-pfm-hyperfocal]")?.focus({ preventScroll: true });

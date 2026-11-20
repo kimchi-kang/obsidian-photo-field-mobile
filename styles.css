@@ -115,7 +115,6 @@
 /* 심도 결과 네 칸 */
 .pfm-root .pfm-dof-results>h2,.pfm-root .pfm-zone-result>h2{margin:0 0 var(--pfm-space-2);font-size:var(--pfm-body);}
 .pfm-root .pfm-dof-results{padding:10px var(--pfm-space-3) var(--pfm-space-2);border:1px solid var(--pfm-ink);background:var(--pfm-surface);}
-.pfm-root .pfm-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin:0;border:1px solid var(--pfm-ink);background:var(--pfm-ink);}
 .pfm-root .pfm-stat{padding:8px 6px;background:var(--pfm-surface);text-align:left;}
 .pfm-root .pfm-stat[data-stat=total]{position:relative;background:var(--pfm-ink);color:var(--pfm-bg);}
 .pfm-root .pfm-stat[data-stat=total]::after{content:'';position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--pfm-signal);}
@@ -368,7 +367,6 @@
 .pfm-root .pfm-ev{border:0;border-radius:12px;background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
 .pfm-root .pfm-ev[data-state=ok]{background:var(--pfm-surface-2);color:var(--pfm-ink);}
 .pfm-root .pfm-ev[data-state=ok]::before{color:var(--pfm-signal);}
-.pfm-root .pfm-stat-grid{gap:8px;border:0;background:transparent;}
 .pfm-root .pfm-stat{padding:10px 7px;border-radius:12px;background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
 .pfm-root .pfm-stat[data-stat=total]{background:var(--pfm-surface);color:var(--pfm-signal);box-shadow:var(--pfm-out-sm);}
 .pfm-root .pfm-stat[data-stat=total] span{color:var(--pfm-muted);opacity:1;}
@@ -416,7 +414,6 @@
 .pfm-root>details details{border-top-color:var(--pfm-line);}
 .pfm-root>details details>summary{font-size:var(--pfm-label);}
 .pfm-root .pfm-dof-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.pfm-root .pfm-dof-hint{flex:1 1 auto;margin:0;font-size:var(--pfm-small);color:var(--pfm-muted);line-height:1.35;}
 .pfm-root .pfm-dof-bar button{flex:0 0 auto;}
 
 .pfm-root .pfm-gear-option{gap:12px;padding:0 12px;}
@@ -424,6 +421,19 @@
 .pfm-root .pfm-gear-option input[type=radio]:checked{background:radial-gradient(circle,var(--pfm-signal) 0 5px,transparent 5.5px),var(--pfm-surface-2);}
 .pfm-root .pfm-gear-option input[type=radio]::before,.pfm-root .pfm-gear-option input[type=radio]::after{content:none!important;display:none!important;}
 .pfm-root .pfm-gear-option input[type=radio]:focus-visible{outline:2px solid var(--pfm-signal);outline-offset:2px;}
+
+/* 심도 카드: 시작 — 끝 한 줄, 범위, 과초점 버튼 */
+.pfm-root .pfm-dof-range{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;padding:12px 14px;border-radius:14px;background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-dof-range .pfm-stat{padding:0;background:none;box-shadow:none;}
+.pfm-root .pfm-dof-range .pfm-stat[data-stat=far]{text-align:right;}
+.pfm-root .pfm-dof-range .pfm-stat strong{font-size:clamp(1.5rem,7vw,1.875rem);font-weight:450;}
+.pfm-root .pfm-dof-range .pfm-stat span::before{content:none!important;}
+.pfm-root .pfm-dof-dash{color:var(--pfm-signal);font-size:1.25rem;font-weight:700;}
+.pfm-root .pfm-dof-total[data-stat=total]{margin:10px 2px 0;padding:0;background:none;box-shadow:none;font-size:var(--pfm-label);color:var(--pfm-muted);}
+.pfm-root .pfm-dof-total[data-stat=total]::after{content:none;}
+.pfm-root .pfm-dof-total[data-stat=total] span{display:inline;margin:0;font-size:inherit;}
+.pfm-root .pfm-dof-total[data-stat=total] strong{display:inline;font-size:inherit;font-weight:750;color:var(--pfm-signal);}
+.pfm-root .pfm-dof-bar button{flex:1 1 auto;width:100%;}
 
 /* 테마와 카드의 반전색을 야간 팔레트로 덮어쓴다. */
 .pfm-root[data-night=true]{
