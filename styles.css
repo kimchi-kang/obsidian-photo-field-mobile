@@ -224,17 +224,10 @@
 .pfm-root .pfm-zone-result p{margin:6px 0;font-size:var(--pfm-label);}
 .pfm-root .pfm-zone-solution{display:block;font-size:clamp(1.5rem,7vw,2rem);font-weight:750;}
 .pfm-root .pfm-zone-result [data-zone-apply]{width:100%;margin-block:8px 2px;background:var(--pfm-ink);border-color:var(--pfm-ink);color:var(--pfm-bg);}
-.pfm-root .pfm-target-zone{stroke:var(--pfm-ink);stroke-width:1.5;}
 .pfm-root .pfm-zone-depth{fill:var(--pfm-ink);}
-.pfm-root .pfm-zone-miss{fill:var(--pfm-signal);fill-opacity:.8;}
-.pfm-root .pfm-zone-miss-edge{stroke:var(--pfm-signal);stroke-width:3;}
+.pfm-root .pfm-zone-band[data-pfm-subject]{cursor:ew-resize;touch-action:none;outline:none;}
+.pfm-root .pfm-zone-band[data-pfm-subject]:focus-visible .pfm-zone-depth{stroke:var(--pfm-signal);stroke-width:2;}
 .pfm-root .pfm-zone-axis-label{font-weight:750;}
-.pfm-root [data-zone-handle],.pfm-root .pfm-zone-hit{touch-action:none;cursor:ew-resize;}
-.pfm-root .pfm-zone-handle-stem{stroke:var(--pfm-ink);stroke-width:1.5;}
-.pfm-root .pfm-zone-handle-dot{fill:var(--pfm-surface);stroke:var(--pfm-ink);stroke-width:2;}
-.pfm-root [data-zone-handle]:focus-visible .pfm-zone-handle-dot{stroke:var(--pfm-signal);stroke-width:3;}
-.pfm-root .pfm-key-target::before{border:1px solid var(--pfm-ink);background:repeating-linear-gradient(135deg,transparent 0 3px,var(--pfm-ink) 3px 4px);}
-.pfm-root .pfm-key-miss::before{background:var(--pfm-signal);}
 
 /* 저장 버튼과 실패 상태 */
 .pfm-root footer{display:grid;gap:var(--pfm-space-2);margin-top:var(--pfm-space-4);}
@@ -400,7 +393,6 @@
 .pfm-root[data-bulb-ended=true] .pfm-bulb-countdown{outline:0;background:var(--pfm-signal);color:var(--pfm-bg);}
 
 /* 장면 그림 */
-.pfm-root .pfm-zone-handle-dot{fill:var(--pfm-surface);stroke:var(--pfm-signal);}
 .pfm-root .pfm-scene-legend{border-top-color:var(--pfm-line);}
 
 /* 다듬기: 모드 줄의 야간 버튼, 접은 설정의 세로 배치, 과초점 설명 */

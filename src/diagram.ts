@@ -2,7 +2,6 @@
 import {Inputs} from './model';
 import {coverage,minFocusDistance} from './engine';
 import type {optics,flash} from './engine';
-import {includesTarget,zoneTarget} from './zone';
 import {metres,fmt} from './units';
 import type {SafeRange} from './flash-tools';
 const ns='http://www.w3.org/2000/svg';
@@ -13,7 +12,6 @@ export function sceneDistance(x:number,max:number,focal:number,minimum=minFocusD
 }
 export function sceneUpperLimit(i:Inputs,far?:number):number {
   const distances=[far,i.focusInfinity?undefined:i.cameraDistance];
-  if(i.zoneOn)distances.push(i.zoneNear,i.zoneInfinity?undefined:i.zoneFar);
   if(i.flashOn)distances.push(i.linked?i.cameraDistance:i.flashDistance);
   const largest=Math.max(0,...distances.filter((distance):distance is number=>distance!==undefined&&Number.isFinite(distance)));
   return [5,10,15,30].find(limit=>limit>=1.3*largest)??30;
@@ -25,7 +23,7 @@ export function diagram(
 ):void {
   host.replaceChildren();
   const showFlash=i.flashOn,zone=i.zoneOn;
-  const axisY=zone?250:192;
+  const axisY=192;
   const height=axisY+(showFlash?68:20);
   const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${SCENE.width} ${height}`);
   svg.setAttribute('role','group');svg.dataset.scene='true';svg.dataset.sceneMax=String(max);host.append(svg);
@@ -70,49 +68,22 @@ export function diagram(
   el('ellipse',{cx:57,cy:92,rx:1.6,ry:5.5,class:'pfm-lens-glass'},undefined,cam);
   el('text',{x:6,y:16,class:'pfm-scene-lens'},`${fmt(i.focal)} mm · f/${fmt(i.aperture)}`);
   if(zone){
-    let target:ReturnType<typeof zoneTarget>|undefined;
-    try{target=zoneTarget(i);}catch{/* 목표 입력 오류는 존 카드에 표시한다. */}
-    if(target){
-      const band=(from:number,to:number,y:number,bandHeight:number,cls:string,fill?:string)=>{
-        const start=x(from),end=x(to);
-        if(end>start)el('rect',{x:start,y,width:end-start,height:bandHeight,class:cls,...(fill?{fill}:{})});
-      };
-      // ∞ 목표는 목표와 선명 구간이 같으므로 빗금 띠 없이 선명 구간만 그린다.
-      if(i.zoneGoal!=='infinity')band(target.near,target.far,155,18,'pfm-target-zone',`url(#${id}-hatch)`);
-      el('text',{x:SCENE.start,y:38,class:'pfm-zone-axis-label'},i.zoneGoal==='infinity'?`선명 ${out(target.near)} ~ ∞ · 거리링 ${out(i.cameraDistance)}`:`목표 ${out(target.near)} ~ ${out(target.far)}`);
-      if(depth){
-        band(depth.near,depth.far,152,9,'pfm-zone-depth');
-        if(!includesTarget(depth,target)){
-          band(target.near,Math.min(target.far,depth.near),155,18,'pfm-zone-miss');
-          band(Math.max(target.near,depth.far),target.far,155,18,'pfm-zone-miss');
-          if(depth.far<target.far&&target.far>max)
-            el('line',{x1:SCENE.end,x2:SCENE.end,y1:155,y2:173,class:'pfm-zone-miss-edge'});
-        }
-      }
+    // 존 포커싱: 피사체 대신 지금 조리개의 선명 구간과 거리링 위치만 그린다.
+    const ringX=inf?SCENE.end:x(Number.isFinite(i.cameraDistance)&&i.cameraDistance>0?i.cameraDistance:0);
+    const movable=i.zoneGoal==='range';
+    const group=el('g',movable?{
+      class:'pfm-zone-band','data-pfm-subject':'true',tabindex:0,role:'slider','aria-label':'선명 구간 · 좌우로 끌거나 화살표 키로 옮기기',
+      'aria-valuemin':Number.isFinite(i.focal)?minFocusDistance(i.focal):0.001,'aria-valuemax':Math.max(max,Number.isFinite(i.cameraDistance)?i.cameraDistance:0),
+      'aria-valuenow':Number.isFinite(i.cameraDistance)?i.cameraDistance:0,'aria-valuetext':inf?'무한대':metres(i.cameraDistance)
+    }:{class:'pfm-zone-band'});
+    if(depth){
+      const start=x(depth.near),end=x(depth.far);
+      if(movable)el('rect',{x:start,y:120,width:Math.max(44,end-start),height:70,fill:'transparent'},undefined,group);
+      if(end>start)el('rect',{x:start,y:150,width:end-start,height:12,class:'pfm-zone-depth'},undefined,group);
+      el('text',{x:SCENE.start,y:38,class:'pfm-zone-axis-label'},`선명 ${out(depth.near)} ~ ${Number.isFinite(depth.far)?out(depth.far):'∞'} · 거리링 ${inf?'∞':out(i.cameraDistance)}`);
     }
-    const handle=(key:'zoneNear'|'zoneFar',centreY:number,label:string)=>{
-      const value=i[key],anchor=x(Number.isFinite(value)?value:0);
-      const hitX=Math.min(SCENE.width-60,anchor-30);
-      const control=el('g',{
-        'data-zone-handle':key,tabindex:0,role:'slider','aria-label':label,
-        'aria-valuemin':key==='zoneFar'&&Number.isFinite(i.zoneNear)?i.zoneNear+.01:minFocusDistance(i.focal),
-        'aria-valuemax':key==='zoneNear'&&!i.zoneInfinity&&Number.isFinite(i.zoneFar)?Math.min(max,i.zoneFar-.01):Math.max(max,Number.isFinite(value)?value:0),
-        'aria-valuenow':Number.isFinite(value)?value:0,'aria-valuetext':Number.isFinite(value)?metres(value):'입력 필요'
-      });
-      // 가까운 두 경계도 각각 잡을 수 있도록 터치 영역을 위아래로 배치한다.
-      el('rect',{x:hitX,y:centreY-30,width:60,height:60,fill:'transparent',class:'pfm-zone-hit'},undefined,control);
-      el('line',{x1:anchor,x2:anchor,y1:centreY,y2:164,class:'pfm-zone-handle-stem'},undefined,control);
-      el('circle',{cx:anchor,cy:centreY,r:7,class:'pfm-zone-handle-dot'},undefined,control);
-    };
-    if(i.zoneGoal==='infinity'){
-      // 거리링 위치(과초점)를 빨간 점선으로 표시한다. 손잡이는 구간 지정에서만 쓴다.
-      const ring=x(i.cameraDistance);
-      el('line',{x1:ring,x2:ring,y1:44,y2:180,class:'pfm-focus-line'});
-      el('circle',{cx:ring,cy:177,r:5,class:'pfm-focus-dot'});
-    }else{
-      handle('zoneNear',148,'목표 근거리');
-      if(!i.zoneInfinity)handle('zoneFar',208,'목표 원거리');
-    }
+    el('line',{x1:ringX,x2:ringX,y1:44,y2:180,class:'pfm-focus-line'},undefined,group);
+    el('circle',{cx:ringX,cy:177,r:5,class:'pfm-focus-dot'},undefined,group);
   }else{
     const subject=inf?SCENE.end:x(Number.isFinite(i.cameraDistance)&&i.cameraDistance>0?i.cameraDistance:0);
     el('line',{x1:subject,x2:subject,y1:24,y2:180,class:'pfm-focus-glow'});
@@ -148,13 +119,12 @@ export function diagram(
   }else if(showFlash)el('text',{x:SCENE.start,y:axisY+51,class:'pfm-axis-label'},'플래시 거리: 현재 조건에서 계산 불가');
   const legend=document.createElement('figcaption');legend.className='pfm-scene-legend';
   const items=[['pfm-key-camera','카메라 화각'],['pfm-key-dof','선명 구간']];
-  if(zone&&i.zoneGoal!=='infinity')items.push(['pfm-key-target','목표 구간'],['pfm-key-miss','심도 밖 목표']);
   if(showFlash&&i.linked)items.push(['pfm-key-flash','플래시 조사각']);
   if(safe?.kind==='range'&&safe.near<=max)items.push(['pfm-key-safe','안전 촬영 구간']);
   for(const [cls,text] of items){const label=document.createElement('span');label.className=cls;label.textContent=text;legend.append(label);}
   host.append(legend);
   const hint=document.createElement('p');hint.className='pfm-scene-hint';
-  hint.textContent=zone?(i.zoneGoal==='infinity'?'조리개를 바꾸면 거리링 위치가 바로 바뀝니다':'좌우로 끌어 목표 조절 · 구간 가운데는 통째로 이동'):'피사체 드래그 · 거리 직접 입력';host.append(hint);
+  hint.textContent=zone?(i.zoneGoal==='infinity'?'조리개를 바꾸면 거리링 위치가 바로 바뀝니다':'그림 어디서든 좌우로 끌어 선명 구간 옮기기'):'피사체 드래그 · 거리 직접 입력';host.append(hint);
   if(showFlash){
     const p=document.createElement('p');p.className='pfm-scene-note';
     p.textContent=i.linked?'플래시 띠: 점선 과다 · 빗금 허용 · 파선 부족':'오프카메라 플래시 거리는 카메라와 별도 축으로 표시합니다.';

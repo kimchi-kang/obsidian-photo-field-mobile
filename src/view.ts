@@ -7,7 +7,7 @@ import {flash,optics,powerSteps} from './engine';
 import {fmt,metres,distanceParts,parseNumber,feetToMetres,metresToFeet,stepDistance} from './units';
 import {diagram,SCENE,sceneDistance,sceneUpperLimit} from './diagram';
 import {equipmentValid,parseTable,selectedEquipment,applyEquipment,equipmentId,selectEquipment,addQ20iii} from './presets';
-import {solveZone,includesTarget,infinityFocus,ringPosition} from './zone';
+import {infinityFocus,ringPosition} from './zone';
 import {focusScale,FOCUS_SCALE_STEPS,FOCUS_SCALE_TICKS} from './scale';
 import {calibrateGN,fillFlash,nominalGN,safeRangeText,safeShootingRange,GNMeasurement} from './flash-tools';
 import {RECIPROCITY_FILMS,correctedTime,formatExposureSeconds,formatExposureMinutes,isReciprocityFilmId,validMeteredSeconds,validReciprocityExponent} from './reciprocity';
@@ -270,89 +270,41 @@ export class PhotoView extends ItemView {
     }catch(e){this.plugin.report(e);}
   }
   private sceneControls():void {
-    type DragKey='cameraDistance'|'zoneNear'|'zoneFar';
-    // band: 목표 구간 전체를 폭을 유지한 채 옮김. free: 그림의 빈 곳을 짚어 가까운 경계를 손가락 위치로 옮김.
-    type Drag={pointer:number;key:DragKey;offset:number;band?:{offset:number;width:number};free?:{startX:number;moved:boolean}};
-    let dragging:Drag|undefined;
+    // 끌 수 있는 것은 초점 거리 하나: 기본 화면은 피사체, 존 포커싱 "구간 옮기기"는 선명 구간 띠.
+    let dragging:{pointer:number;offset:number}|undefined;
     const coordinate=(e:PointerEvent)=>{
       const rect=this.picture.querySelector('svg')?.getBoundingClientRect();
       return rect&&rect.width>0?(e.clientX-rect.left)/rect.width*SCENE.width:null;
     };
-    const target=(e:Event)=>{
-      if(!(e.target instanceof Element))return;
-      const element=e.target.closest<SVGElement>('[data-pfm-subject],[data-zone-handle]');
-      if(!element)return;
-      const key:DragKey=element.dataset.zoneHandle==='zoneNear'?'zoneNear':element.dataset.zoneHandle==='zoneFar'?'zoneFar':'cameraDistance';
-      return {key,element};
-    };
-    const limits=(key:DragKey)=>{
+    const grabbable=(e:Event)=>{
+      if(!(e.target instanceof Element))return false;
+      if(e.target.closest('[data-pfm-subject]'))return true;
+      // 구간 옮기기에서는 그림 어디를 짚어도 선명 구간을 잡는다.
       const i=this.plugin.state.inputs;
-      const minimum=key==='zoneFar'?(Number.isFinite(i.zoneNear)?i.zoneNear+.01:.01):this.minimumFocus();
-      const maximum=this.dragMax??this.sceneMax;
-      return {minimum,maximum:key==='zoneNear'&&!i.zoneInfinity&&Number.isFinite(i.zoneFar)?Math.min(maximum,i.zoneFar-.01):maximum};
+      return i.zoneOn&&i.zoneGoal==='range'&&!!this.picture.querySelector('svg')?.contains(e.target);
     };
-    const update=(key:DragKey,distance:number)=>{
-      const {minimum,maximum}=limits(key);
-      if(!Number.isFinite(distance)||minimum>maximum)return;
-      this.plugin.update(key,Math.max(minimum,Math.min(maximum,distance)));
-      this.syncNumeric(key);this.numeric.get(key)?.input.setAttribute('aria-invalid','false');this.changed();
-    };
-    const fingerDistance=(x:number)=>(x-SCENE.start)/(SCENE.end-SCENE.start)*(this.dragMax??this.sceneMax);
-    const moveBand=(x:number,band:{offset:number;width:number})=>{
+    const update=(distance:number)=>{
       const minimum=this.minimumFocus(),maximum=this.dragMax??this.sceneMax;
-      const near=Math.max(minimum,Math.min(maximum-band.width,fingerDistance(x)-band.offset));
-      if(!Number.isFinite(near)||near<minimum)return;
-      this.plugin.update('zoneNear',near);this.plugin.update('zoneFar',near+band.width);
-      this.syncNumeric('zoneNear');this.syncNumeric('zoneFar');this.changed();
-    };
-    const applyFree=(x:number)=>{
-      const i=this.plugin.state.inputs,d=fingerDistance(x);
-      const finiteFar=!i.zoneInfinity&&Number.isFinite(i.zoneFar);
-      const key:DragKey=!finiteFar||!Number.isFinite(i.zoneNear)||Math.abs(d-i.zoneNear)<=Math.abs(d-i.zoneFar)?'zoneNear':'zoneFar';
-      update(key,d);
+      if(!Number.isFinite(distance)||minimum>maximum)return;
+      this.plugin.update('cameraDistance',Math.max(minimum,Math.min(maximum,distance)));
+      this.syncNumeric('cameraDistance');this.numeric.get('cameraDistance')?.input.setAttribute('aria-invalid','false');this.changed();
     };
     this.listen(this.picture,'pointerdown',event=>{
-      if(!(event instanceof PointerEvent)||dragging)return;
-      const control=target(event),x=coordinate(event);
-      if(x===null)return;
+      if(!(event instanceof PointerEvent)||dragging||!grabbable(event))return;
+      const x=coordinate(event);if(x===null)return;
       const i=this.plugin.state.inputs;
-      if(!control){
-        // 존 포커싱에서는 손잡이를 정확히 잡지 않아도 그림 어디서든 목표 구간을 움직인다.
-        if(!i.zoneOn||i.zoneGoal!=='range'||!this.picture.querySelector('svg')?.contains(event.target as Node))return;
-        this.dragMax=this.sceneMax;
-        const d=fingerDistance(x),finiteFar=!i.zoneInfinity&&Number.isFinite(i.zoneFar)&&Number.isFinite(i.zoneNear);
-        const width=finiteFar?i.zoneFar-i.zoneNear:0;
-        // 구간 안쪽 가운데를 짚으면 구간 전체를, 그 밖이면 가까운 경계를 옮긴다.
-        if(finiteFar&&d>i.zoneNear+width*.2&&d<i.zoneFar-width*.2)dragging={pointer:event.pointerId,key:'zoneNear',offset:0,band:{offset:d-i.zoneNear,width}};
-        else dragging={pointer:event.pointerId,key:'zoneNear',offset:0,free:{startX:x,moved:false}};
-        // 세로 스크롤은 브라우저에 맡기고(pan-y), 가로로 움직일 때만 구간을 옮긴다.
-        this.picture.setPointerCapture(event.pointerId);
-        return;
-      }
-      const current=i[control.key];
-      const fraction=control.key==='cameraDistance'&&i.focusInfinity?1:Number.isFinite(current)?Math.max(0,Math.min(1,current/this.sceneMax)):0;
+      const fraction=i.focusInfinity?1:Number.isFinite(i.cameraDistance)?Math.max(0,Math.min(1,i.cameraDistance/this.sceneMax)):0;
       const anchor=SCENE.start+(SCENE.end-SCENE.start)*fraction;
       this.dragMax=this.sceneMax;
-      dragging={pointer:event.pointerId,key:control.key,offset:x-anchor};
-      this.picture.setPointerCapture(event.pointerId);event.preventDefault();
+      // 짚은 자리와 초점 위치의 차이를 유지해, 띠가 손가락을 따라 그대로 움직이게 한다.
+      dragging={pointer:event.pointerId,offset:x-anchor};
+      this.picture.setPointerCapture(event.pointerId);
     });
     this.listen(this.picture,'pointermove',event=>{
       if(!(event instanceof PointerEvent)||event.pointerId!==dragging?.pointer)return;
-      const x=coordinate(event);
-      if(x===null)return;
+      const x=coordinate(event);if(x===null)return;
       event.preventDefault();
-      if(dragging.band){moveBand(x,dragging.band);return;}
-      if(dragging.free){
-        if(!dragging.free.moved&&Math.abs(x-dragging.free.startX)<4)return;
-        dragging.free.moved=true;applyFree(x);return;
-      }
-      const {minimum,maximum}=limits(dragging.key);
-      update(dragging.key,Math.min(maximum,sceneDistance(x-dragging.offset,this.sceneMax,this.plugin.state.inputs.focal,minimum)));
-    });
-    // 움직이지 않고 짧게 짚기만 해도 가까운 경계를 그 자리로 옮긴다.
-    this.listen(this.picture,'pointerup',event=>{
-      if(!(event instanceof PointerEvent)||event.pointerId!==dragging?.pointer||!dragging.free||dragging.free.moved)return;
-      const x=coordinate(event);if(x!==null)applyFree(x);
+      update(sceneDistance(x-dragging.offset,this.dragMax??this.sceneMax,this.plugin.state.inputs.focal,this.minimumFocus()));
     });
     for(const kind of ['pointerup','pointercancel','lostpointercapture'])this.listen(this.picture,kind,event=>{
       if(!(event instanceof PointerEvent)||event.pointerId!==dragging?.pointer)return;
@@ -362,15 +314,12 @@ export class PhotoView extends ItemView {
     });
     this.listen(this.picture,'keydown',event=>{
       if(!(event instanceof KeyboardEvent)||!['ArrowLeft','ArrowRight'].includes(event.key))return;
-      const control=target(event);if(!control)return;
-      const value=this.plugin.state.inputs[control.key],direction=event.key==='ArrowLeft'?-1:1;
-      const minimum=limits(control.key).minimum;
+      if(!(event.target instanceof Element)||!event.target.closest('[data-pfm-subject]'))return;
       event.preventDefault();
-      const next=stepDistance(value,direction,minimum);
+      const next=stepDistance(this.plugin.state.inputs.cameraDistance,event.key==='ArrowLeft'?-1:1,this.minimumFocus());
       if(next===undefined)return;
-      update(control.key,next);
-      const selector=control.key==='cameraDistance'?'[data-pfm-subject]':`[data-zone-handle=${control.key}]`;
-      this.picture.querySelector<SVGElement>(selector)?.focus({preventScroll:true});
+      update(next);
+      this.picture.querySelector<SVGElement>('[data-pfm-subject]')?.focus({preventScroll:true});
     });
   }
   private changed():void {
@@ -939,15 +888,8 @@ export class PhotoView extends ItemView {
     const i=this.plugin.state.inputs;
     const quick=node(this.root,'section',undefined,'pfm-quick');
     node(quick,'h2','빠른 조절');
-    if(i.zoneOn&&i.zoneGoal==='infinity'){/* ∞ 목표는 조리개만 바꾸면 된다. */}
-    else if(i.zoneOn){
-      // 목표 근거리는 장면 그림에서 끌어 정하고, 입력칸은 원거리만 둔다.
-      this.number(quick,'목표 원거리 (m)','zoneFar');
-      const wrap=node(quick,'label',undefined,'pfm-check');
-      const infinity=node(wrap,'input');infinity.type='checkbox';infinity.checked=i.zoneInfinity;infinity.dataset.key='zoneInfinity';
-      node(wrap,'span','목표 원거리 무한대');
-      this.listen(infinity,'change',()=>{this.plugin.update('zoneInfinity',infinity.checked);this.changed();});
-    }else this.number(quick,'초점 맞출 거리 (m)','cameraDistance');
+    // ∞ 목표는 조리개만 바꾸면 된다.
+    if(!(i.zoneOn&&i.zoneGoal==='infinity'))this.number(quick,'초점 맞출 거리 (m)','cameraDistance');
     this.number(quick,'조리개 (f/)','aperture',{min:0.7,max:32,step:0.1});
     if(!i.flashOn)return;
     this.power=this.select(quick,'출력 선택','denominator',{},()=>this.numeric.get('denominator')?.sync());
@@ -1016,7 +958,7 @@ export class PhotoView extends ItemView {
     const card=node(this.results,'div',undefined,'pfm-zone-result');
     node(card,'h2','존 포커싱');
     const goals=node(card,'div',undefined,'pfm-zone-goals');goals.setAttribute('role','group');goals.setAttribute('aria-label','존 포커싱 목표');
-    for(const [goal,label] of [['infinity','∞까지 선명'],['range','구간 지정']] as const){
+    for(const [goal,label] of [['infinity','∞까지 선명'],['range','구간 옮기기']] as const){
       const button=this.button(goals,label,()=>{
         if(i.zoneGoal===goal)return;
         this.plugin.update('zoneGoal',goal);this.render();
@@ -1026,37 +968,26 @@ export class PhotoView extends ItemView {
       button.dataset.zoneGoal=goal;button.setAttribute('aria-pressed',String(i.zoneGoal===goal));
     }
     if(i.zoneGoal==='infinity'){this.paintInfinity(card);return;}
-    try{
-      if(i.zoneNear<this.minimumFocus())throw Error(`목표 근거리는 ${metres(this.minimumFocus())} 이상으로 입력하세요.`);
-      const zone=solveZone(i);
-      node(card,'p',`목표 ${metres(zone.target.near)} ~ ${metres(zone.target.far)}`);
-      if(!zone.possible){
-        node(card,'p',`렌즈 최소 조리개 f/${fmt(zone.aperture)}으로도 부족 · 이론상 f/${fmt(zone.required,2)} 필요`,'pfm-error');
-        return;
-      }
-      if(zone.cameraDistance<this.minimumFocus()){
-        node(card,'p',`필요한 초점 위치 ${metres(zone.cameraDistance)}는 렌즈 최단 초점거리 ${metres(this.minimumFocus())}보다 가깝습니다.`,'pfm-error');
-        return;
-      }
-      node(card,'strong',`f/${fmt(zone.aperture)} · ${metres(zone.cameraDistance)}`,'pfm-zone-solution');
-      node(card,'p',`필름면 기준 초점 · ${limits&&includesTarget(limits,zone.target)?`지금 설정(f/${fmt(i.aperture)})이 목표를 담음`:`지금 설정(f/${fmt(i.aperture)} · ${i.focusInfinity?'∞':metres(i.cameraDistance)})으로는 부족 · 적용하면 목표 전체 선명`}`);
-      const apply=node(card,'button','이 설정 적용');apply.type='button';apply.dataset.zoneApply='true';
-      apply.onclick=()=>{
-        this.plugin.update('cameraDistance',zone.cameraDistance);this.plugin.update('aperture',zone.aperture);
-        this.syncNumeric('aperture');this.changed();
-        this.results.querySelector<HTMLButtonElement>('[data-zone-apply]')?.focus({preventScroll:true});
-      };
-    }catch(e){node(card,'p',e instanceof Error?e.message:String(e),'pfm-error');}
+    // 구간 옮기기: 지금 조리개의 선명 구간을 그림에서 끌어 옮기고, 거리링 위치를 읽는다.
+    if(!limits){node(card,'p','초점 거리와 조리개를 확인하세요.','pfm-error');return;}
+    const ring=i.focusInfinity?Infinity:i.cameraDistance;
+    node(card,'p','거리링을 여기에','pfm-zone-eyebrow');
+    node(card,'strong',Number.isFinite(ring)?metres(ring):'∞','pfm-zone-solution');
+    node(card,'p',`${Number.isFinite(ring)?this.ringText(ring):'링 눈금 ∞'} · f/${fmt(i.aperture)}이면 ${metres(limits.near)} ~ ${Number.isFinite(limits.far)?metres(limits.far):'∞'} 선명`);
+    node(card,'p','그림의 선명 구간을 좌우로 끌어 옮기세요. 조리개를 바꾸면 구간 폭이 바뀝니다.','pfm-zone-tip');
+  }
+  private ringText(distance:number):string {
+    const p=ringPosition(distance);
+    return p.on!==undefined?`링 눈금 ${fmt(p.on)}`:`링 눈금 ${fmt(p.between![0])}과 ${p.between![1]===Infinity?'∞':fmt(p.between![1])} 사이`;
   }
   /** ∞까지 선명하게: 지금 조리개에서 거리링을 둘 위치(과초점)와 조리개별 표. */
   private paintInfinity(card:HTMLElement):void {
     const i=this.plugin.state.inputs;
     try{
       const r=infinityFocus(i);
-      const ringText=(d:number)=>{const p=ringPosition(d);return p.on!==undefined?`링 눈금 ${fmt(p.on)}`:`링 눈금 ${fmt(p.between![0])}과 ${p.between![1]===Infinity?'∞':fmt(p.between![1])} 사이`;};
       node(card,'p','거리링을 여기에','pfm-zone-eyebrow');
       node(card,'strong',metres(r.ring),'pfm-zone-solution');
-      node(card,'p',`${ringText(r.ring)} · f/${fmt(r.aperture)}이면 ${metres(r.near)}부터 ∞까지 선명`);
+      node(card,'p',`${this.ringText(r.ring)} · f/${fmt(r.aperture)}이면 ${metres(r.near)}부터 ∞까지 선명`);
       node(card,'p',`렌즈 심도 눈금을 쓴다면: ∞ 표시를 f/${fmt(r.aperture)} 눈금선에 맞추면 같습니다.`,'pfm-zone-tip');
       const set=!i.focusInfinity&&Math.abs(i.cameraDistance-r.ring)<=r.ring*.005;
       const apply=node(card,'button',set?'초점이 여기에 맞춰져 있음':'초점을 여기에 맞추기');apply.type='button';apply.dataset.zoneApply='true';apply.disabled=set;
@@ -1125,7 +1056,6 @@ export class PhotoView extends ItemView {
     const i=this.plugin.state.inputs;
     this.root.dataset.cocMode=i.cocMode;this.root.dataset.linked=String(i.linked);
     const coc=this.numeric.get('coc');if(coc)coc.input.disabled=i.cocMode!=='custom';
-    const far=this.numeric.get('zoneFar');if(far)far.input.disabled=i.zoneInfinity;
     this.paintGear();
     this.results.replaceChildren();
     if(this.outputUndo&&this.outputUndo.applied!==i.denominator)this.outputUndo=undefined;
@@ -1145,7 +1075,7 @@ export class PhotoView extends ItemView {
     let shown=i,shownLimits=focusLimits;
     if(i.zoneOn&&i.zoneGoal==='infinity'){
       // ∞ 목표에서는 "거리링을 과초점에 두면" 선명해지는 구간을 그린다.
-      try{const r=infinityFocus(i);shown={...i,zoneNear:r.near,zoneInfinity:true,cameraDistance:r.ring,focusInfinity:false};shownLimits=optics(shown);}catch{/* 오류는 존 카드에 표시한다. */}
+      try{const r=infinityFocus(i);shown={...i,cameraDistance:r.ring,focusInfinity:false};shownLimits=optics(shown);}catch{/* 오류는 존 카드에 표시한다. */}
     }
     this.sceneMax=this.dragMax??sceneUpperLimit(shown,shownLimits?.far);
     diagram(this.picture,shown,this.sceneMax,shownLimits,flashResult,safe);

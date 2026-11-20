@@ -131,6 +131,27 @@
       "imports": [],
       "format": "esm"
     },
+    "src/diagram.ts": {
+      "bytes": 11912,
+      "imports": [
+        {
+          "path": "./model",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/engine.ts",
+          "kind": "import-statement",
+          "original": "./engine"
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
+        }
+      ],
+      "format": "esm"
+    },
     "src/zone.ts": {
       "bytes": 5403,
       "imports": [
@@ -143,32 +164,6 @@
           "path": "src/engine.ts",
           "kind": "import-statement",
           "original": "./engine"
-        }
-      ],
-      "format": "esm"
-    },
-    "src/diagram.ts": {
-      "bytes": 13634,
-      "imports": [
-        {
-          "path": "./model",
-          "kind": "import-statement",
-          "external": true
-        },
-        {
-          "path": "src/engine.ts",
-          "kind": "import-statement",
-          "original": "./engine"
-        },
-        {
-          "path": "src/zone.ts",
-          "kind": "import-statement",
-          "original": "./zone"
-        },
-        {
-          "path": "src/units.ts",
-          "kind": "import-statement",
-          "original": "./units"
         }
       ],
       "format": "esm"
@@ -211,7 +206,7 @@
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 77948,
+      "bytes": 73306,
       "imports": [
         {
           "path": "src/field.ts",
@@ -407,13 +402,13 @@
           "bytesInOutput": 1413
         },
         "src/view.ts": {
-          "bytesInOutput": 84219
+          "bytesInOutput": 79421
+        },
+        "src/diagram.ts": {
+          "bytesInOutput": 13129
         },
         "src/zone.ts": {
           "bytesInOutput": 5226
-        },
-        "src/diagram.ts": {
-          "bytesInOutput": 14561
         },
         "src/scale.ts": {
           "bytesInOutput": 1432
@@ -425,7 +420,7 @@
           "bytesInOutput": 21567
         }
       },
-      "bytes": 184394
+      "bytes": 178164
     }
   }
 }

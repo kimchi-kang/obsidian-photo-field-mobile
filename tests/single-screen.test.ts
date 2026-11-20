@@ -34,7 +34,8 @@ test('그림 상한은 유효한 거리의 1.3배를 포함하는 첫 눈금이�
     assert.equal(sceneUpperLimit(i,far),max);
     assert.equal(i.diagramMax,17);
   }
-  assert.equal(sceneUpperLimit({...defaults,zoneOn:true,zoneNear:3,zoneFar:8},5),15);
+  // 존 포커싱의 예전 목표 값은 그림 범위에 영향을 주지 않는다.
+  assert.equal(sceneUpperLimit({...defaults,zoneOn:true,zoneNear:3,zoneFar:30,cameraDistance:2},5),10);
   assert.equal(sceneUpperLimit({...defaults,zoneOn:true,zoneNear:3,zoneFar:30,zoneInfinity:true,cameraDistance:2},Infinity),5);
   assert.equal(sceneUpperLimit({...defaults,flashOn:true,linked:false,flashDistance:14},5),30);
 });
@@ -175,20 +176,17 @@ test('모드별 DOM, 권장 출력, 존 조절과 저장 상태가 함께 갱신
     assert.notEqual(state.inputs.cameraDistance,ring);
     button('[data-zone-goal=range]').click();
     assert.equal(state.inputs.zoneGoal,'range');
-    assert.ok(query('.pfm-target-zone'));
+    // 구간 옮기기: 목표 띠·빨간 영역·손잡이 없이 선명 구간과 거리링 위치만 있다.
+    assert.equal(query('.pfm-target-zone'),null);
+    assert.equal(query('.pfm-zone-miss'),null);
+    assert.equal(query('[data-zone-handle]'),null);
     assert.ok(query('.pfm-zone-depth'));
-    assert.ok(query('.pfm-zone-miss'));
-    for(const handle of host.querySelectorAll('.pfm-zone-hit')){
-      assert.equal(handle.getAttribute('width'),'60');
-      assert.equal(handle.getAttribute('height'),'60');
-    }
-    const near='[data-zone-handle=zoneNear]',far='[data-zone-handle=zoneFar]';
-    const previous=state.inputs.zoneNear;
-    query(near)!.dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
-    assert.ok(state.inputs.zoneNear>previous);
-    const oldFar=state.inputs.zoneFar;
-    query(far)!.dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
-    assert.ok(state.inputs.zoneFar<oldFar);
+    assert.ok(query('[data-key=cameraDistance]'));
+    assert.match(query('.pfm-zone-solution')!.textContent!,/\d m$/);
+    const band='.pfm-zone-band[data-pfm-subject]';
+    const before=state.inputs.cameraDistance;
+    query(band)!.dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
+    assert.ok(state.inputs.cameraDistance<before);
 
     class TestPointerEvent extends window.MouseEvent {readonly pointerId=1;}
     Object.assign(window,{PointerEvent:TestPointerEvent});
@@ -198,27 +196,20 @@ test('모드별 DOM, 권장 출력, 존 조절과 저장 상태가 함께 갱신
     picture.hasPointerCapture=()=>captured;
     picture.releasePointerCapture=()=>{captured=false;};
     window.SVGSVGElement.prototype.getBoundingClientRect=()=>new window.DOMRect(0,0,400,250);
-    const farBeforeDrag=state.inputs.zoneFar;
     const sceneMax=Number(attribute('[data-scene]','data-scene-max'));
-    const handleX=Number(attribute(`${far} .pfm-zone-handle-dot`,'cx'));
     const pointer=(target:Element,type:string,x:number)=>target.dispatchEvent(new TestPointerEvent(type,{clientX:x,bubbles:true}));
-    pointer(query(far)!,'pointerdown',handleX);
+    // 띠가 아닌 빈 곳을 짚어도 손가락을 따라 선명 구간이 움직인다.
+    const start=state.inputs.cameraDistance;
+    pointer(query('[data-scene]')!,'pointerdown',200);
     assert.equal(captured,true);
-    pointer(picture,'pointermove',handleX-15);
-    assert.ok(state.inputs.zoneFar<farBeforeDrag);
+    pointer(picture,'pointermove',240);
+    assert.ok(state.inputs.cameraDistance>start);
     assert.equal(Number(attribute('[data-scene]','data-scene-max')),sceneMax);
-    pointer(picture,'pointerup',handleX-15);
+    pointer(picture,'pointerup',240);
     assert.equal(captured,false);
-
-    button('[data-zone-apply]').click();
-    assert.equal(query('.pfm-zone-miss'),null);
+    assert.match(query('.pfm-zone-axis-label')?.textContent??'',/거리링/);
     button(flash).click();
     assert.deepEqual(cards(),['pfm-zone-result']);
-    const infinity=query('[data-key=zoneInfinity]');
-    assert.ok(infinity instanceof window.HTMLInputElement);
-    infinity.click();
-    assert.equal(query(far),null);
-    assert.match(query('.pfm-zone-axis-label')?.textContent??'',/∞/);
     assert.equal(state.inputs.zoneFlow,'current');
   }finally{window.close();}
 });

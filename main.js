@@ -901,6 +901,186 @@ var LatestWriter = class {
 // src/view.ts
 var import_obsidian = require("obsidian");
 
+// src/diagram.ts
+var ns = "http://www.w3.org/2000/svg";
+var SCENE = { width: 400, start: 54, end: 382 };
+var nextId = 0;
+function sceneDistance(x, max, focal, minimum = minFocusDistance(focal)) {
+  return Math.max(minimum, Math.min(max, (x - SCENE.start) / (SCENE.end - SCENE.start) * max));
+}
+function sceneUpperLimit(i, far) {
+  const distances = [far, i.focusInfinity ? void 0 : i.cameraDistance];
+  if (i.flashOn) distances.push(i.linked ? i.cameraDistance : i.flashDistance);
+  const largest = Math.max(0, ...distances.filter((distance) => distance !== void 0 && Number.isFinite(distance)));
+  return [5, 10, 15, 30].find((limit) => limit >= 1.3 * largest) ?? 30;
+}
+function diagram(host, i, max, depth, light, safe) {
+  host.replaceChildren();
+  const showFlash = i.flashOn, zone = i.zoneOn;
+  const axisY = 192;
+  const height = axisY + (showFlash ? 68 : 20);
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${SCENE.width} ${height}`);
+  svg.setAttribute("role", "group");
+  svg.dataset.scene = "true";
+  svg.dataset.sceneMax = String(max);
+  host.append(svg);
+  function el(tag, attrs, text, parent = svg) {
+    const n = document.createElementNS(ns, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    if (text !== void 0) n.textContent = text;
+    parent.append(n);
+    return n;
+  }
+  const id = `pfm-scene-${++nextId}`;
+  el("title", { id: `${id}-title` }, zone ? "\uCE74\uBA54\uB77C\uC640 \uC874 \uD3EC\uCEE4\uC2F1 \uBAA9\uD45C \uAD6C\uAC04 \uBC0F \uC2E4\uC81C \uC2EC\uB3C4" : "\uCE74\uBA54\uB77C\uC640 \uD53C\uC0AC\uCCB4, \uB80C\uC988 \uD654\uAC01\uACFC \uC2EC\uB3C4");
+  svg.setAttribute("aria-labelledby", `${id}-title`);
+  const defs = el("defs", {}), clip = el("clipPath", { id: id + "-clip" }, void 0, defs);
+  el("rect", { x: SCENE.start, y: 24, width: SCENE.end - SCENE.start, height: 140 }, void 0, clip);
+  const pattern = el("pattern", { id: id + "-hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse" }, void 0, defs);
+  el("path", { d: "M0 7 L7 0", stroke: "var(--pfm-accent)", "stroke-width": 1.2 }, void 0, pattern);
+  const coneFill = el("linearGradient", { id: id + "-cone", x1: 0, x2: 1, y1: 0, y2: 0 }, void 0, defs);
+  el("stop", { offset: 0, class: "pfm-cone-stop-near" }, void 0, coneFill);
+  el("stop", { offset: 1, class: "pfm-cone-stop-far" }, void 0, coneFill);
+  const x = (d) => SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(d / max, 1));
+  const inf = i.focusInfinity;
+  const out = (d) => `${d > max && Number.isFinite(d) ? "\u2192 " : ""}${metres(d)}`;
+  const cone = (degrees, cl) => {
+    const half = (SCENE.end - SCENE.start) * Math.tan(degrees * Math.PI / 360);
+    el("path", { d: `M${SCENE.start} 92 L${SCENE.end} ${92 - half} L${SCENE.end} ${92 + half} Z`, class: cl, "clip-path": `url(#${id}-clip)`, ...cl === "pfm-camera-cone" ? { fill: `url(#${id}-cone)` } : {} });
+  };
+  if (depth) {
+    cone(depth.vertical, "pfm-camera-cone");
+    if (!zone) {
+      el("rect", { x: x(depth.near), y: 24, width: x(depth.far) - x(depth.near), height: 140, class: "pfm-dof-zone" });
+      for (const d of [depth.near, depth.far]) el("line", { x1: x(d), x2: x(d), y1: 24, y2: 164, class: "pfm-dof-limit" });
+    }
+  } else el("text", { x: 70, y: 65 }, "\uB80C\uC988\xB7\uCD08\uC810 \uC785\uB825\uC744 \uD655\uC778\uD558\uC138\uC694.");
+  if (showFlash && i.linked) try {
+    cone(coverage(i).v, "pfm-flash-cone");
+  } catch {
+  }
+  el("line", { x1: 4, x2: 390, y1: 164, y2: 164, class: "pfm-ground" });
+  const fig = (d, parent, cls = "") => el("path", { d, ...cls ? { class: cls } : {} }, void 0, parent);
+  const limb = (d, width, parent, cls = "") => el("path", { d, fill: "none", stroke: "currentColor", "stroke-width": width, "stroke-linecap": "round", "stroke-linejoin": "round", ...cls ? { class: cls } : {} }, void 0, parent);
+  el("ellipse", { cx: 25, cy: 165, rx: 20, ry: 3, class: "pfm-shadow" });
+  const photographer = el("g", { class: "pfm-person pfm-photographer" });
+  limb("M29 96 L34 110 L51 100", 5.5, photographer, "pfm-figure-far");
+  limb("M20 122 L17 142 L14 158", 8, photographer, "pfm-figure-pants");
+  limb("M29 122 L33 142 L33 158", 8, photographer, "pfm-figure-pants");
+  fig("M8 164 Q8 158 14 158 L18 158 Q21 158 21 161 L21 164 Z", photographer);
+  fig("M30 164 Q30 158 35 158 L38 158 Q42 159 42 164 Z", photographer);
+  fig("M19 93 C20 89 25 88 30 90 L35 93 C37 95 37 98 36 101 L32 125 L17 125 C15 113 16 101 19 93 Z", photographer);
+  el("rect", { x: 24, y: 85, width: 6, height: 6, rx: 2 }, void 0, photographer);
+  el("circle", { cx: 27, cy: 80, r: 7.5, class: "pfm-figure-skin" }, void 0, photographer);
+  fig("M19.5 79 C19.5 72 24 70 28 70.5 C32 71 34.5 74 34 78 L27 76 Z", photographer, "pfm-figure-hair");
+  limb("M32 95 L37 108 L44 99", 6, photographer);
+  const cam = el("g", { class: "pfm-camera-body" }, void 0, photographer);
+  el("rect", { x: 31, y: 83, width: 18, height: 15, rx: 3 }, void 0, cam);
+  fig("M35 83 L37.5 78.5 L43.5 78.5 L46 83 Z", cam);
+  el("rect", { x: 40, y: 80.5, width: 3, height: 2.5, rx: 1, class: "pfm-camera-shutter" }, void 0, cam);
+  el("rect", { x: 48, y: 85, width: 9, height: 14, rx: 2 }, void 0, cam);
+  el("rect", { x: 51, y: 85, width: 1.4, height: 14, class: "pfm-camera-detail" }, void 0, cam);
+  el("ellipse", { cx: 57, cy: 92, rx: 1.6, ry: 5.5, class: "pfm-lens-glass" }, void 0, cam);
+  el("text", { x: 6, y: 16, class: "pfm-scene-lens" }, `${fmt(i.focal)} mm \xB7 f/${fmt(i.aperture)}`);
+  if (zone) {
+    const ringX = inf ? SCENE.end : x(Number.isFinite(i.cameraDistance) && i.cameraDistance > 0 ? i.cameraDistance : 0);
+    const movable = i.zoneGoal === "range";
+    const group = el("g", movable ? {
+      class: "pfm-zone-band",
+      "data-pfm-subject": "true",
+      tabindex: 0,
+      role: "slider",
+      "aria-label": "\uC120\uBA85 \uAD6C\uAC04 \xB7 \uC88C\uC6B0\uB85C \uB04C\uAC70\uB098 \uD654\uC0B4\uD45C \uD0A4\uB85C \uC62E\uAE30\uAE30",
+      "aria-valuemin": Number.isFinite(i.focal) ? minFocusDistance(i.focal) : 1e-3,
+      "aria-valuemax": Math.max(max, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0),
+      "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0,
+      "aria-valuetext": inf ? "\uBB34\uD55C\uB300" : metres(i.cameraDistance)
+    } : { class: "pfm-zone-band" });
+    if (depth) {
+      const start = x(depth.near), end = x(depth.far);
+      if (movable) el("rect", { x: start, y: 120, width: Math.max(44, end - start), height: 70, fill: "transparent" }, void 0, group);
+      if (end > start) el("rect", { x: start, y: 150, width: end - start, height: 12, class: "pfm-zone-depth" }, void 0, group);
+      el("text", { x: SCENE.start, y: 38, class: "pfm-zone-axis-label" }, `\uC120\uBA85 ${out(depth.near)} ~ ${Number.isFinite(depth.far) ? out(depth.far) : "\u221E"} \xB7 \uAC70\uB9AC\uB9C1 ${inf ? "\u221E" : out(i.cameraDistance)}`);
+    }
+    el("line", { x1: ringX, x2: ringX, y1: 44, y2: 180, class: "pfm-focus-line" }, void 0, group);
+    el("circle", { cx: ringX, cy: 177, r: 5, class: "pfm-focus-dot" }, void 0, group);
+  } else {
+    const subject = inf ? SCENE.end : x(Number.isFinite(i.cameraDistance) && i.cameraDistance > 0 ? i.cameraDistance : 0);
+    el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-glow" });
+    el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-line" });
+    el("ellipse", { cx: subject, cy: 165, rx: 16, ry: 3, class: "pfm-shadow" });
+    const person = el("g", { transform: `translate(${subject},0)`, class: "pfm-person pfm-subject", "data-pfm-subject": "true", tabindex: 0, role: "slider", "aria-labelledby": `${id}-subject-title`, "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0, "aria-valuemin": Number.isFinite(i.focal) ? minFocusDistance(i.focal) : 1e-3, "aria-valuemax": Math.max(max, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0), "aria-valuetext": inf ? "\uBB34\uD55C\uB300" : metres(i.cameraDistance) });
+    el("title", { id: `${id}-subject-title` }, "\uD53C\uC0AC\uCCB4 \uAC70\uB9AC \xB7 \uC88C\uC6B0 \uB4DC\uB798\uADF8 \uB610\uB294 \uD654\uC0B4\uD45C \uD0A4\uB85C \uC870\uC808", person);
+    el("rect", { x: -26, y: 68, width: 52, height: 102, fill: "transparent" }, void 0, person);
+    limb("M-4.5 122 L-5 159", 7.5, person, "pfm-figure-pants");
+    limb("M4.5 122 L5 159", 7.5, person, "pfm-figure-pants");
+    el("ellipse", { cx: -6, cy: 162, rx: 5.5, ry: 2.6 }, void 0, person);
+    el("ellipse", { cx: 6, cy: 162, rx: 5.5, ry: 2.6 }, void 0, person);
+    limb("M-12.5 96 L-15 110 L-14 123", 5.5, person);
+    limb("M12.5 96 L15 110 L14 123", 5.5, person);
+    fig("M-12 94 C-12 90 -8 89 -4 89 L4 89 C8 89 12 90 12 94 L9 125 L-9 125 Z", person);
+    el("rect", { x: -3, y: 84, width: 6, height: 6, rx: 2 }, void 0, person);
+    el("circle", { cx: 0, cy: 80, r: 7.5, class: "pfm-figure-skin" }, void 0, person);
+    fig("M-7.8 80 C-8.5 72 -4 70 0 70 C4 70 8.5 72 7.8 80 C6 75.5 3 74 0 74 C-3 74 -6 75.5 -7.8 80 Z", person, "pfm-figure-hair");
+    el("circle", { cx: 0, cy: 177, r: 5, class: "pfm-focus-dot" }, void 0, person);
+    el("text", { x: Math.max(92, Math.min(subject, 340)), y: 38, "text-anchor": "middle", class: "pfm-subject-label" }, `\uD53C\uC0AC\uCCB4 ${inf ? "\u221E" : i.cameraDistance > max ? "\u2192 \uADF8\uB9BC \uBC16" : out(i.cameraDistance)}`);
+  }
+  el("line", { x1: SCENE.start, x2: SCENE.end, y1: axisY, y2: axisY, class: "pfm-distance-axis" });
+  for (let n = 0; n <= 4; n++) {
+    const d = max * n / 4;
+    el("line", { x1: x(d), x2: x(d), y1: axisY - 3, y2: axisY + 3, class: "pfm-distance-axis" });
+    el("text", { x: x(d), y: axisY + 16, "text-anchor": n === 4 ? "end" : "middle", class: "pfm-axis-label" }, metres(d));
+  }
+  if (safe?.kind === "range" && safe.near <= max) {
+    const start = x(safe.near), end = x(safe.far), attrs = { class: "pfm-safe-band", "aria-hidden": "true" };
+    if (end > start) el("rect", { ...attrs, x: start, y: zone ? 232 : 170, width: end - start, height: 12 });
+    else el("line", { ...attrs, x1: start, x2: start, y1: zone ? 232 : 170, y2: zone ? 244 : 182 });
+  }
+  if (light) {
+    const f = light, y = axisY + 36;
+    el("rect", { x: SCENE.start, y, width: x(f.low) - SCENE.start, height: 12, class: "pfm-over-zone" });
+    el("rect", { x: x(f.low), y, width: x(f.high) - x(f.low), height: 12, fill: `url(#${id}-hatch)` });
+    el("rect", { x: x(f.high), y, width: SCENE.end - x(f.high), height: 12, class: "pfm-under-zone" });
+    el("line", { x1: x(f.r), x2: x(f.r), y1: y - 5, y2: y + 17, class: "pfm-flash-marker" });
+    el("text", { x: SCENE.start, y: axisY + 65, class: "pfm-axis-label" }, `${i.linked ? "\uD50C\uB798\uC2DC" : "\uD50C\uB798\uC2DC \uB3C5\uB9BD \uAC70\uB9AC \uCD95"} \xB7 \uD5C8\uC6A9 ${out(f.low)} ~ ${out(f.high)}`);
+  } else if (showFlash) el("text", { x: SCENE.start, y: axisY + 51, class: "pfm-axis-label" }, "\uD50C\uB798\uC2DC \uAC70\uB9AC: \uD604\uC7AC \uC870\uAC74\uC5D0\uC11C \uACC4\uC0B0 \uBD88\uAC00");
+  const legend = document.createElement("figcaption");
+  legend.className = "pfm-scene-legend";
+  const items = [["pfm-key-camera", "\uCE74\uBA54\uB77C \uD654\uAC01"], ["pfm-key-dof", "\uC120\uBA85 \uAD6C\uAC04"]];
+  if (showFlash && i.linked) items.push(["pfm-key-flash", "\uD50C\uB798\uC2DC \uC870\uC0AC\uAC01"]);
+  if (safe?.kind === "range" && safe.near <= max) items.push(["pfm-key-safe", "\uC548\uC804 \uCD2C\uC601 \uAD6C\uAC04"]);
+  for (const [cls, text] of items) {
+    const label = document.createElement("span");
+    label.className = cls;
+    label.textContent = text;
+    legend.append(label);
+  }
+  host.append(legend);
+  const hint = document.createElement("p");
+  hint.className = "pfm-scene-hint";
+  hint.textContent = zone ? i.zoneGoal === "infinity" ? "\uC870\uB9AC\uAC1C\uB97C \uBC14\uAFB8\uBA74 \uAC70\uB9AC\uB9C1 \uC704\uCE58\uAC00 \uBC14\uB85C \uBC14\uB01D\uB2C8\uB2E4" : "\uADF8\uB9BC \uC5B4\uB514\uC11C\uB4E0 \uC88C\uC6B0\uB85C \uB04C\uC5B4 \uC120\uBA85 \uAD6C\uAC04 \uC62E\uAE30\uAE30" : "\uD53C\uC0AC\uCCB4 \uB4DC\uB798\uADF8 \xB7 \uAC70\uB9AC \uC9C1\uC811 \uC785\uB825";
+  host.append(hint);
+  if (showFlash) {
+    const p = document.createElement("p");
+    p.className = "pfm-scene-note";
+    p.textContent = i.linked ? "\uD50C\uB798\uC2DC \uB760: \uC810\uC120 \uACFC\uB2E4 \xB7 \uBE57\uAE08 \uD5C8\uC6A9 \xB7 \uD30C\uC120 \uBD80\uC871" : "\uC624\uD504\uCE74\uBA54\uB77C \uD50C\uB798\uC2DC \uAC70\uB9AC\uB294 \uCE74\uBA54\uB77C\uC640 \uBCC4\uB3C4 \uCD95\uC73C\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4.";
+    host.append(p);
+  }
+  if (safe?.kind === "range" && safe.far > max) {
+    const p = document.createElement("p");
+    p.className = "pfm-scene-note";
+    p.textContent = `\uADF8\uB9BC \uBC16 \uC548\uC804 \uCD2C\uC601 \uAD6C\uAC04: ${out(safe.near)} ~ ${out(safe.far)}`;
+    host.append(p);
+  }
+  if (depth && (depth.near > max || Number.isFinite(depth.far) && depth.far > max)) {
+    const p = document.createElement("p");
+    p.className = "pfm-scene-note";
+    p.textContent = `\uADF8\uB9BC \uBC16 \uC2EC\uB3C4: ${out(depth.near)} ~ ${out(depth.far)}`;
+    host.append(p);
+  }
+}
+
 // src/zone.ts
 function equivalence(i) {
   positive(i.width, i.height, i.focal, i.aperture);
@@ -1003,214 +1183,6 @@ function ringPosition(distance, marks = RING_MARKS) {
   if (upper === void 0) return { between: [marks[marks.length - 1], Infinity] };
   const index = marks.indexOf(upper);
   return { between: [index > 0 ? marks[index - 1] : 0, upper] };
-}
-
-// src/diagram.ts
-var ns = "http://www.w3.org/2000/svg";
-var SCENE = { width: 400, start: 54, end: 382 };
-var nextId = 0;
-function sceneDistance(x, max, focal, minimum = minFocusDistance(focal)) {
-  return Math.max(minimum, Math.min(max, (x - SCENE.start) / (SCENE.end - SCENE.start) * max));
-}
-function sceneUpperLimit(i, far) {
-  const distances = [far, i.focusInfinity ? void 0 : i.cameraDistance];
-  if (i.zoneOn) distances.push(i.zoneNear, i.zoneInfinity ? void 0 : i.zoneFar);
-  if (i.flashOn) distances.push(i.linked ? i.cameraDistance : i.flashDistance);
-  const largest = Math.max(0, ...distances.filter((distance) => distance !== void 0 && Number.isFinite(distance)));
-  return [5, 10, 15, 30].find((limit) => limit >= 1.3 * largest) ?? 30;
-}
-function diagram(host, i, max, depth, light, safe) {
-  host.replaceChildren();
-  const showFlash = i.flashOn, zone = i.zoneOn;
-  const axisY = zone ? 250 : 192;
-  const height = axisY + (showFlash ? 68 : 20);
-  const svg = document.createElementNS(ns, "svg");
-  svg.setAttribute("viewBox", `0 0 ${SCENE.width} ${height}`);
-  svg.setAttribute("role", "group");
-  svg.dataset.scene = "true";
-  svg.dataset.sceneMax = String(max);
-  host.append(svg);
-  function el(tag, attrs, text, parent = svg) {
-    const n = document.createElementNS(ns, tag);
-    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
-    if (text !== void 0) n.textContent = text;
-    parent.append(n);
-    return n;
-  }
-  const id = `pfm-scene-${++nextId}`;
-  el("title", { id: `${id}-title` }, zone ? "\uCE74\uBA54\uB77C\uC640 \uC874 \uD3EC\uCEE4\uC2F1 \uBAA9\uD45C \uAD6C\uAC04 \uBC0F \uC2E4\uC81C \uC2EC\uB3C4" : "\uCE74\uBA54\uB77C\uC640 \uD53C\uC0AC\uCCB4, \uB80C\uC988 \uD654\uAC01\uACFC \uC2EC\uB3C4");
-  svg.setAttribute("aria-labelledby", `${id}-title`);
-  const defs = el("defs", {}), clip = el("clipPath", { id: id + "-clip" }, void 0, defs);
-  el("rect", { x: SCENE.start, y: 24, width: SCENE.end - SCENE.start, height: 140 }, void 0, clip);
-  const pattern = el("pattern", { id: id + "-hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse" }, void 0, defs);
-  el("path", { d: "M0 7 L7 0", stroke: "var(--pfm-accent)", "stroke-width": 1.2 }, void 0, pattern);
-  const coneFill = el("linearGradient", { id: id + "-cone", x1: 0, x2: 1, y1: 0, y2: 0 }, void 0, defs);
-  el("stop", { offset: 0, class: "pfm-cone-stop-near" }, void 0, coneFill);
-  el("stop", { offset: 1, class: "pfm-cone-stop-far" }, void 0, coneFill);
-  const x = (d) => SCENE.start + (SCENE.end - SCENE.start) * Math.max(0, Math.min(d / max, 1));
-  const inf = i.focusInfinity;
-  const out = (d) => `${d > max && Number.isFinite(d) ? "\u2192 " : ""}${metres(d)}`;
-  const cone = (degrees, cl) => {
-    const half = (SCENE.end - SCENE.start) * Math.tan(degrees * Math.PI / 360);
-    el("path", { d: `M${SCENE.start} 92 L${SCENE.end} ${92 - half} L${SCENE.end} ${92 + half} Z`, class: cl, "clip-path": `url(#${id}-clip)`, ...cl === "pfm-camera-cone" ? { fill: `url(#${id}-cone)` } : {} });
-  };
-  if (depth) {
-    cone(depth.vertical, "pfm-camera-cone");
-    if (!zone) {
-      el("rect", { x: x(depth.near), y: 24, width: x(depth.far) - x(depth.near), height: 140, class: "pfm-dof-zone" });
-      for (const d of [depth.near, depth.far]) el("line", { x1: x(d), x2: x(d), y1: 24, y2: 164, class: "pfm-dof-limit" });
-    }
-  } else el("text", { x: 70, y: 65 }, "\uB80C\uC988\xB7\uCD08\uC810 \uC785\uB825\uC744 \uD655\uC778\uD558\uC138\uC694.");
-  if (showFlash && i.linked) try {
-    cone(coverage(i).v, "pfm-flash-cone");
-  } catch {
-  }
-  el("line", { x1: 4, x2: 390, y1: 164, y2: 164, class: "pfm-ground" });
-  const fig = (d, parent, cls = "") => el("path", { d, ...cls ? { class: cls } : {} }, void 0, parent);
-  const limb = (d, width, parent, cls = "") => el("path", { d, fill: "none", stroke: "currentColor", "stroke-width": width, "stroke-linecap": "round", "stroke-linejoin": "round", ...cls ? { class: cls } : {} }, void 0, parent);
-  el("ellipse", { cx: 25, cy: 165, rx: 20, ry: 3, class: "pfm-shadow" });
-  const photographer = el("g", { class: "pfm-person pfm-photographer" });
-  limb("M29 96 L34 110 L51 100", 5.5, photographer, "pfm-figure-far");
-  limb("M20 122 L17 142 L14 158", 8, photographer, "pfm-figure-pants");
-  limb("M29 122 L33 142 L33 158", 8, photographer, "pfm-figure-pants");
-  fig("M8 164 Q8 158 14 158 L18 158 Q21 158 21 161 L21 164 Z", photographer);
-  fig("M30 164 Q30 158 35 158 L38 158 Q42 159 42 164 Z", photographer);
-  fig("M19 93 C20 89 25 88 30 90 L35 93 C37 95 37 98 36 101 L32 125 L17 125 C15 113 16 101 19 93 Z", photographer);
-  el("rect", { x: 24, y: 85, width: 6, height: 6, rx: 2 }, void 0, photographer);
-  el("circle", { cx: 27, cy: 80, r: 7.5, class: "pfm-figure-skin" }, void 0, photographer);
-  fig("M19.5 79 C19.5 72 24 70 28 70.5 C32 71 34.5 74 34 78 L27 76 Z", photographer, "pfm-figure-hair");
-  limb("M32 95 L37 108 L44 99", 6, photographer);
-  const cam = el("g", { class: "pfm-camera-body" }, void 0, photographer);
-  el("rect", { x: 31, y: 83, width: 18, height: 15, rx: 3 }, void 0, cam);
-  fig("M35 83 L37.5 78.5 L43.5 78.5 L46 83 Z", cam);
-  el("rect", { x: 40, y: 80.5, width: 3, height: 2.5, rx: 1, class: "pfm-camera-shutter" }, void 0, cam);
-  el("rect", { x: 48, y: 85, width: 9, height: 14, rx: 2 }, void 0, cam);
-  el("rect", { x: 51, y: 85, width: 1.4, height: 14, class: "pfm-camera-detail" }, void 0, cam);
-  el("ellipse", { cx: 57, cy: 92, rx: 1.6, ry: 5.5, class: "pfm-lens-glass" }, void 0, cam);
-  el("text", { x: 6, y: 16, class: "pfm-scene-lens" }, `${fmt(i.focal)} mm \xB7 f/${fmt(i.aperture)}`);
-  if (zone) {
-    let target;
-    try {
-      target = zoneTarget(i);
-    } catch {
-    }
-    if (target) {
-      const band = (from, to, y, bandHeight, cls, fill) => {
-        const start = x(from), end = x(to);
-        if (end > start) el("rect", { x: start, y, width: end - start, height: bandHeight, class: cls, ...fill ? { fill } : {} });
-      };
-      if (i.zoneGoal !== "infinity") band(target.near, target.far, 155, 18, "pfm-target-zone", `url(#${id}-hatch)`);
-      el("text", { x: SCENE.start, y: 38, class: "pfm-zone-axis-label" }, i.zoneGoal === "infinity" ? `\uC120\uBA85 ${out(target.near)} ~ \u221E \xB7 \uAC70\uB9AC\uB9C1 ${out(i.cameraDistance)}` : `\uBAA9\uD45C ${out(target.near)} ~ ${out(target.far)}`);
-      if (depth) {
-        band(depth.near, depth.far, 152, 9, "pfm-zone-depth");
-        if (!includesTarget(depth, target)) {
-          band(target.near, Math.min(target.far, depth.near), 155, 18, "pfm-zone-miss");
-          band(Math.max(target.near, depth.far), target.far, 155, 18, "pfm-zone-miss");
-          if (depth.far < target.far && target.far > max)
-            el("line", { x1: SCENE.end, x2: SCENE.end, y1: 155, y2: 173, class: "pfm-zone-miss-edge" });
-        }
-      }
-    }
-    const handle = (key, centreY, label) => {
-      const value = i[key], anchor = x(Number.isFinite(value) ? value : 0);
-      const hitX = Math.min(SCENE.width - 60, anchor - 30);
-      const control = el("g", {
-        "data-zone-handle": key,
-        tabindex: 0,
-        role: "slider",
-        "aria-label": label,
-        "aria-valuemin": key === "zoneFar" && Number.isFinite(i.zoneNear) ? i.zoneNear + 0.01 : minFocusDistance(i.focal),
-        "aria-valuemax": key === "zoneNear" && !i.zoneInfinity && Number.isFinite(i.zoneFar) ? Math.min(max, i.zoneFar - 0.01) : Math.max(max, Number.isFinite(value) ? value : 0),
-        "aria-valuenow": Number.isFinite(value) ? value : 0,
-        "aria-valuetext": Number.isFinite(value) ? metres(value) : "\uC785\uB825 \uD544\uC694"
-      });
-      el("rect", { x: hitX, y: centreY - 30, width: 60, height: 60, fill: "transparent", class: "pfm-zone-hit" }, void 0, control);
-      el("line", { x1: anchor, x2: anchor, y1: centreY, y2: 164, class: "pfm-zone-handle-stem" }, void 0, control);
-      el("circle", { cx: anchor, cy: centreY, r: 7, class: "pfm-zone-handle-dot" }, void 0, control);
-    };
-    if (i.zoneGoal === "infinity") {
-      const ring = x(i.cameraDistance);
-      el("line", { x1: ring, x2: ring, y1: 44, y2: 180, class: "pfm-focus-line" });
-      el("circle", { cx: ring, cy: 177, r: 5, class: "pfm-focus-dot" });
-    } else {
-      handle("zoneNear", 148, "\uBAA9\uD45C \uADFC\uAC70\uB9AC");
-      if (!i.zoneInfinity) handle("zoneFar", 208, "\uBAA9\uD45C \uC6D0\uAC70\uB9AC");
-    }
-  } else {
-    const subject = inf ? SCENE.end : x(Number.isFinite(i.cameraDistance) && i.cameraDistance > 0 ? i.cameraDistance : 0);
-    el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-glow" });
-    el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-line" });
-    el("ellipse", { cx: subject, cy: 165, rx: 16, ry: 3, class: "pfm-shadow" });
-    const person = el("g", { transform: `translate(${subject},0)`, class: "pfm-person pfm-subject", "data-pfm-subject": "true", tabindex: 0, role: "slider", "aria-labelledby": `${id}-subject-title`, "aria-valuenow": Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0, "aria-valuemin": Number.isFinite(i.focal) ? minFocusDistance(i.focal) : 1e-3, "aria-valuemax": Math.max(max, Number.isFinite(i.cameraDistance) ? i.cameraDistance : 0), "aria-valuetext": inf ? "\uBB34\uD55C\uB300" : metres(i.cameraDistance) });
-    el("title", { id: `${id}-subject-title` }, "\uD53C\uC0AC\uCCB4 \uAC70\uB9AC \xB7 \uC88C\uC6B0 \uB4DC\uB798\uADF8 \uB610\uB294 \uD654\uC0B4\uD45C \uD0A4\uB85C \uC870\uC808", person);
-    el("rect", { x: -26, y: 68, width: 52, height: 102, fill: "transparent" }, void 0, person);
-    limb("M-4.5 122 L-5 159", 7.5, person, "pfm-figure-pants");
-    limb("M4.5 122 L5 159", 7.5, person, "pfm-figure-pants");
-    el("ellipse", { cx: -6, cy: 162, rx: 5.5, ry: 2.6 }, void 0, person);
-    el("ellipse", { cx: 6, cy: 162, rx: 5.5, ry: 2.6 }, void 0, person);
-    limb("M-12.5 96 L-15 110 L-14 123", 5.5, person);
-    limb("M12.5 96 L15 110 L14 123", 5.5, person);
-    fig("M-12 94 C-12 90 -8 89 -4 89 L4 89 C8 89 12 90 12 94 L9 125 L-9 125 Z", person);
-    el("rect", { x: -3, y: 84, width: 6, height: 6, rx: 2 }, void 0, person);
-    el("circle", { cx: 0, cy: 80, r: 7.5, class: "pfm-figure-skin" }, void 0, person);
-    fig("M-7.8 80 C-8.5 72 -4 70 0 70 C4 70 8.5 72 7.8 80 C6 75.5 3 74 0 74 C-3 74 -6 75.5 -7.8 80 Z", person, "pfm-figure-hair");
-    el("circle", { cx: 0, cy: 177, r: 5, class: "pfm-focus-dot" }, void 0, person);
-    el("text", { x: Math.max(92, Math.min(subject, 340)), y: 38, "text-anchor": "middle", class: "pfm-subject-label" }, `\uD53C\uC0AC\uCCB4 ${inf ? "\u221E" : i.cameraDistance > max ? "\u2192 \uADF8\uB9BC \uBC16" : out(i.cameraDistance)}`);
-  }
-  el("line", { x1: SCENE.start, x2: SCENE.end, y1: axisY, y2: axisY, class: "pfm-distance-axis" });
-  for (let n = 0; n <= 4; n++) {
-    const d = max * n / 4;
-    el("line", { x1: x(d), x2: x(d), y1: axisY - 3, y2: axisY + 3, class: "pfm-distance-axis" });
-    el("text", { x: x(d), y: axisY + 16, "text-anchor": n === 4 ? "end" : "middle", class: "pfm-axis-label" }, metres(d));
-  }
-  if (safe?.kind === "range" && safe.near <= max) {
-    const start = x(safe.near), end = x(safe.far), attrs = { class: "pfm-safe-band", "aria-hidden": "true" };
-    if (end > start) el("rect", { ...attrs, x: start, y: zone ? 232 : 170, width: end - start, height: 12 });
-    else el("line", { ...attrs, x1: start, x2: start, y1: zone ? 232 : 170, y2: zone ? 244 : 182 });
-  }
-  if (light) {
-    const f = light, y = axisY + 36;
-    el("rect", { x: SCENE.start, y, width: x(f.low) - SCENE.start, height: 12, class: "pfm-over-zone" });
-    el("rect", { x: x(f.low), y, width: x(f.high) - x(f.low), height: 12, fill: `url(#${id}-hatch)` });
-    el("rect", { x: x(f.high), y, width: SCENE.end - x(f.high), height: 12, class: "pfm-under-zone" });
-    el("line", { x1: x(f.r), x2: x(f.r), y1: y - 5, y2: y + 17, class: "pfm-flash-marker" });
-    el("text", { x: SCENE.start, y: axisY + 65, class: "pfm-axis-label" }, `${i.linked ? "\uD50C\uB798\uC2DC" : "\uD50C\uB798\uC2DC \uB3C5\uB9BD \uAC70\uB9AC \uCD95"} \xB7 \uD5C8\uC6A9 ${out(f.low)} ~ ${out(f.high)}`);
-  } else if (showFlash) el("text", { x: SCENE.start, y: axisY + 51, class: "pfm-axis-label" }, "\uD50C\uB798\uC2DC \uAC70\uB9AC: \uD604\uC7AC \uC870\uAC74\uC5D0\uC11C \uACC4\uC0B0 \uBD88\uAC00");
-  const legend = document.createElement("figcaption");
-  legend.className = "pfm-scene-legend";
-  const items = [["pfm-key-camera", "\uCE74\uBA54\uB77C \uD654\uAC01"], ["pfm-key-dof", "\uC120\uBA85 \uAD6C\uAC04"]];
-  if (zone && i.zoneGoal !== "infinity") items.push(["pfm-key-target", "\uBAA9\uD45C \uAD6C\uAC04"], ["pfm-key-miss", "\uC2EC\uB3C4 \uBC16 \uBAA9\uD45C"]);
-  if (showFlash && i.linked) items.push(["pfm-key-flash", "\uD50C\uB798\uC2DC \uC870\uC0AC\uAC01"]);
-  if (safe?.kind === "range" && safe.near <= max) items.push(["pfm-key-safe", "\uC548\uC804 \uCD2C\uC601 \uAD6C\uAC04"]);
-  for (const [cls, text] of items) {
-    const label = document.createElement("span");
-    label.className = cls;
-    label.textContent = text;
-    legend.append(label);
-  }
-  host.append(legend);
-  const hint = document.createElement("p");
-  hint.className = "pfm-scene-hint";
-  hint.textContent = zone ? i.zoneGoal === "infinity" ? "\uC870\uB9AC\uAC1C\uB97C \uBC14\uAFB8\uBA74 \uAC70\uB9AC\uB9C1 \uC704\uCE58\uAC00 \uBC14\uB85C \uBC14\uB01D\uB2C8\uB2E4" : "\uC88C\uC6B0\uB85C \uB04C\uC5B4 \uBAA9\uD45C \uC870\uC808 \xB7 \uAD6C\uAC04 \uAC00\uC6B4\uB370\uB294 \uD1B5\uC9F8\uB85C \uC774\uB3D9" : "\uD53C\uC0AC\uCCB4 \uB4DC\uB798\uADF8 \xB7 \uAC70\uB9AC \uC9C1\uC811 \uC785\uB825";
-  host.append(hint);
-  if (showFlash) {
-    const p = document.createElement("p");
-    p.className = "pfm-scene-note";
-    p.textContent = i.linked ? "\uD50C\uB798\uC2DC \uB760: \uC810\uC120 \uACFC\uB2E4 \xB7 \uBE57\uAE08 \uD5C8\uC6A9 \xB7 \uD30C\uC120 \uBD80\uC871" : "\uC624\uD504\uCE74\uBA54\uB77C \uD50C\uB798\uC2DC \uAC70\uB9AC\uB294 \uCE74\uBA54\uB77C\uC640 \uBCC4\uB3C4 \uCD95\uC73C\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4.";
-    host.append(p);
-  }
-  if (safe?.kind === "range" && safe.far > max) {
-    const p = document.createElement("p");
-    p.className = "pfm-scene-note";
-    p.textContent = `\uADF8\uB9BC \uBC16 \uC548\uC804 \uCD2C\uC601 \uAD6C\uAC04: ${out(safe.near)} ~ ${out(safe.far)}`;
-    host.append(p);
-  }
-  if (depth && (depth.near > max || Number.isFinite(depth.far) && depth.far > max)) {
-    const p = document.createElement("p");
-    p.className = "pfm-scene-note";
-    p.textContent = `\uADF8\uB9BC \uBC16 \uC2EC\uB3C4: ${out(depth.near)} ~ ${out(depth.far)}`;
-    host.append(p);
-  }
 }
 
 // src/scale.ts
@@ -1633,89 +1605,37 @@ var PhotoView = class extends import_obsidian.ItemView {
       const rect = this.picture.querySelector("svg")?.getBoundingClientRect();
       return rect && rect.width > 0 ? (e.clientX - rect.left) / rect.width * SCENE.width : null;
     };
-    const target = (e) => {
-      if (!(e.target instanceof Element)) return;
-      const element = e.target.closest("[data-pfm-subject],[data-zone-handle]");
-      if (!element) return;
-      const key = element.dataset.zoneHandle === "zoneNear" ? "zoneNear" : element.dataset.zoneHandle === "zoneFar" ? "zoneFar" : "cameraDistance";
-      return { key, element };
-    };
-    const limits = (key) => {
+    const grabbable = (e) => {
+      if (!(e.target instanceof Element)) return false;
+      if (e.target.closest("[data-pfm-subject]")) return true;
       const i = this.plugin.state.inputs;
-      const minimum = key === "zoneFar" ? Number.isFinite(i.zoneNear) ? i.zoneNear + 0.01 : 0.01 : this.minimumFocus();
-      const maximum = this.dragMax ?? this.sceneMax;
-      return { minimum, maximum: key === "zoneNear" && !i.zoneInfinity && Number.isFinite(i.zoneFar) ? Math.min(maximum, i.zoneFar - 0.01) : maximum };
+      return i.zoneOn && i.zoneGoal === "range" && !!this.picture.querySelector("svg")?.contains(e.target);
     };
-    const update = (key, distance) => {
-      const { minimum, maximum } = limits(key);
-      if (!Number.isFinite(distance) || minimum > maximum) return;
-      this.plugin.update(key, Math.max(minimum, Math.min(maximum, distance)));
-      this.syncNumeric(key);
-      this.numeric.get(key)?.input.setAttribute("aria-invalid", "false");
-      this.changed();
-    };
-    const fingerDistance = (x) => (x - SCENE.start) / (SCENE.end - SCENE.start) * (this.dragMax ?? this.sceneMax);
-    const moveBand = (x, band) => {
+    const update = (distance) => {
       const minimum = this.minimumFocus(), maximum = this.dragMax ?? this.sceneMax;
-      const near = Math.max(minimum, Math.min(maximum - band.width, fingerDistance(x) - band.offset));
-      if (!Number.isFinite(near) || near < minimum) return;
-      this.plugin.update("zoneNear", near);
-      this.plugin.update("zoneFar", near + band.width);
-      this.syncNumeric("zoneNear");
-      this.syncNumeric("zoneFar");
+      if (!Number.isFinite(distance) || minimum > maximum) return;
+      this.plugin.update("cameraDistance", Math.max(minimum, Math.min(maximum, distance)));
+      this.syncNumeric("cameraDistance");
+      this.numeric.get("cameraDistance")?.input.setAttribute("aria-invalid", "false");
       this.changed();
-    };
-    const applyFree = (x) => {
-      const i = this.plugin.state.inputs, d = fingerDistance(x);
-      const finiteFar = !i.zoneInfinity && Number.isFinite(i.zoneFar);
-      const key = !finiteFar || !Number.isFinite(i.zoneNear) || Math.abs(d - i.zoneNear) <= Math.abs(d - i.zoneFar) ? "zoneNear" : "zoneFar";
-      update(key, d);
     };
     this.listen(this.picture, "pointerdown", (event) => {
-      if (!(event instanceof PointerEvent) || dragging) return;
-      const control = target(event), x = coordinate(event);
+      if (!(event instanceof PointerEvent) || dragging || !grabbable(event)) return;
+      const x = coordinate(event);
       if (x === null) return;
       const i = this.plugin.state.inputs;
-      if (!control) {
-        if (!i.zoneOn || i.zoneGoal !== "range" || !this.picture.querySelector("svg")?.contains(event.target)) return;
-        this.dragMax = this.sceneMax;
-        const d = fingerDistance(x), finiteFar = !i.zoneInfinity && Number.isFinite(i.zoneFar) && Number.isFinite(i.zoneNear);
-        const width = finiteFar ? i.zoneFar - i.zoneNear : 0;
-        if (finiteFar && d > i.zoneNear + width * 0.2 && d < i.zoneFar - width * 0.2) dragging = { pointer: event.pointerId, key: "zoneNear", offset: 0, band: { offset: d - i.zoneNear, width } };
-        else dragging = { pointer: event.pointerId, key: "zoneNear", offset: 0, free: { startX: x, moved: false } };
-        this.picture.setPointerCapture(event.pointerId);
-        return;
-      }
-      const current = i[control.key];
-      const fraction = control.key === "cameraDistance" && i.focusInfinity ? 1 : Number.isFinite(current) ? Math.max(0, Math.min(1, current / this.sceneMax)) : 0;
+      const fraction = i.focusInfinity ? 1 : Number.isFinite(i.cameraDistance) ? Math.max(0, Math.min(1, i.cameraDistance / this.sceneMax)) : 0;
       const anchor = SCENE.start + (SCENE.end - SCENE.start) * fraction;
       this.dragMax = this.sceneMax;
-      dragging = { pointer: event.pointerId, key: control.key, offset: x - anchor };
+      dragging = { pointer: event.pointerId, offset: x - anchor };
       this.picture.setPointerCapture(event.pointerId);
-      event.preventDefault();
     });
     this.listen(this.picture, "pointermove", (event) => {
       if (!(event instanceof PointerEvent) || event.pointerId !== dragging?.pointer) return;
       const x = coordinate(event);
       if (x === null) return;
       event.preventDefault();
-      if (dragging.band) {
-        moveBand(x, dragging.band);
-        return;
-      }
-      if (dragging.free) {
-        if (!dragging.free.moved && Math.abs(x - dragging.free.startX) < 4) return;
-        dragging.free.moved = true;
-        applyFree(x);
-        return;
-      }
-      const { minimum, maximum } = limits(dragging.key);
-      update(dragging.key, Math.min(maximum, sceneDistance(x - dragging.offset, this.sceneMax, this.plugin.state.inputs.focal, minimum)));
-    });
-    this.listen(this.picture, "pointerup", (event) => {
-      if (!(event instanceof PointerEvent) || event.pointerId !== dragging?.pointer || !dragging.free || dragging.free.moved) return;
-      const x = coordinate(event);
-      if (x !== null) applyFree(x);
+      update(sceneDistance(x - dragging.offset, this.dragMax ?? this.sceneMax, this.plugin.state.inputs.focal, this.minimumFocus()));
     });
     for (const kind of ["pointerup", "pointercancel", "lostpointercapture"]) this.listen(this.picture, kind, (event) => {
       if (!(event instanceof PointerEvent) || event.pointerId !== dragging?.pointer) return;
@@ -1727,16 +1647,12 @@ var PhotoView = class extends import_obsidian.ItemView {
     });
     this.listen(this.picture, "keydown", (event) => {
       if (!(event instanceof KeyboardEvent) || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
-      const control = target(event);
-      if (!control) return;
-      const value = this.plugin.state.inputs[control.key], direction = event.key === "ArrowLeft" ? -1 : 1;
-      const minimum = limits(control.key).minimum;
+      if (!(event.target instanceof Element) || !event.target.closest("[data-pfm-subject]")) return;
       event.preventDefault();
-      const next = stepDistance(value, direction, minimum);
+      const next = stepDistance(this.plugin.state.inputs.cameraDistance, event.key === "ArrowLeft" ? -1 : 1, this.minimumFocus());
       if (next === void 0) return;
-      update(control.key, next);
-      const selector = control.key === "cameraDistance" ? "[data-pfm-subject]" : `[data-zone-handle=${control.key}]`;
-      this.picture.querySelector(selector)?.focus({ preventScroll: true });
+      update(next);
+      this.picture.querySelector("[data-pfm-subject]")?.focus({ preventScroll: true });
     });
   }
   changed() {
@@ -2501,20 +2417,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     const i = this.plugin.state.inputs;
     const quick = node(this.root, "section", void 0, "pfm-quick");
     node(quick, "h2", "\uBE60\uB978 \uC870\uC808");
-    if (i.zoneOn && i.zoneGoal === "infinity") {
-    } else if (i.zoneOn) {
-      this.number(quick, "\uBAA9\uD45C \uC6D0\uAC70\uB9AC (m)", "zoneFar");
-      const wrap = node(quick, "label", void 0, "pfm-check");
-      const infinity = node(wrap, "input");
-      infinity.type = "checkbox";
-      infinity.checked = i.zoneInfinity;
-      infinity.dataset.key = "zoneInfinity";
-      node(wrap, "span", "\uBAA9\uD45C \uC6D0\uAC70\uB9AC \uBB34\uD55C\uB300");
-      this.listen(infinity, "change", () => {
-        this.plugin.update("zoneInfinity", infinity.checked);
-        this.changed();
-      });
-    } else this.number(quick, "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC (m)", "cameraDistance");
+    if (!(i.zoneOn && i.zoneGoal === "infinity")) this.number(quick, "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC (m)", "cameraDistance");
     this.number(quick, "\uC870\uB9AC\uAC1C (f/)", "aperture", { min: 0.7, max: 32, step: 0.1 });
     if (!i.flashOn) return;
     this.power = this.select(quick, "\uCD9C\uB825 \uC120\uD0DD", "denominator", {}, () => this.numeric.get("denominator")?.sync());
@@ -2604,7 +2507,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     const goals = node(card, "div", void 0, "pfm-zone-goals");
     goals.setAttribute("role", "group");
     goals.setAttribute("aria-label", "\uC874 \uD3EC\uCEE4\uC2F1 \uBAA9\uD45C");
-    for (const [goal, label] of [["infinity", "\u221E\uAE4C\uC9C0 \uC120\uBA85"], ["range", "\uAD6C\uAC04 \uC9C0\uC815"]]) {
+    for (const [goal, label] of [["infinity", "\u221E\uAE4C\uC9C0 \uC120\uBA85"], ["range", "\uAD6C\uAC04 \uC62E\uAE30\uAE30"]]) {
       const button = this.button(goals, label, () => {
         if (i.zoneGoal === goal) return;
         this.plugin.update("zoneGoal", goal);
@@ -2620,46 +2523,28 @@ var PhotoView = class extends import_obsidian.ItemView {
       this.paintInfinity(card);
       return;
     }
-    try {
-      if (i.zoneNear < this.minimumFocus()) throw Error(`\uBAA9\uD45C \uADFC\uAC70\uB9AC\uB294 ${metres(this.minimumFocus())} \uC774\uC0C1\uC73C\uB85C \uC785\uB825\uD558\uC138\uC694.`);
-      const zone = solveZone(i);
-      node(card, "p", `\uBAA9\uD45C ${metres(zone.target.near)} ~ ${metres(zone.target.far)}`);
-      if (!zone.possible) {
-        node(card, "p", `\uB80C\uC988 \uCD5C\uC18C \uC870\uB9AC\uAC1C f/${fmt(zone.aperture)}\uC73C\uB85C\uB3C4 \uBD80\uC871 \xB7 \uC774\uB860\uC0C1 f/${fmt(zone.required, 2)} \uD544\uC694`, "pfm-error");
-        return;
-      }
-      if (zone.cameraDistance < this.minimumFocus()) {
-        node(card, "p", `\uD544\uC694\uD55C \uCD08\uC810 \uC704\uCE58 ${metres(zone.cameraDistance)}\uB294 \uB80C\uC988 \uCD5C\uB2E8 \uCD08\uC810\uAC70\uB9AC ${metres(this.minimumFocus())}\uBCF4\uB2E4 \uAC00\uAE5D\uC2B5\uB2C8\uB2E4.`, "pfm-error");
-        return;
-      }
-      node(card, "strong", `f/${fmt(zone.aperture)} \xB7 ${metres(zone.cameraDistance)}`, "pfm-zone-solution");
-      node(card, "p", `\uD544\uB984\uBA74 \uAE30\uC900 \uCD08\uC810 \xB7 ${limits && includesTarget(limits, zone.target) ? `\uC9C0\uAE08 \uC124\uC815(f/${fmt(i.aperture)})\uC774 \uBAA9\uD45C\uB97C \uB2F4\uC74C` : `\uC9C0\uAE08 \uC124\uC815(f/${fmt(i.aperture)} \xB7 ${i.focusInfinity ? "\u221E" : metres(i.cameraDistance)})\uC73C\uB85C\uB294 \uBD80\uC871 \xB7 \uC801\uC6A9\uD558\uBA74 \uBAA9\uD45C \uC804\uCCB4 \uC120\uBA85`}`);
-      const apply = node(card, "button", "\uC774 \uC124\uC815 \uC801\uC6A9");
-      apply.type = "button";
-      apply.dataset.zoneApply = "true";
-      apply.onclick = () => {
-        this.plugin.update("cameraDistance", zone.cameraDistance);
-        this.plugin.update("aperture", zone.aperture);
-        this.syncNumeric("aperture");
-        this.changed();
-        this.results.querySelector("[data-zone-apply]")?.focus({ preventScroll: true });
-      };
-    } catch (e) {
-      node(card, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+    if (!limits) {
+      node(card, "p", "\uCD08\uC810 \uAC70\uB9AC\uC640 \uC870\uB9AC\uAC1C\uB97C \uD655\uC778\uD558\uC138\uC694.", "pfm-error");
+      return;
     }
+    const ring = i.focusInfinity ? Infinity : i.cameraDistance;
+    node(card, "p", "\uAC70\uB9AC\uB9C1\uC744 \uC5EC\uAE30\uC5D0", "pfm-zone-eyebrow");
+    node(card, "strong", Number.isFinite(ring) ? metres(ring) : "\u221E", "pfm-zone-solution");
+    node(card, "p", `${Number.isFinite(ring) ? this.ringText(ring) : "\uB9C1 \uB208\uAE08 \u221E"} \xB7 f/${fmt(i.aperture)}\uC774\uBA74 ${metres(limits.near)} ~ ${Number.isFinite(limits.far) ? metres(limits.far) : "\u221E"} \uC120\uBA85`);
+    node(card, "p", "\uADF8\uB9BC\uC758 \uC120\uBA85 \uAD6C\uAC04\uC744 \uC88C\uC6B0\uB85C \uB04C\uC5B4 \uC62E\uAE30\uC138\uC694. \uC870\uB9AC\uAC1C\uB97C \uBC14\uAFB8\uBA74 \uAD6C\uAC04 \uD3ED\uC774 \uBC14\uB01D\uB2C8\uB2E4.", "pfm-zone-tip");
+  }
+  ringText(distance) {
+    const p = ringPosition(distance);
+    return p.on !== void 0 ? `\uB9C1 \uB208\uAE08 ${fmt(p.on)}` : `\uB9C1 \uB208\uAE08 ${fmt(p.between[0])}\uACFC ${p.between[1] === Infinity ? "\u221E" : fmt(p.between[1])} \uC0AC\uC774`;
   }
   /** ∞까지 선명하게: 지금 조리개에서 거리링을 둘 위치(과초점)와 조리개별 표. */
   paintInfinity(card) {
     const i = this.plugin.state.inputs;
     try {
       const r = infinityFocus(i);
-      const ringText = (d) => {
-        const p = ringPosition(d);
-        return p.on !== void 0 ? `\uB9C1 \uB208\uAE08 ${fmt(p.on)}` : `\uB9C1 \uB208\uAE08 ${fmt(p.between[0])}\uACFC ${p.between[1] === Infinity ? "\u221E" : fmt(p.between[1])} \uC0AC\uC774`;
-      };
       node(card, "p", "\uAC70\uB9AC\uB9C1\uC744 \uC5EC\uAE30\uC5D0", "pfm-zone-eyebrow");
       node(card, "strong", metres(r.ring), "pfm-zone-solution");
-      node(card, "p", `${ringText(r.ring)} \xB7 f/${fmt(r.aperture)}\uC774\uBA74 ${metres(r.near)}\uBD80\uD130 \u221E\uAE4C\uC9C0 \uC120\uBA85`);
+      node(card, "p", `${this.ringText(r.ring)} \xB7 f/${fmt(r.aperture)}\uC774\uBA74 ${metres(r.near)}\uBD80\uD130 \u221E\uAE4C\uC9C0 \uC120\uBA85`);
       node(card, "p", `\uB80C\uC988 \uC2EC\uB3C4 \uB208\uAE08\uC744 \uC4F4\uB2E4\uBA74: \u221E \uD45C\uC2DC\uB97C f/${fmt(r.aperture)} \uB208\uAE08\uC120\uC5D0 \uB9DE\uCD94\uBA74 \uAC19\uC2B5\uB2C8\uB2E4.`, "pfm-zone-tip");
       const set = !i.focusInfinity && Math.abs(i.cameraDistance - r.ring) <= r.ring * 5e-3;
       const apply = node(card, "button", set ? "\uCD08\uC810\uC774 \uC5EC\uAE30\uC5D0 \uB9DE\uCDB0\uC838 \uC788\uC74C" : "\uCD08\uC810\uC744 \uC5EC\uAE30\uC5D0 \uB9DE\uCD94\uAE30");
@@ -2877,8 +2762,6 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.root.dataset.linked = String(i.linked);
     const coc = this.numeric.get("coc");
     if (coc) coc.input.disabled = i.cocMode !== "custom";
-    const far = this.numeric.get("zoneFar");
-    if (far) far.input.disabled = i.zoneInfinity;
     this.paintGear();
     this.results.replaceChildren();
     if (this.outputUndo && this.outputUndo.applied !== i.denominator) this.outputUndo = void 0;
@@ -2904,7 +2787,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (i.zoneOn && i.zoneGoal === "infinity") {
       try {
         const r = infinityFocus(i);
-        shown = { ...i, zoneNear: r.near, zoneInfinity: true, cameraDistance: r.ring, focusInfinity: false };
+        shown = { ...i, cameraDistance: r.ring, focusInfinity: false };
         shownLimits = optics(shown);
       } catch {
       }
