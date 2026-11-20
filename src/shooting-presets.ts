@@ -19,6 +19,8 @@ export interface LensPreset extends Preset {
   apertureMax:number;
   apertureSteps:number[];
   mfd:number;
+  /** 거리링에 새겨진 미터 눈금(∞ 제외, 오름차순). 없으면 일반 눈금을 쓴다. */
+  focusMarks?:number[];
 }
 export const filmTypes={negative:'네거티브',slide:'슬라이드',bw:'흑백'} as const;
 export interface FilmPreset extends Preset {
@@ -45,7 +47,9 @@ export function presetDefaults():PresetData {
     }],
     lenses:[{
       id:'nikkor-50-14-ais',name:'Nikkor 50mm f/1.4 AI-S',focal:50,apertureMin:1.4,apertureMax:16,
-      apertureSteps:[1.4,2,2.8,4,5.6,8,11,16],mfd:.45,memo:'필터 52mm',
+      apertureSteps:[1.4,2,2.8,4,5.6,8,11,16],mfd:.45,
+      focusMarks:[.45,.5,.6,.7,.8,1,1.2,1.5,2,3,5,10],
+      memo:'필터 52mm · 거리링 0.45 m~∞ · 심도 눈금 있음',
     }],
     films:[
       {id:'vision3-250d',name:'Kodak Vision3 250D',iso:250,type:'negative',reciprocityFilm:'vision3-250d',memo:''},
@@ -83,6 +87,8 @@ export function presetProblem<K extends PresetKind>(kind:K,value:unknown):string
     if(!Array.isArray(lens.apertureSteps)||!lens.apertureSteps.length||!lens.apertureSteps.every((n,index,steps)=>positive(n)&&n>=lens.apertureMin&&n<=lens.apertureMax&&(index===0||n>steps[index-1])))
       return '조리개 단계는 범위 안의 숫자를 중복 없이 오름차순으로 입력하세요.';
     if(!positive(lens.mfd))return '최단 초점거리는 0보다 큰 미터 값으로 입력하세요.';
+    if(lens.focusMarks!==undefined&&(!Array.isArray(lens.focusMarks)||!lens.focusMarks.every((n,index,marks)=>positive(n)&&n>=lens.mfd*.999&&(index===0||n>marks[index-1]))))
+      return '거리링 눈금은 최단 초점거리 이상의 미터 값을 중복 없이 오름차순으로 입력하세요(∞ 제외).';
   }else{
     const film=p as FilmPreset;
     if(!validIso(film.iso))return '박스 ISO는 양의 정수로 입력하세요.';
@@ -114,6 +120,11 @@ export function restorePresets(data:PresetData,raw:Partial<PresetData>):void {
     data[key]=restored.some(p=>p.id===raw[key])?raw[key]??'':'';
   }
   for(const kind of presetKinds)restoreList(kind);
+  // 1.8~1.10에 저장된 내장 렌즈에는 거리링 눈금이 없으므로 내장 값으로 채운다(사용자 렌즈는 그대로).
+  for(const builtIn of presetDefaults().lenses){
+    const saved=presets(data,'lenses').find(lens=>lens.id===builtIn.id);
+    if(saved&&!saved.focusMarks)saved.focusMarks=[...builtIn.focusMarks!];
+  }
   const deleted=raw.deletedPreset;
   if(deleted&&presetKinds.includes(deleted.kind)&&Number.isSafeInteger(deleted.index)&&deleted.index>=0&&validPreset(deleted.kind,deleted.preset))
     data.deletedPreset=JSON.parse(JSON.stringify(deleted));
@@ -210,4 +221,9 @@ export function undoPresetDeletion(state:Saved):void {
   }
   insert(deleted.kind,deleted.preset,deleted.index);
   delete state.deletedPreset;
+}
+
+/** 거리 조절에 쓸 거리링 눈금. 렌즈에 눈금이 없으면 undefined(일반 눈금 사용). */
+export function lensFocusMarks(lens?:LensPreset):number[]|undefined {
+  return lens?.focusMarks?.length?[...lens.focusMarks]:undefined;
 }

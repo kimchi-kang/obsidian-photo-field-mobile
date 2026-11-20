@@ -75,7 +75,7 @@
       "format": "esm"
     },
     "src/shooting-presets.ts": {
-      "bytes": 10833,
+      "bytes": 11979,
       "imports": [
         {
           "path": "src/engine.ts",
@@ -206,7 +206,7 @@
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 73306,
+      "bytes": 74829,
       "imports": [
         {
           "path": "src/field.ts",
@@ -393,7 +393,7 @@
           "bytesInOutput": 4152
         },
         "src/shooting-presets.ts": {
-          "bytesInOutput": 10053
+          "bytesInOutput": 10978
         },
         "src/storage.ts": {
           "bytesInOutput": 6039
@@ -402,7 +402,7 @@
           "bytesInOutput": 1413
         },
         "src/view.ts": {
-          "bytesInOutput": 79421
+          "bytesInOutput": 80898
         },
         "src/diagram.ts": {
           "bytesInOutput": 13129
@@ -420,7 +420,7 @@
           "bytesInOutput": 21567
         }
       },
-      "bytes": 178164
+      "bytes": 180566
     }
   }
 }

@@ -11,7 +11,7 @@ import {infinityFocus,ringPosition} from './zone';
 import {focusScale,FOCUS_SCALE_STEPS,FOCUS_SCALE_TICKS} from './scale';
 import {calibrateGN,fillFlash,nominalGN,safeRangeText,safeShootingRange,GNMeasurement} from './flash-tools';
 import {RECIPROCITY_FILMS,correctedTime,formatExposureSeconds,formatExposureMinutes,isReciprocityFilmId,validMeteredSeconds,validReciprocityExponent} from './reciprocity';
-import {cameraShutters,deletePreset,effectiveMinFocus,eiStops,filmTypes,isoOutsideCamera,presetKinds,presetLabels,savePreset,selectedPreset,selectPreset,syncLimit,undoPresetDeletion} from './shooting-presets';
+import {cameraShutters,deletePreset,effectiveMinFocus,eiStops,filmTypes,isoOutsideCamera,lensFocusMarks,presetKinds,presetLabels,savePreset,selectedPreset,selectPreset,syncLimit,undoPresetDeletion} from './shooting-presets';
 import type {FilmPreset,PresetKind} from './shooting-presets';
 export const VIEW='photo-field-mobile';
 const FILM_SPEEDS=[12,25,50,100,200,400,800,1600,3200,6400];
@@ -209,7 +209,10 @@ export class PhotoView extends ItemView {
           const focal=numeric('초점거리 (mm)',lens?.focal),apertureMin=numeric('최대 개방 f값',lens?.apertureMin),apertureMax=numeric('최소 조리개 f값',lens?.apertureMax);
           const steps=this.text(editor,'조리개 단계 (쉼표 구분)',lens?.apertureSteps.join(',')??'');
           const mfd=numeric('최단 초점거리 (m, 필름면 기준)',lens?.mfd);
-          fields=()=>({focal:focal(),apertureMin:apertureMin(),apertureMax:apertureMax(),apertureSteps:steps.value.split(',').map(parseNumber),mfd:mfd()});
+          const marks=this.text(editor,'거리링 눈금 (m, 쉼표 구분, ∞ 제외)',lens?.focusMarks?.join(',')??'');
+          marks.placeholder='0.45,0.5,0.7,1,1.5,2,3,5,10';
+          fields=()=>({focal:focal(),apertureMin:apertureMin(),apertureMax:apertureMax(),apertureSteps:steps.value.split(',').map(parseNumber),mfd:mfd(),
+            ...(marks.value.trim()?{focusMarks:marks.value.split(',').map(parseNumber)}:{})});
         }else{
           const film=existing&&'iso' in existing?existing:undefined;
           const iso=numeric('박스 ISO',film?.iso);
@@ -358,7 +361,7 @@ export class PhotoView extends ItemView {
     const depth=ruler?node(ruler,'div',undefined,'pfm-focus-depth'):undefined;
     depth?.setAttribute('role','img');
     let axis:ReturnType<typeof focusScale>;
-    let lastMinimum:number|undefined;
+    let lastScaleKey='';
     // 조리개 슬라이더는 눈금 번호를 사용하고 초점 슬라이더는 로그 축의 정수 위치를 사용한다.
     const currentStops=()=>key==='aperture'?apertureStops():undefined;
     let stops=currentStops();
@@ -379,8 +382,10 @@ export class PhotoView extends ItemView {
       if(!ruler||!ticks||!range)return;
       const {focal}=this.plugin.state.inputs;
       const floor=this.minimumFocus();
-      if(Object.is(floor,lastMinimum))return;
-      lastMinimum=floor;
+      const marks=lensFocusMarks(selectedPreset(this.plugin.state,'lenses'));
+      const cacheKey=`${floor};${marks?.join(',')??''}`;
+      if(cacheKey===lastScaleKey)return;
+      lastScaleKey=cacheKey;
       axis=focusScale(focal,floor);
       if(Number.isFinite(focal)&&focal>0)minimum=floor;
       input.min=String(minimum*scale);
@@ -388,10 +393,21 @@ export class PhotoView extends ItemView {
       ruler.hidden=!axis;
       ticks.replaceChildren();
       if(!axis)return;
-      for(const distance of FOCUS_SCALE_TICKS) {
-        if(distance<axis.minimum)continue;
-        const tick=node(ticks,'span',distance===Infinity?'∞':String(distance));
-        tick.style.left=`${axis.position(distance)*100}%`;
+      // 렌즈를 고르면 그 렌즈의 거리링 눈금을 그대로 보여 준다. 너무 붙는 눈금은 숫자 없이 선만 둔다.
+      // 1·2·3·5·10 m처럼 중요한 눈금부터 숫자를 붙이고, 숫자끼리 너무 붙으면 선만 둔다. 숫자는 위·아래 두 줄에 번갈아 놓는다.
+      const all=(marks?[...marks,Infinity]:[...FOCUS_SCALE_TICKS]).filter(d=>d>=axis!.minimum);
+      const priority=[Infinity,all[0],1,2,3,5,10,.5,1.5,.7];
+      const order=[...all].sort((a,b)=>{const pa=priority.indexOf(a),pb=priority.indexOf(b);return (pa<0?99:pa)-(pb<0?99:pb);});
+      const labelled=new Set<number>();
+      for(const d of order)if([...labelled].every(o=>Math.abs(axis!.position(o)-axis!.position(d))>=.05))labelled.add(d);
+      let row=0;
+      for(const distance of all){
+        const position=axis.position(distance),label=labelled.has(distance);
+        const text=distance===Infinity?'∞':distance<1?String(distance).replace(/^0/,''):String(distance);
+        const tick=node(ticks,'span',label?text:'');
+        tick.className=label?(row?'pfm-tick-b':'pfm-tick-a'):'pfm-tick-minor';
+        if(label)row=1-row;
+        tick.style.left=`${position*100}%`;
       }
     };
     const syncRange=(value:number)=>{
@@ -469,7 +485,8 @@ export class PhotoView extends ItemView {
         else{input.min=String(options?.min??0);input.removeAttribute('max');}
       }
       if(picker){
-        let values=(key==='aperture'?apertureStops():choices[key])??[];
+        const marks=key==='cameraDistance'?lensFocusMarks(lens):undefined;
+        let values=(key==='aperture'?apertureStops():marks??choices[key])??[];
         if(hasFocusMinimum&&lens)values=values.filter(n=>n>=minimum);
         const optionKey=values.join(',')+';';
         if(pickerOptions!==optionKey){
@@ -977,7 +994,7 @@ export class PhotoView extends ItemView {
     node(card,'p','그림의 선명 구간을 좌우로 끌어 옮기세요. 조리개를 바꾸면 구간 폭이 바뀝니다.','pfm-zone-tip');
   }
   private ringText(distance:number):string {
-    const p=ringPosition(distance);
+    const p=ringPosition(distance,lensFocusMarks(selectedPreset(this.plugin.state,'lenses')));
     return p.on!==undefined?`링 눈금 ${fmt(p.on)}`:`링 눈금 ${fmt(p.between![0])}과 ${p.between![1]===Infinity?'∞':fmt(p.between![1])} 사이`;
   }
   /** ∞까지 선명하게: 지금 조리개에서 거리링을 둘 위치(과초점)와 조리개별 표. */

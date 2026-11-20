@@ -586,7 +586,8 @@ function presetDefaults() {
       apertureMax: 16,
       apertureSteps: [1.4, 2, 2.8, 4, 5.6, 8, 11, 16],
       mfd: 0.45,
-      memo: "\uD544\uD130 52mm"
+      focusMarks: [0.45, 0.5, 0.6, 0.7, 0.8, 1, 1.2, 1.5, 2, 3, 5, 10],
+      memo: "\uD544\uD130 52mm \xB7 \uAC70\uB9AC\uB9C1 0.45 m~\u221E \xB7 \uC2EC\uB3C4 \uB208\uAE08 \uC788\uC74C"
     }],
     films: [
       { id: "vision3-250d", name: "Kodak Vision3 250D", iso: 250, type: "negative", reciprocityFilm: "vision3-250d", memo: "" },
@@ -624,6 +625,8 @@ function presetProblem(kind, value) {
     if (!Array.isArray(lens.apertureSteps) || !lens.apertureSteps.length || !lens.apertureSteps.every((n, index, steps) => positive2(n) && n >= lens.apertureMin && n <= lens.apertureMax && (index === 0 || n > steps[index - 1])))
       return "\uC870\uB9AC\uAC1C \uB2E8\uACC4\uB294 \uBC94\uC704 \uC548\uC758 \uC22B\uC790\uB97C \uC911\uBCF5 \uC5C6\uC774 \uC624\uB984\uCC28\uC21C\uC73C\uB85C \uC785\uB825\uD558\uC138\uC694.";
     if (!positive2(lens.mfd)) return "\uCD5C\uB2E8 \uCD08\uC810\uAC70\uB9AC\uB294 0\uBCF4\uB2E4 \uD070 \uBBF8\uD130 \uAC12\uC73C\uB85C \uC785\uB825\uD558\uC138\uC694.";
+    if (lens.focusMarks !== void 0 && (!Array.isArray(lens.focusMarks) || !lens.focusMarks.every((n, index, marks) => positive2(n) && n >= lens.mfd * 0.999 && (index === 0 || n > marks[index - 1]))))
+      return "\uAC70\uB9AC\uB9C1 \uB208\uAE08\uC740 \uCD5C\uB2E8 \uCD08\uC810\uAC70\uB9AC \uC774\uC0C1\uC758 \uBBF8\uD130 \uAC12\uC744 \uC911\uBCF5 \uC5C6\uC774 \uC624\uB984\uCC28\uC21C\uC73C\uB85C \uC785\uB825\uD558\uC138\uC694(\u221E \uC81C\uC678).";
   } else {
     const film = p;
     if (!validIso(film.iso)) return "\uBC15\uC2A4 ISO\uB294 \uC591\uC758 \uC815\uC218\uB85C \uC785\uB825\uD558\uC138\uC694.";
@@ -653,6 +656,10 @@ function restorePresets(data, raw) {
     data[key] = restored.some((p) => p.id === raw[key]) ? raw[key] ?? "" : "";
   }
   for (const kind of presetKinds) restoreList(kind);
+  for (const builtIn of presetDefaults().lenses) {
+    const saved = presets(data, "lenses").find((lens) => lens.id === builtIn.id);
+    if (saved && !saved.focusMarks) saved.focusMarks = [...builtIn.focusMarks];
+  }
   const deleted = raw.deletedPreset;
   if (deleted && presetKinds.includes(deleted.kind) && Number.isSafeInteger(deleted.index) && deleted.index >= 0 && validPreset(deleted.kind, deleted.preset))
     data.deletedPreset = JSON.parse(JSON.stringify(deleted));
@@ -741,6 +748,9 @@ function undoPresetDeletion(state) {
   }
   insert(deleted.kind, deleted.preset, deleted.index);
   delete state.deletedPreset;
+}
+function lensFocusMarks(lens) {
+  return lens?.focusMarks?.length ? [...lens.focusMarks] : void 0;
 }
 
 // src/storage.ts
@@ -1491,7 +1501,16 @@ var PhotoView = class extends import_obsidian.ItemView {
           const focal = numeric("\uCD08\uC810\uAC70\uB9AC (mm)", lens?.focal), apertureMin = numeric("\uCD5C\uB300 \uAC1C\uBC29 f\uAC12", lens?.apertureMin), apertureMax = numeric("\uCD5C\uC18C \uC870\uB9AC\uAC1C f\uAC12", lens?.apertureMax);
           const steps = this.text(editor, "\uC870\uB9AC\uAC1C \uB2E8\uACC4 (\uC27C\uD45C \uAD6C\uBD84)", lens?.apertureSteps.join(",") ?? "");
           const mfd = numeric("\uCD5C\uB2E8 \uCD08\uC810\uAC70\uB9AC (m, \uD544\uB984\uBA74 \uAE30\uC900)", lens?.mfd);
-          fields = () => ({ focal: focal(), apertureMin: apertureMin(), apertureMax: apertureMax(), apertureSteps: steps.value.split(",").map(parseNumber), mfd: mfd() });
+          const marks = this.text(editor, "\uAC70\uB9AC\uB9C1 \uB208\uAE08 (m, \uC27C\uD45C \uAD6C\uBD84, \u221E \uC81C\uC678)", lens?.focusMarks?.join(",") ?? "");
+          marks.placeholder = "0.45,0.5,0.7,1,1.5,2,3,5,10";
+          fields = () => ({
+            focal: focal(),
+            apertureMin: apertureMin(),
+            apertureMax: apertureMax(),
+            apertureSteps: steps.value.split(",").map(parseNumber),
+            mfd: mfd(),
+            ...marks.value.trim() ? { focusMarks: marks.value.split(",").map(parseNumber) } : {}
+          });
         } else {
           const film = existing && "iso" in existing ? existing : void 0;
           const iso = numeric("\uBC15\uC2A4 ISO", film?.iso);
@@ -1713,7 +1732,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     const depth = ruler ? node(ruler, "div", void 0, "pfm-focus-depth") : void 0;
     depth?.setAttribute("role", "img");
     let axis;
-    let lastMinimum;
+    let lastScaleKey = "";
     const currentStops = () => key === "aperture" ? apertureStops() : void 0;
     let stops = currentStops();
     const toRange = (v) => {
@@ -1735,8 +1754,10 @@ var PhotoView = class extends import_obsidian.ItemView {
       if (!ruler || !ticks || !range) return;
       const { focal } = this.plugin.state.inputs;
       const floor = this.minimumFocus();
-      if (Object.is(floor, lastMinimum)) return;
-      lastMinimum = floor;
+      const marks = lensFocusMarks(selectedPreset(this.plugin.state, "lenses"));
+      const cacheKey = `${floor};${marks?.join(",") ?? ""}`;
+      if (cacheKey === lastScaleKey) return;
+      lastScaleKey = cacheKey;
       axis = focusScale(focal, floor);
       if (Number.isFinite(focal) && focal > 0) minimum = floor;
       input.min = String(minimum * scale);
@@ -1744,10 +1765,22 @@ var PhotoView = class extends import_obsidian.ItemView {
       ruler.hidden = !axis;
       ticks.replaceChildren();
       if (!axis) return;
-      for (const distance of FOCUS_SCALE_TICKS) {
-        if (distance < axis.minimum) continue;
-        const tick = node(ticks, "span", distance === Infinity ? "\u221E" : String(distance));
-        tick.style.left = `${axis.position(distance) * 100}%`;
+      const all = (marks ? [...marks, Infinity] : [...FOCUS_SCALE_TICKS]).filter((d) => d >= axis.minimum);
+      const priority = [Infinity, all[0], 1, 2, 3, 5, 10, 0.5, 1.5, 0.7];
+      const order = [...all].sort((a, b) => {
+        const pa = priority.indexOf(a), pb = priority.indexOf(b);
+        return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
+      });
+      const labelled = /* @__PURE__ */ new Set();
+      for (const d of order) if ([...labelled].every((o) => Math.abs(axis.position(o) - axis.position(d)) >= 0.05)) labelled.add(d);
+      let row = 0;
+      for (const distance of all) {
+        const position = axis.position(distance), label2 = labelled.has(distance);
+        const text = distance === Infinity ? "\u221E" : distance < 1 ? String(distance).replace(/^0/, "") : String(distance);
+        const tick = node(ticks, "span", label2 ? text : "");
+        tick.className = label2 ? row ? "pfm-tick-b" : "pfm-tick-a" : "pfm-tick-minor";
+        if (label2) row = 1 - row;
+        tick.style.left = `${position * 100}%`;
       }
     };
     const syncRange = (value) => {
@@ -1886,7 +1919,8 @@ var PhotoView = class extends import_obsidian.ItemView {
         }
       }
       if (picker) {
-        let values = (key === "aperture" ? apertureStops() : choices[key]) ?? [];
+        const marks = key === "cameraDistance" ? lensFocusMarks(lens) : void 0;
+        let values = (key === "aperture" ? apertureStops() : marks ?? choices[key]) ?? [];
         if (hasFocusMinimum && lens) values = values.filter((n) => n >= minimum);
         const optionKey = values.join(",") + ";";
         if (pickerOptions !== optionKey) {
@@ -2534,7 +2568,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     node(card, "p", "\uADF8\uB9BC\uC758 \uC120\uBA85 \uAD6C\uAC04\uC744 \uC88C\uC6B0\uB85C \uB04C\uC5B4 \uC62E\uAE30\uC138\uC694. \uC870\uB9AC\uAC1C\uB97C \uBC14\uAFB8\uBA74 \uAD6C\uAC04 \uD3ED\uC774 \uBC14\uB01D\uB2C8\uB2E4.", "pfm-zone-tip");
   }
   ringText(distance) {
-    const p = ringPosition(distance);
+    const p = ringPosition(distance, lensFocusMarks(selectedPreset(this.plugin.state, "lenses")));
     return p.on !== void 0 ? `\uB9C1 \uB208\uAE08 ${fmt(p.on)}` : `\uB9C1 \uB208\uAE08 ${fmt(p.between[0])}\uACFC ${p.between[1] === Infinity ? "\u221E" : fmt(p.between[1])} \uC0AC\uC774`;
   }
   /** ∞까지 선명하게: 지금 조리개에서 거리링을 둘 위치(과초점)와 조리개별 표. */

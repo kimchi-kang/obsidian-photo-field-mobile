@@ -8,7 +8,7 @@ import {SCENE,sceneDistance} from '../src/diagram';
 import {stepDistance} from '../src/units';
 import {fillFlash} from '../src/flash-tools';
 import {cheatsheetNote,note} from '../src/note';
-import {cameraShutters,deletePreset,effectiveMinFocus,eiStops,isoOutsideCamera,presetDefaults,savePreset,selectedPreset,selectPreset,undoPresetDeletion,updateShootingInput} from '../src/shooting-presets';
+import {cameraShutters,deletePreset,effectiveMinFocus,eiStops,isoOutsideCamera,lensFocusMarks,presetDefaults,presetProblem,restorePresets,savePreset,selectedPreset,selectPreset,undoPresetDeletion,updateShootingInput} from '../src/shooting-presets';
 
 test('내장 프리셋은 지정된 사양을 독립된 기본값으로 제공한다',()=>{
   const data=presetDefaults();
@@ -19,7 +19,7 @@ test('내장 프리셋은 지정된 사양을 독립된 기본값으로 제공�
   }]);
   assert.deepEqual(data.lenses,[{
     id:'nikkor-50-14-ais',name:'Nikkor 50mm f/1.4 AI-S',focal:50,apertureMin:1.4,apertureMax:16,
-    apertureSteps:[1.4,2,2.8,4,5.6,8,11,16],mfd:.45,memo:'필터 52mm',
+    apertureSteps:[1.4,2,2.8,4,5.6,8,11,16],mfd:.45,focusMarks:[.45,.5,.6,.7,.8,1,1.2,1.5,2,3,5,10],memo:'필터 52mm · 거리링 0.45 m~∞ · 심도 눈금 있음',
   }]);
   assert.deepEqual(data.films.map(({id,name,iso,type,reciprocityFilm,memo})=>[id,name,iso,type,reciprocityFilm,memo]),[
     ['vision3-250d','Kodak Vision3 250D',250,'negative','vision3-250d',''],
@@ -198,4 +198,28 @@ test('결과 노트와 치트시트에 선택 프리셋 이름, 필름 종류와
       assert.ok(md.split('\n').includes(`${key}: ${JSON.stringify(value)}`),key);
     }
   }
+});
+
+test('내장 Nikkor 50mm f/1.4 AI-S는 조리개 f/1.4~16 단계와 거리링 눈금 0.45 m~10 m를 가진다',()=>{
+  const lens=presetDefaults().lenses.find(l=>l.id==='nikkor-50-14-ais')!;
+  assert.deepEqual(lens.apertureSteps,[1.4,2,2.8,4,5.6,8,11,16]);
+  assert.deepEqual(lens.focusMarks,[.45,.5,.6,.7,.8,1,1.2,1.5,2,3,5,10]);
+  assert.equal(lens.mfd,.45);
+  assert.deepEqual(lensFocusMarks(lens),lens.focusMarks);
+  assert.equal(lensFocusMarks({...lens,focusMarks:undefined}),undefined);
+});
+test('거리링 눈금 검증: 오름차순·최단 거리 이상만 허용',()=>{
+  const lens=presetDefaults().lenses[0];
+  assert.equal(presetProblem('lenses',{...lens,focusMarks:[.5,.45]}).length>0,true);
+  assert.equal(presetProblem('lenses',{...lens,focusMarks:[.3,.5]}).length>0,true);
+  assert.equal(presetProblem('lenses',{...lens,focusMarks:[.45,1,3]}),'');
+  assert.equal(presetProblem('lenses',{...lens,focusMarks:undefined}),'');
+});
+test('예전에 저장된 내장 렌즈에는 거리링 눈금을 채우고 사용자 렌즈는 그대로 둔다',()=>{
+  const {focusMarks:_,...old}=presetDefaults().lenses[0];
+  const mine={...old,id:'my-lens',name:'내 렌즈'};
+  const data=presetDefaults();
+  restorePresets(data,{lenses:[old,mine],activeLensId:'nikkor-50-14-ais'});
+  assert.deepEqual(data.lenses[0].focusMarks,[.45,.5,.6,.7,.8,1,1.2,1.5,2,3,5,10]);
+  assert.equal(data.lenses[1].focusMarks,undefined);
 });

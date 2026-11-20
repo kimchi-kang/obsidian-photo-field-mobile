@@ -443,6 +443,14 @@
 .pfm-root .pfm-ring-row[aria-current=true]{background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
 .pfm-root .pfm-ring-row[aria-current=true] :is(span:first-child,strong){color:var(--pfm-signal);}
 
+/* 렌즈 거리링 눈금: 숫자 없는 보조 눈금은 짧은 선만 */
+.pfm-root .pfm-focus-ticks span.pfm-tick-a{padding-top:7px;}
+.pfm-root .pfm-focus-ticks span.pfm-tick-a::before{height:5px;}
+.pfm-root .pfm-focus-ticks span.pfm-tick-b{padding-top:19px;}
+.pfm-root .pfm-focus-ticks span.pfm-tick-b::before{height:16px;}
+.pfm-root .pfm-focus-ticks span.pfm-tick-minor{padding-top:0;}
+.pfm-root .pfm-focus-ticks span.pfm-tick-minor::before{height:5px;}
+
 /* 테마와 카드의 반전색을 야간 팔레트로 덮어쓴다. */
 .pfm-root[data-night=true]{
  --pfm-bg:#000;--pfm-surface:#090100;--pfm-surface-2:#220603;
