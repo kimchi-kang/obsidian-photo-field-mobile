@@ -10,8 +10,8 @@
  --pfm-space-1:4px;--pfm-space-2:8px;--pfm-space-3:12px;--pfm-space-4:16px;--pfm-radius:0;--pfm-control:44px;--pfm-body:0.875rem;--pfm-label:0.8125rem;--pfm-small:0.75rem;--pfm-tag:0.6875rem;--pfm-title:1rem;
  --text-accent:var(--pfm-accent);box-sizing:border-box;width:100%;max-width:760px;margin:0 auto;padding:var(--pfm-space-2) var(--pfm-space-4) calc(120px + env(safe-area-inset-bottom));background:var(--pfm-bg);color:var(--pfm-ink);font-family:var(--pfm-round);font-size:var(--pfm-body);line-height:1.45;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent;
 }
-.theme-light .pfm-root{--pfm-bg:#f2f2ef;--pfm-surface:#ffffff;--pfm-surface-2:#e6e6e3;--pfm-ink:#0a0a0a;--pfm-muted:#585858;--pfm-line:#d6d6d2;--pfm-control-line:#848484;--pfm-accent:#0a0a0a;--pfm-accent-ink:#ffffff;--pfm-dof:#0a0a0a;--pfm-beam:#0a0a0a;--pfm-error:#c4291c;--pfm-warning:#0a0a0a;--pfm-warning-bg:#e6e6e3;--pfm-ok:#0a0a0a;--pfm-signal:#e0301e;--pfm-lcd:#0a0a0a;--pfm-lcd-dot:#ffffff17;}
-.theme-dark .pfm-root{--pfm-bg:#0a0a0a;--pfm-surface:#141414;--pfm-surface-2:#1f1f1f;--pfm-ink:#f2f2f0;--pfm-muted:#a3a3a3;--pfm-line:#2b2b2b;--pfm-control-line:#707070;--pfm-accent:#f2f2f0;--pfm-accent-ink:#0a0a0a;--pfm-dof:#f2f2f0;--pfm-beam:#f2f2f0;--pfm-error:#ff6b5b;--pfm-warning:#f2f2f0;--pfm-warning-bg:#1f1f1f;--pfm-ok:#f2f2f0;--pfm-signal:#ff4b3a;--pfm-lcd:#f4f4f1;--pfm-lcd-dot:#00000014;}
+.theme-light .pfm-root{--pfm-bg:#2a2d34;--pfm-surface:#2a2d34;--pfm-surface-2:#25282e;--pfm-ink:#eceef3;--pfm-muted:#a9afbb;--pfm-line:#3a3e47;--pfm-control-line:#8a909c;--pfm-accent:#d93a3f;--pfm-accent-ink:#ffffff;--pfm-dof:#eceef3;--pfm-beam:#eceef3;--pfm-error:#ff7070;--pfm-warning:#eceef3;--pfm-warning-bg:#25282e;--pfm-ok:#eceef3;--pfm-signal:#ff5a5f;--pfm-lcd:#2a2d34;--pfm-lcd-dot:#ffffff08;--pfm-hi:#363a43;--pfm-lo:#1b1d22;}
+.theme-dark .pfm-root{--pfm-bg:#2a2d34;--pfm-surface:#2a2d34;--pfm-surface-2:#25282e;--pfm-ink:#eceef3;--pfm-muted:#a9afbb;--pfm-line:#3a3e47;--pfm-control-line:#8a909c;--pfm-accent:#d93a3f;--pfm-accent-ink:#ffffff;--pfm-dof:#eceef3;--pfm-beam:#eceef3;--pfm-error:#ff7070;--pfm-warning:#eceef3;--pfm-warning-bg:#25282e;--pfm-ok:#eceef3;--pfm-signal:#ff5a5f;--pfm-lcd:#2a2d34;--pfm-lcd-dot:#ffffff08;--pfm-hi:#363a43;--pfm-lo:#1b1d22;}
 .pfm-root *{box-sizing:border-box;min-width:0;}
 .pfm-root p{margin:var(--pfm-space-2) 0;}
 .pfm-root h2{margin:0 0 var(--pfm-space-3);font-size:var(--pfm-title);font-weight:800;letter-spacing:-.01em;}
@@ -83,9 +83,9 @@
  color:var(--pfm-ink);overflow:hidden;
 }
 .pfm-root .pfm-flash-results,.theme-dark .pfm-root .pfm-flash-results{
- --pfm-signal:#c4291c;--pfm-ink:#0a0a0a;--pfm-muted:#5c5c5c;--pfm-line:#cfcfcb;--pfm-surface:#ffffff;--pfm-surface-2:#e6e6e3;
- --pfm-control-line:#848484;--pfm-accent:#0a0a0a;--pfm-accent-ink:#ffffff;--pfm-error:#c4291c;--pfm-warning:#0a0a0a;--pfm-warning-bg:#e6e6e3;
- --pfm-bg:#f4f4f1;--pfm-lcd:#f4f4f1;--pfm-lcd-dot:#0a0a0a12;
+ --pfm-signal:#ff5a5f;--pfm-ink:#eceef3;--pfm-muted:#a9afbb;--pfm-line:#3a3e47;--pfm-surface:#2a2d34;--pfm-surface-2:#25282e;
+ --pfm-control-line:#8a909c;--pfm-accent:#d93a3f;--pfm-accent-ink:#ffffff;--pfm-error:#ff7070;--pfm-warning:#eceef3;--pfm-warning-bg:#25282e;
+ --pfm-bg:#2a2d34;--pfm-lcd:#2a2d34;--pfm-lcd-dot:#ffffff08;
 }
 .pfm-root .pfm-flash-results::after{content:'';position:absolute;top:0;right:0;width:22px;height:22px;background:linear-gradient(225deg,var(--pfm-signal) 0 50%,transparent 50%);}
 .pfm-root .pfm-eyebrow{order:0;flex-basis:100%;margin:0 0 4px;font-size:var(--pfm-small);font-weight:700;color:var(--pfm-muted);}
@@ -285,13 +285,133 @@
 .pfm-root .pfm-focus-depth::after{content:'';position:absolute;inset-block:-3px;left:var(--pfm-depth-focus);width:1px;background:var(--pfm-signal);}
 
 
+/* 다크 소프트 뉴모피즘: 카드와 배경을 같은 색으로 두고, 좌상단 밝은 빛(--pfm-hi)과 우하단 그림자(--pfm-lo)만으로
+   누를 수 있는 것은 솟게(양각), 입력칸·눌린 상태·값 표시는 패이게(음각) 한다. 포인트 색은 빨강 하나. */
+.pfm-root{
+ --pfm-out:7px 7px 14px var(--pfm-lo),-6px -6px 12px var(--pfm-hi);
+ --pfm-out-sm:4px 4px 8px var(--pfm-lo),-3px -3px 7px var(--pfm-hi);
+ --pfm-in:inset 4px 4px 8px var(--pfm-lo),inset -3px -3px 7px var(--pfm-hi);
+ --pfm-in-sm:inset 2px 2px 4px var(--pfm-lo),inset -2px -2px 4px var(--pfm-hi);
+ --pfm-card-radius:20px;--pfm-control-radius:14px;
+ padding-top:var(--pfm-space-3);
+}
+/* 솟은 카드 */
+.pfm-root :is(.pfm-flash-results,.pfm-dof-results,.pfm-zone-result,.pfm-diagram,.pfm-quick,.pfm-safe-range),.pfm-root>details{
+ border:0;border-radius:var(--pfm-card-radius);background:var(--pfm-surface);box-shadow:var(--pfm-out);
+}
+.pfm-root .pfm-results{gap:20px;}
+.pfm-root>.pfm-diagram,.pfm-root .pfm-quick,.pfm-root>details{margin-top:20px;}
+.pfm-root .pfm-flash-results{padding:16px 18px 18px;}
+.pfm-root .pfm-flash-results::after{top:16px;right:16px;width:8px;height:8px;border-radius:50%;background:var(--pfm-signal);box-shadow:0 0 8px var(--pfm-signal);}
+.pfm-root .pfm-dof-results,.pfm-root .pfm-zone-result{padding:14px 16px;}
+.pfm-root .pfm-diagram{padding:14px 14px 10px;}
+.pfm-root .pfm-diagram svg{border-radius:12px;}
+.pfm-root .pfm-quick{padding:18px;}
+
+/* 버튼은 양각, 누름·켜짐은 음각 + 빨간 글자 */
+.pfm-root button{border:0;border-radius:var(--pfm-control-radius);background:var(--pfm-surface);box-shadow:var(--pfm-out-sm);transition:box-shadow .12s,color .12s;}
+.pfm-root button:active:not(:disabled){background:var(--pfm-surface);box-shadow:var(--pfm-in);}
+.pfm-root button:disabled{box-shadow:var(--pfm-in-sm);}
+.pfm-root :is(.pfm-mode-toggles button,.pfm-link-toggle,.pfm-night-toggle)[aria-pressed=true],
+.pfm-root .pfm-gear-chip[aria-expanded=true],
+.pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-infinity-toggle[aria-pressed=true]{
+ background:var(--pfm-surface-2);color:var(--pfm-signal);box-shadow:var(--pfm-in);
+}
+.pfm-root .pfm-mode-toggles{gap:14px;margin-bottom:20px;}
+.pfm-root .pfm-mode-toggles button{min-height:52px;border-radius:26px;}
+.pfm-root .pfm-mode-toggles button[aria-pressed=true]::before{content:'';display:inline-block;width:7px;height:7px;margin-right:8px;border-radius:50%;background:var(--pfm-signal);box-shadow:0 0 6px var(--pfm-signal);vertical-align:1px;}
+.pfm-root :is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--pfm-signal);outline-offset:3px;}
+
+/* 장비 바 */
+.pfm-root .pfm-gear-bar{margin-bottom:20px;}
+.pfm-root .pfm-gear-chips{gap:12px;}
+.pfm-root .pfm-gear-chip{padding:8px 10px;border-radius:var(--pfm-control-radius);}
+.pfm-root .pfm-gear-label{color:var(--pfm-muted);}
+.pfm-root .pfm-gear-chip[aria-expanded=true] .pfm-gear-label{color:inherit;}
+.pfm-root .pfm-gear-tag{padding:1px 6px;border:0;border-radius:8px;box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-gear-picker{margin-top:14px;padding:8px;border:0;border-radius:var(--pfm-control-radius);background:var(--pfm-surface-2);box-shadow:var(--pfm-in);}
+.pfm-root .pfm-gear-option{border-radius:10px;}
+.pfm-root .pfm-gear-option:has(:checked){background:var(--pfm-surface);color:var(--pfm-signal);box-shadow:var(--pfm-out-sm);}
+.pfm-root .pfm-gear-option input[type=radio]{accent-color:var(--pfm-signal);}
+
+/* 입력칸은 음각 */
+.pfm-root input:not([type=checkbox]):not([type=range]):not([type=radio]),.pfm-root textarea,.pfm-root select{
+ border:0;border-radius:12px;background-color:var(--pfm-surface-2);box-shadow:var(--pfm-in);
+}
+.pfm-root input[aria-invalid=true]{border:0;box-shadow:var(--pfm-in),inset 0 0 0 2px var(--pfm-error);}
+.pfm-root .pfm-range-field .pfm-number-entry>input{border:0;background-color:var(--pfm-surface-2);}
+.pfm-root .pfm-range-field .pfm-number-entry>input:focus{box-shadow:var(--pfm-in),inset 0 -2px 0 var(--pfm-signal);}
+.pfm-root .pfm-number-entry{gap:8px;}
+.pfm-root .pfm-number-entry>button{border:0;border-radius:50%;}
+.pfm-root div.pfm-field>.pfm-value-picker{border:0;border-radius:50%;background-color:var(--pfm-surface);box-shadow:var(--pfm-out-sm);}
+.pfm-root .pfm-quick>.pfm-field,.pfm-root .pfm-quick>.pfm-check{border-top:0;}
+
+/* 슬라이더 손잡이: 둥근 양각 머리에 빨간 점 */
+.pfm-root input[type=range]::-webkit-slider-thumb{border-radius:14px;background:radial-gradient(circle at 50% 30%,var(--pfm-signal) 0 3px,transparent 3.5px),var(--pfm-surface);box-shadow:var(--pfm-out-sm);}
+.pfm-root input[type=range]::-moz-range-thumb{border-radius:14px;background:radial-gradient(circle at 50% 30%,var(--pfm-signal) 0 3px,transparent 3.5px),var(--pfm-surface);box-shadow:var(--pfm-out-sm);}
+.pfm-root input[type=range]::-webkit-slider-thumb{background-repeat:no-repeat;background-clip:padding-box;}
+.pfm-root input[type=range]::-moz-range-thumb{background-repeat:no-repeat;background-clip:padding-box;}
+.pfm-root input[data-range=cameraDistance]::-webkit-slider-thumb{border-radius:14px;}
+.pfm-root input[data-range=cameraDistance]::-moz-range-thumb{border-radius:14px;}
+.pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-infinity-toggle{border:0;border-radius:50%;box-shadow:var(--pfm-out-sm);}
+.pfm-root div.pfm-field[data-field=cameraDistance]>.pfm-infinity-toggle[aria-pressed=true]::after{display:none;}
+.pfm-root .pfm-focus-depth{border:0;border-radius:5px;box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-focus-depth::before{border-radius:4px;background:var(--pfm-ink);opacity:.75;}
+
+/* 토글 스위치: 음각 홈 + 솟은 둥근 손잡이 */
+.pfm-root .pfm-check input{border:0;border-radius:14px;background:var(--pfm-surface-2);box-shadow:var(--pfm-in);}
+.pfm-root .pfm-check input::before{top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:var(--pfm-surface);box-shadow:var(--pfm-out-sm);}
+.pfm-root .pfm-check input:checked{background:var(--pfm-surface-2);}
+.pfm-root .pfm-check input:checked::before{background:var(--pfm-signal);box-shadow:0 0 8px var(--pfm-signal);}
+
+/* 결과 숫자 */
+.pfm-root .pfm-ev{border:0;border-radius:12px;background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-ev[data-state=ok]{background:var(--pfm-surface-2);color:var(--pfm-ink);}
+.pfm-root .pfm-ev[data-state=ok]::before{color:var(--pfm-signal);}
+.pfm-root .pfm-stat-grid{gap:8px;border:0;background:transparent;}
+.pfm-root .pfm-stat{padding:10px 7px;border-radius:12px;background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-stat[data-stat=total]{background:var(--pfm-surface);color:var(--pfm-signal);box-shadow:var(--pfm-out-sm);}
+.pfm-root .pfm-stat[data-stat=total] span{color:var(--pfm-muted);opacity:1;}
+.pfm-root .pfm-stat[data-stat=total]::after,.theme-dark .pfm-root .pfm-stat[data-stat=total]::after{background:var(--pfm-signal);}
+.pfm-root .pfm-stat[data-stat=near] span::before,.pfm-root .pfm-stat[data-stat=far] span::before{border-radius:50%;}
+.pfm-root .pfm-dof-bar{margin-top:14px;}
+.pfm-root .pfm-dof-bar button{border:0;background:var(--pfm-surface);}
+.pfm-root .pfm-flash-results>p:not([class]),.pfm-root .pfm-output-action{border-top-color:var(--pfm-line);}
+.pfm-root .pfm-output-action{gap:10px;}
+.pfm-root .pfm-output-action button,.pfm-root .pfm-flash-results>.pfm-error-action{border:0;background:var(--pfm-surface);}
+.pfm-root .pfm-output-action button:disabled{box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-output-action [data-flash-apply]:disabled{border:0;}
+.pfm-root .pfm-warning,.pfm-root .pfm-flash-results>.pfm-error,.pfm-root footer [role=status]{border-left:0;border-radius:12px;box-shadow:var(--pfm-in-sm),inset 3px 0 0 var(--pfm-signal);}
+.pfm-root .pfm-zone-result p.pfm-error,.pfm-root .pfm-zone-result .pfm-error{color:var(--pfm-error);}
+
+/* 주요 동작 버튼은 빨간 양각 */
+.pfm-root :is(.pfm-output-action [data-flash-apply]:not(:disabled),.pfm-zone-result [data-zone-apply],.pfm-save-actions .pfm-save){
+ border:0;background:var(--pfm-accent);color:var(--pfm-accent-ink);box-shadow:var(--pfm-out-sm);
+}
+.pfm-root :is(.pfm-output-action [data-flash-apply]:not(:disabled),.pfm-zone-result [data-zone-apply],.pfm-save-actions .pfm-save):active{box-shadow:inset 3px 3px 6px #00000055,inset -2px -2px 5px #ffffff22;}
+.pfm-root footer{gap:14px;margin-top:24px;}
+.pfm-root .pfm-save-actions{gap:14px;}
+.pfm-root .pfm-retry{box-shadow:none;}
+
+/* 접는 섹션 */
+.pfm-root>details{padding:0 18px;}
+.pfm-root summary::after{border:0;border-radius:50%;width:28px;height:28px;line-height:28px;box-shadow:var(--pfm-out-sm);}
+.pfm-root details[open]>summary::after{background:var(--pfm-surface-2);color:var(--pfm-signal);box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-fill{border:0;border-radius:var(--pfm-control-radius);box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-reciprocity .pfm-bulb-countdown{border-radius:var(--pfm-control-radius);background:var(--pfm-surface-2);color:var(--pfm-signal);box-shadow:var(--pfm-in);}
+.pfm-root[data-bulb-ended=true] .pfm-bulb-countdown{outline:0;background:var(--pfm-signal);color:var(--pfm-bg);}
+
+/* 장면 그림 */
+.pfm-root .pfm-zone-handle-dot{fill:var(--pfm-surface);stroke:var(--pfm-signal);}
+.pfm-root .pfm-scene-legend{border-top-color:var(--pfm-line);}
+
 /* 테마와 카드의 반전색을 야간 팔레트로 덮어쓴다. */
 .pfm-root[data-night=true]{
  --pfm-bg:#000;--pfm-surface:#090100;--pfm-surface-2:#220603;
  --pfm-ink:#a52c20;--pfm-muted:#802118;--pfm-line:#43100b;--pfm-control-line:#762016;
  --pfm-accent:#8a2419;--pfm-accent-ink:#000;--pfm-dof:#762016;--pfm-beam:#762016;
  --pfm-error:#b83325;--pfm-warning:#a52c20;--pfm-warning-bg:#220603;--pfm-ok:#a52c20;
- --pfm-signal:#b83325;--pfm-signal-pressed:var(--pfm-signal);--pfm-lcd:#000;--pfm-lcd-dot:#43100b45;
+ --pfm-signal:#b83325;--pfm-signal-pressed:var(--pfm-signal);--pfm-hi:#1a0503;--pfm-lo:#000;--pfm-lcd:#000;--pfm-lcd-dot:#43100b45;
  --text-normal:var(--pfm-ink);--text-muted:var(--pfm-muted);--text-faint:var(--pfm-muted);
  --text-selection:var(--pfm-surface-2);--interactive-normal:var(--pfm-surface);--interactive-hover:var(--pfm-surface-2);
  --background-modifier-border-hover:var(--pfm-control-line);--background-modifier-border-focus:var(--pfm-signal);
