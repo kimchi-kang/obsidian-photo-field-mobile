@@ -435,6 +435,22 @@
 .pfm-root .pfm-dof-total[data-stat=total] strong{display:inline;font-size:inherit;font-weight:750;color:var(--pfm-signal);}
 .pfm-root .pfm-dof-bar button{flex:1 1 auto;width:100%;}
 
+/* 존 포커싱: 목표 방식 전환과 ∞ 거리링 안내 */
+.pfm-root .pfm-zone-goals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0 0 14px;padding:5px;border-radius:16px;background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-zone-goals button{min-height:44px;margin:0;border-radius:12px;box-shadow:none;background:transparent;color:var(--pfm-muted);}
+.pfm-root .pfm-zone-goals button[aria-pressed=true]{background:var(--pfm-surface);color:var(--pfm-signal);box-shadow:var(--pfm-out-sm);}
+.pfm-root .pfm-zone-eyebrow{margin:0!important;font-size:var(--pfm-small)!important;font-weight:700;color:var(--pfm-muted);}
+.pfm-root .pfm-zone-result .pfm-zone-solution{font-size:clamp(2.25rem,11vw,3rem);font-weight:450;letter-spacing:-.02em;line-height:1.1;}
+.pfm-root .pfm-zone-tip{color:var(--pfm-muted);font-size:var(--pfm-small)!important;}
+.pfm-root .pfm-zone-result [data-zone-apply]:disabled{background:var(--pfm-surface-2);color:var(--pfm-muted);box-shadow:var(--pfm-in-sm);opacity:1;}
+.pfm-root .pfm-ring-table{margin-top:10px;border-top:1px solid var(--pfm-line);}
+.pfm-root .pfm-ring-table>summary{min-height:44px;font-size:var(--pfm-label);}
+.pfm-root .pfm-ring-row{display:grid;grid-template-columns:4rem minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;min-height:44px;margin:0 0 8px;padding:6px 12px;text-align:left;font-variant-numeric:tabular-nums;box-shadow:var(--pfm-out-sm);}
+.pfm-root .pfm-ring-row span{font-size:var(--pfm-small);color:var(--pfm-muted);font-weight:650;}
+.pfm-root .pfm-ring-row strong{font-size:1.0625rem;font-weight:600;}
+.pfm-root .pfm-ring-row[aria-current=true]{background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-ring-row[aria-current=true] :is(span:first-child,strong){color:var(--pfm-signal);}
+
 /* 테마와 카드의 반전색을 야간 팔레트로 덮어쓴다. */
 .pfm-root[data-night=true]{
  --pfm-bg:#000;--pfm-surface:#090100;--pfm-surface-2:#220603;

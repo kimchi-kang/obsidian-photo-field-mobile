@@ -1,7 +1,7 @@
 {
   "inputs": {
     "src/model.ts": {
-      "bytes": 4282,
+      "bytes": 4331,
       "imports": [],
       "format": "esm"
     },
@@ -96,7 +96,7 @@
       "format": "esm"
     },
     "src/storage.ts": {
-      "bytes": 6130,
+      "bytes": 6201,
       "imports": [
         {
           "path": "src/field.ts",
@@ -132,7 +132,7 @@
       "format": "esm"
     },
     "src/zone.ts": {
-      "bytes": 4363,
+      "bytes": 5403,
       "imports": [
         {
           "path": "./model",
@@ -148,7 +148,7 @@
       "format": "esm"
     },
     "src/diagram.ts": {
-      "bytes": 12940,
+      "bytes": 13634,
       "imports": [
         {
           "path": "./model",
@@ -211,7 +211,7 @@
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 74225,
+      "bytes": 77948,
       "imports": [
         {
           "path": "src/field.ts",
@@ -282,7 +282,7 @@
       "format": "esm"
     },
     "src/note.ts": {
-      "bytes": 17054,
+      "bytes": 17065,
       "imports": [
         {
           "path": "src/model.ts",
@@ -380,7 +380,7 @@
           "bytesInOutput": 7344
         },
         "src/model.ts": {
-          "bytesInOutput": 2327
+          "bytesInOutput": 2351
         },
         "src/units.ts": {
           "bytesInOutput": 1566
@@ -401,19 +401,19 @@
           "bytesInOutput": 10053
         },
         "src/storage.ts": {
-          "bytesInOutput": 5963
+          "bytesInOutput": 6039
         },
         "src/writer.ts": {
           "bytesInOutput": 1413
         },
         "src/view.ts": {
-          "bytesInOutput": 79987
+          "bytesInOutput": 84219
         },
         "src/zone.ts": {
-          "bytesInOutput": 4498
+          "bytesInOutput": 5226
         },
         "src/diagram.ts": {
-          "bytesInOutput": 13969
+          "bytesInOutput": 14561
         },
         "src/scale.ts": {
           "bytesInOutput": 1432
@@ -425,7 +425,7 @@
           "bytesInOutput": 21567
         }
       },
-      "bytes": 178742
+      "bytes": 184394
     }
   }
 }

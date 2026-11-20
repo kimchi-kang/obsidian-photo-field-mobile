@@ -165,6 +165,16 @@ test('모드별 DOM, 권장 출력, 존 조절과 저장 상태가 함께 갱신
     assert.deepEqual(cards(),['pfm-flash-results','pfm-zone-result']);
     assert.equal(query(subject),null);
     assert.equal(query('[data-key=cameraDistance]'),null);
+    // 기본 목표는 ∞까지: 거리링 위치·조리개별 표가 보이고 구간 손잡이는 없다.
+    assert.equal(attribute('[data-zone-goal=infinity]','aria-pressed'),'true');
+    assert.match(query('.pfm-zone-solution')!.textContent!,/\d m$/);
+    assert.ok(host.querySelectorAll('.pfm-ring-row').length>=3);
+    assert.equal(query('[data-zone-handle]'),null);
+    const ring=state.inputs.cameraDistance;
+    button('[data-zone-apply]').click();
+    assert.notEqual(state.inputs.cameraDistance,ring);
+    button('[data-zone-goal=range]').click();
+    assert.equal(state.inputs.zoneGoal,'range');
     assert.ok(query('.pfm-target-zone'));
     assert.ok(query('.pfm-zone-depth'));
     assert.ok(query('.pfm-zone-miss'));

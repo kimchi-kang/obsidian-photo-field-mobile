@@ -77,8 +77,9 @@ export function diagram(
         const start=x(from),end=x(to);
         if(end>start)el('rect',{x:start,y,width:end-start,height:bandHeight,class:cls,...(fill?{fill}:{})});
       };
-      band(target.near,target.far,155,18,'pfm-target-zone',`url(#${id}-hatch)`);
-      el('text',{x:SCENE.start,y:38,class:'pfm-zone-axis-label'},`목표 ${out(target.near)} ~ ${out(target.far)}`);
+      // ∞ 목표는 목표와 선명 구간이 같으므로 빗금 띠 없이 선명 구간만 그린다.
+      if(i.zoneGoal!=='infinity')band(target.near,target.far,155,18,'pfm-target-zone',`url(#${id}-hatch)`);
+      el('text',{x:SCENE.start,y:38,class:'pfm-zone-axis-label'},i.zoneGoal==='infinity'?`선명 ${out(target.near)} ~ ∞ · 거리링 ${out(i.cameraDistance)}`:`목표 ${out(target.near)} ~ ${out(target.far)}`);
       if(depth){
         band(depth.near,depth.far,152,9,'pfm-zone-depth');
         if(!includesTarget(depth,target)){
@@ -103,8 +104,15 @@ export function diagram(
       el('line',{x1:anchor,x2:anchor,y1:centreY,y2:164,class:'pfm-zone-handle-stem'},undefined,control);
       el('circle',{cx:anchor,cy:centreY,r:7,class:'pfm-zone-handle-dot'},undefined,control);
     };
-    handle('zoneNear',148,'목표 근거리');
-    if(!i.zoneInfinity)handle('zoneFar',208,'목표 원거리');
+    if(i.zoneGoal==='infinity'){
+      // 거리링 위치(과초점)를 빨간 점선으로 표시한다. 손잡이는 구간 지정에서만 쓴다.
+      const ring=x(i.cameraDistance);
+      el('line',{x1:ring,x2:ring,y1:44,y2:180,class:'pfm-focus-line'});
+      el('circle',{cx:ring,cy:177,r:5,class:'pfm-focus-dot'});
+    }else{
+      handle('zoneNear',148,'목표 근거리');
+      if(!i.zoneInfinity)handle('zoneFar',208,'목표 원거리');
+    }
   }else{
     const subject=inf?SCENE.end:x(Number.isFinite(i.cameraDistance)&&i.cameraDistance>0?i.cameraDistance:0);
     el('line',{x1:subject,x2:subject,y1:24,y2:180,class:'pfm-focus-glow'});
@@ -140,13 +148,13 @@ export function diagram(
   }else if(showFlash)el('text',{x:SCENE.start,y:axisY+51,class:'pfm-axis-label'},'플래시 거리: 현재 조건에서 계산 불가');
   const legend=document.createElement('figcaption');legend.className='pfm-scene-legend';
   const items=[['pfm-key-camera','카메라 화각'],['pfm-key-dof','선명 구간']];
-  if(zone)items.push(['pfm-key-target','목표 구간'],['pfm-key-miss','심도 밖 목표']);
+  if(zone&&i.zoneGoal!=='infinity')items.push(['pfm-key-target','목표 구간'],['pfm-key-miss','심도 밖 목표']);
   if(showFlash&&i.linked)items.push(['pfm-key-flash','플래시 조사각']);
   if(safe?.kind==='range'&&safe.near<=max)items.push(['pfm-key-safe','안전 촬영 구간']);
   for(const [cls,text] of items){const label=document.createElement('span');label.className=cls;label.textContent=text;legend.append(label);}
   host.append(legend);
   const hint=document.createElement('p');hint.className='pfm-scene-hint';
-  hint.textContent=zone?'좌우로 끌어 목표 조절 · 구간 가운데는 통째로 이동':'피사체 드래그 · 거리 직접 입력';host.append(hint);
+  hint.textContent=zone?(i.zoneGoal==='infinity'?'조리개를 바꾸면 거리링 위치가 바로 바뀝니다':'좌우로 끌어 목표 조절 · 구간 가운데는 통째로 이동'):'피사체 드래그 · 거리 직접 입력';host.append(hint);
   if(showFlash){
     const p=document.createElement('p');p.className='pfm-scene-note';
     p.textContent=i.linked?'플래시 띠: 점선 과다 · 빗금 허용 · 파선 부족':'오프카메라 플래시 거리는 카메라와 별도 축으로 표시합니다.';

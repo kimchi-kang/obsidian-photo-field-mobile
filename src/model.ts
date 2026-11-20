@@ -13,7 +13,7 @@ export interface Inputs {
   flashOn: boolean; zoneOn: boolean; flashWasEnabled: boolean; nightMode: boolean;
   shutter: number; fillRatio: number;
   reciprocityFilm: ReciprocityFilmId; meteredSeconds: number; reciprocityOverrides: ReciprocityOverrides;
-  cropBasis:'nominal'|'dimensions'; zoneFlow:'current'|'target'; zoneNear:number; zoneFar:number; zoneInfinity:boolean; apertureMin:number; apertureMax:number; apertureSteps:string;
+  cropBasis:'nominal'|'dimensions'; zoneFlow:'current'|'target'; zoneGoal:'infinity'|'range'; zoneNear:number; zoneFar:number; zoneInfinity:boolean; apertureMin:number; apertureMax:number; apertureSteps:string;
 }
 export interface Equipment {id:string; name: string; conditions: string; source: string; table: Record<string, number>; minDenominator: number; steps: string}
 export interface EquipmentDraft {id:string;name:string;conditions:string;source:string;table:string;unit:'m'|'ft';minDenominator:string;steps:string}
@@ -31,7 +31,7 @@ export const defaults: Inputs = {
   conditions:'연습용 가상 GN · 장비 사양 아님 · ISO100·최대출력·직접광·50mm',
   reciprocityFilm:'vision3-500t',meteredSeconds:4,reciprocityOverrides:{},
   denominator:4,loss:0,tolerance:1,minDenominator:256,steps:'1,2,4,8,16,32,64,128,256',
-  coverage:'approx',horizontal:40,vertical:27,mode:'manual',diagramMax:15,tab:'combined',flashOn:false,zoneOn:false,flashWasEnabled:false,nightMode:false,shutter:125,fillRatio:-1.5,cropBasis:'nominal',zoneFlow:'current',zoneNear:2,zoneFar:5,zoneInfinity:false,apertureMin:1.4,apertureMax:16,apertureSteps:FULL_STOP_APERTURES
+  coverage:'approx',horizontal:40,vertical:27,mode:'manual',diagramMax:15,tab:'combined',flashOn:false,zoneOn:false,flashWasEnabled:false,nightMode:false,shutter:125,fillRatio:-1.5,cropBasis:'nominal',zoneFlow:'current',zoneGoal:'infinity',zoneNear:2,zoneFar:5,zoneInfinity:false,apertureMin:1.4,apertureMax:16,apertureSteps:FULL_STOP_APERTURES
 };
 export function assignInput<K extends keyof Inputs>(i:Inputs,key:K,value:Inputs[K]):void {
   i[key]=value;

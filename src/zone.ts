@@ -66,3 +66,23 @@ export function solveZone(i:Inputs) {
   const aperture=steps[steps.length-1],cameraDistance=distanceFor(aperture);
   return {possible:false as const,aperture,cameraDistance,actual:optics({...i,aperture,cameraDistance,focusInfinity:false}),required,target};
 }
+
+/** 니코르 수동 렌즈 거리링에 흔히 새겨진 눈금(m, 필름면 기준). */
+export const RING_MARKS=[0.45,0.5,0.6,0.7,0.8,1,1.2,1.5,2,3,5,10];
+/** ∞까지 선명하게 찍을 때 거리링을 둘 위치(과초점)와 그때 선명해지는 가장 가까운 거리. */
+export function infinityFocus(i:Inputs,aperture=i.aperture) {
+  const at={...i,aperture,focusInfinity:false};
+  const ring=optics(at).hyperfocal;
+  const near=optics({...at,cameraDistance:ring}).near;
+  return {aperture,ring,near};
+}
+/** 거리 값이 거리링 눈금 어디쯤인지: 눈금 위(3% 이내)거나 두 눈금 사이. */
+export function ringPosition(distance:number,marks=RING_MARKS):{on?:number;between?:[number,number]} {
+  positive(distance);
+  const on=marks.find(m=>Math.abs(distance-m)/m<=.03);
+  if(on!==undefined)return {on};
+  const upper=marks.find(m=>m>distance);
+  if(upper===undefined)return {between:[marks[marks.length-1],Infinity]};
+  const index=marks.indexOf(upper);
+  return {between:[index>0?marks[index-1]:0,upper]};
+}

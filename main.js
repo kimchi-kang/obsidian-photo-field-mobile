@@ -97,6 +97,7 @@ var defaults = {
   fillRatio: -1.5,
   cropBasis: "nominal",
   zoneFlow: "current",
+  zoneGoal: "infinity",
   zoneNear: 2,
   zoneFar: 5,
   zoneInfinity: false,
@@ -776,6 +777,7 @@ function restore(data) {
   if (!validMeteredSeconds(i.meteredSeconds)) i.meteredSeconds = defaults.meteredSeconds;
   if (!["nominal", "dimensions"].includes(i.cropBasis)) i.cropBasis = "nominal";
   if (!["current", "target"].includes(i.zoneFlow)) i.zoneFlow = "current";
+  if (!["infinity", "range"].includes(i.zoneGoal)) i.zoneGoal = "infinity";
   if (typeof d.inputs === "object" && d.inputs && !("zoneFlow" in d.inputs) && !result.migrationBackup) result.migrationBackup = JSON.parse(JSON.stringify(data));
   if (!["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(i.mode)) i.mode = "manual";
   if (!["flash", "dof", "combined", "zone"].includes(i.tab)) i.tab = "combined";
@@ -986,6 +988,22 @@ function solveZone(i) {
   const aperture = steps[steps.length - 1], cameraDistance = distanceFor(aperture);
   return { possible: false, aperture, cameraDistance, actual: optics({ ...i, aperture, cameraDistance, focusInfinity: false }), required, target };
 }
+var RING_MARKS = [0.45, 0.5, 0.6, 0.7, 0.8, 1, 1.2, 1.5, 2, 3, 5, 10];
+function infinityFocus(i, aperture = i.aperture) {
+  const at = { ...i, aperture, focusInfinity: false };
+  const ring = optics(at).hyperfocal;
+  const near = optics({ ...at, cameraDistance: ring }).near;
+  return { aperture, ring, near };
+}
+function ringPosition(distance, marks = RING_MARKS) {
+  positive(distance);
+  const on = marks.find((m) => Math.abs(distance - m) / m <= 0.03);
+  if (on !== void 0) return { on };
+  const upper = marks.find((m) => m > distance);
+  if (upper === void 0) return { between: [marks[marks.length - 1], Infinity] };
+  const index = marks.indexOf(upper);
+  return { between: [index > 0 ? marks[index - 1] : 0, upper] };
+}
 
 // src/diagram.ts
 var ns = "http://www.w3.org/2000/svg";
@@ -1081,8 +1099,8 @@ function diagram(host, i, max, depth, light, safe) {
         const start = x(from), end = x(to);
         if (end > start) el("rect", { x: start, y, width: end - start, height: bandHeight, class: cls, ...fill ? { fill } : {} });
       };
-      band(target.near, target.far, 155, 18, "pfm-target-zone", `url(#${id}-hatch)`);
-      el("text", { x: SCENE.start, y: 38, class: "pfm-zone-axis-label" }, `\uBAA9\uD45C ${out(target.near)} ~ ${out(target.far)}`);
+      if (i.zoneGoal !== "infinity") band(target.near, target.far, 155, 18, "pfm-target-zone", `url(#${id}-hatch)`);
+      el("text", { x: SCENE.start, y: 38, class: "pfm-zone-axis-label" }, i.zoneGoal === "infinity" ? `\uC120\uBA85 ${out(target.near)} ~ \u221E \xB7 \uAC70\uB9AC\uB9C1 ${out(i.cameraDistance)}` : `\uBAA9\uD45C ${out(target.near)} ~ ${out(target.far)}`);
       if (depth) {
         band(depth.near, depth.far, 152, 9, "pfm-zone-depth");
         if (!includesTarget(depth, target)) {
@@ -1110,8 +1128,14 @@ function diagram(host, i, max, depth, light, safe) {
       el("line", { x1: anchor, x2: anchor, y1: centreY, y2: 164, class: "pfm-zone-handle-stem" }, void 0, control);
       el("circle", { cx: anchor, cy: centreY, r: 7, class: "pfm-zone-handle-dot" }, void 0, control);
     };
-    handle("zoneNear", 148, "\uBAA9\uD45C \uADFC\uAC70\uB9AC");
-    if (!i.zoneInfinity) handle("zoneFar", 208, "\uBAA9\uD45C \uC6D0\uAC70\uB9AC");
+    if (i.zoneGoal === "infinity") {
+      const ring = x(i.cameraDistance);
+      el("line", { x1: ring, x2: ring, y1: 44, y2: 180, class: "pfm-focus-line" });
+      el("circle", { cx: ring, cy: 177, r: 5, class: "pfm-focus-dot" });
+    } else {
+      handle("zoneNear", 148, "\uBAA9\uD45C \uADFC\uAC70\uB9AC");
+      if (!i.zoneInfinity) handle("zoneFar", 208, "\uBAA9\uD45C \uC6D0\uAC70\uB9AC");
+    }
   } else {
     const subject = inf ? SCENE.end : x(Number.isFinite(i.cameraDistance) && i.cameraDistance > 0 ? i.cameraDistance : 0);
     el("line", { x1: subject, x2: subject, y1: 24, y2: 180, class: "pfm-focus-glow" });
@@ -1155,7 +1179,7 @@ function diagram(host, i, max, depth, light, safe) {
   const legend = document.createElement("figcaption");
   legend.className = "pfm-scene-legend";
   const items = [["pfm-key-camera", "\uCE74\uBA54\uB77C \uD654\uAC01"], ["pfm-key-dof", "\uC120\uBA85 \uAD6C\uAC04"]];
-  if (zone) items.push(["pfm-key-target", "\uBAA9\uD45C \uAD6C\uAC04"], ["pfm-key-miss", "\uC2EC\uB3C4 \uBC16 \uBAA9\uD45C"]);
+  if (zone && i.zoneGoal !== "infinity") items.push(["pfm-key-target", "\uBAA9\uD45C \uAD6C\uAC04"], ["pfm-key-miss", "\uC2EC\uB3C4 \uBC16 \uBAA9\uD45C"]);
   if (showFlash && i.linked) items.push(["pfm-key-flash", "\uD50C\uB798\uC2DC \uC870\uC0AC\uAC01"]);
   if (safe?.kind === "range" && safe.near <= max) items.push(["pfm-key-safe", "\uC548\uC804 \uCD2C\uC601 \uAD6C\uAC04"]);
   for (const [cls, text] of items) {
@@ -1167,7 +1191,7 @@ function diagram(host, i, max, depth, light, safe) {
   host.append(legend);
   const hint = document.createElement("p");
   hint.className = "pfm-scene-hint";
-  hint.textContent = zone ? "\uC88C\uC6B0\uB85C \uB04C\uC5B4 \uBAA9\uD45C \uC870\uC808 \xB7 \uAD6C\uAC04 \uAC00\uC6B4\uB370\uB294 \uD1B5\uC9F8\uB85C \uC774\uB3D9" : "\uD53C\uC0AC\uCCB4 \uB4DC\uB798\uADF8 \xB7 \uAC70\uB9AC \uC9C1\uC811 \uC785\uB825";
+  hint.textContent = zone ? i.zoneGoal === "infinity" ? "\uC870\uB9AC\uAC1C\uB97C \uBC14\uAFB8\uBA74 \uAC70\uB9AC\uB9C1 \uC704\uCE58\uAC00 \uBC14\uB85C \uBC14\uB01D\uB2C8\uB2E4" : "\uC88C\uC6B0\uB85C \uB04C\uC5B4 \uBAA9\uD45C \uC870\uC808 \xB7 \uAD6C\uAC04 \uAC00\uC6B4\uB370\uB294 \uD1B5\uC9F8\uB85C \uC774\uB3D9" : "\uD53C\uC0AC\uCCB4 \uB4DC\uB798\uADF8 \xB7 \uAC70\uB9AC \uC9C1\uC811 \uC785\uB825";
   host.append(hint);
   if (showFlash) {
     const p = document.createElement("p");
@@ -1325,6 +1349,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.sceneMax = 5;
     this.powerButtons = {};
     this.aborters = [];
+    this.ringTableOpen = false;
     this.gnDisplayUnit = "m";
     this.detailState = /* @__PURE__ */ new Map();
     this.calibrationMessage = "";
@@ -1652,7 +1677,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       if (x === null) return;
       const i = this.plugin.state.inputs;
       if (!control) {
-        if (!i.zoneOn || !this.picture.querySelector("svg")?.contains(event.target)) return;
+        if (!i.zoneOn || i.zoneGoal !== "range" || !this.picture.querySelector("svg")?.contains(event.target)) return;
         this.dragMax = this.sceneMax;
         const d = fingerDistance(x), finiteFar = !i.zoneInfinity && Number.isFinite(i.zoneFar) && Number.isFinite(i.zoneNear);
         const width = finiteFar ? i.zoneFar - i.zoneNear : 0;
@@ -1736,16 +1761,17 @@ var PhotoView = class extends import_obsidian.ItemView {
     range.style.setProperty("--pfm-range-progress", `${percent}%`);
     range.style.setProperty("--pfm-range-fraction", String(percent / 100));
   }
+  apertureStops() {
+    const lens = selectedPreset(this.plugin.state, "lenses");
+    if (lens) return lens.apertureSteps;
+    const { apertureSteps, apertureMin, apertureMax } = this.plugin.state.inputs;
+    const stops = [...new Set(apertureSteps.split(",").map(Number))].filter((n) => n > 0 && Number.isFinite(n) && n >= apertureMin && n <= apertureMax).sort((a, b) => a - b);
+    return stops.length ? stops : FULL_STOP_APERTURES.split(",").map(Number);
+  }
   number(parent, label, key, options) {
     const isFocus = key === "cameraDistance";
     const hasFocusMinimum = isFocus || key === "zoneNear";
-    const apertureStops = () => {
-      const lens = selectedPreset(this.plugin.state, "lenses");
-      if (lens) return lens.apertureSteps;
-      const { apertureSteps, apertureMin, apertureMax } = this.plugin.state.inputs;
-      const stops2 = [...new Set(apertureSteps.split(",").map(Number))].filter((n) => n > 0 && Number.isFinite(n) && n >= apertureMin && n <= apertureMax).sort((a, b) => a - b);
-      return stops2.length ? stops2 : FULL_STOP_APERTURES.split(",").map(Number);
-    };
+    const apertureStops = () => this.apertureStops();
     const wrap = node(parent, "div", void 0, "pfm-field");
     wrap.dataset.field = key;
     const infinite = () => isFocus && this.plugin.state.inputs.focusInfinity;
@@ -2475,7 +2501,8 @@ var PhotoView = class extends import_obsidian.ItemView {
     const i = this.plugin.state.inputs;
     const quick = node(this.root, "section", void 0, "pfm-quick");
     node(quick, "h2", "\uBE60\uB978 \uC870\uC808");
-    if (i.zoneOn) {
+    if (i.zoneOn && i.zoneGoal === "infinity") {
+    } else if (i.zoneOn) {
       this.number(quick, "\uBAA9\uD45C \uC6D0\uAC70\uB9AC (m)", "zoneFar");
       const wrap = node(quick, "label", void 0, "pfm-check");
       const infinity = node(wrap, "input");
@@ -2574,6 +2601,25 @@ var PhotoView = class extends import_obsidian.ItemView {
     const i = this.plugin.state.inputs;
     const card = node(this.results, "div", void 0, "pfm-zone-result");
     node(card, "h2", "\uC874 \uD3EC\uCEE4\uC2F1");
+    const goals = node(card, "div", void 0, "pfm-zone-goals");
+    goals.setAttribute("role", "group");
+    goals.setAttribute("aria-label", "\uC874 \uD3EC\uCEE4\uC2F1 \uBAA9\uD45C");
+    for (const [goal, label] of [["infinity", "\u221E\uAE4C\uC9C0 \uC120\uBA85"], ["range", "\uAD6C\uAC04 \uC9C0\uC815"]]) {
+      const button = this.button(goals, label, () => {
+        if (i.zoneGoal === goal) return;
+        this.plugin.update("zoneGoal", goal);
+        this.render();
+        this.root.querySelector(`[data-zone-goal=${goal}]`)?.focus({ preventScroll: true });
+        void this.plugin.persist().catch((e) => this.plugin.reportSaveError(e));
+        this.plugin.refresh(this);
+      });
+      button.dataset.zoneGoal = goal;
+      button.setAttribute("aria-pressed", String(i.zoneGoal === goal));
+    }
+    if (i.zoneGoal === "infinity") {
+      this.paintInfinity(card);
+      return;
+    }
     try {
       if (i.zoneNear < this.minimumFocus()) throw Error(`\uBAA9\uD45C \uADFC\uAC70\uB9AC\uB294 ${metres(this.minimumFocus())} \uC774\uC0C1\uC73C\uB85C \uC785\uB825\uD558\uC138\uC694.`);
       const zone = solveZone(i);
@@ -2598,6 +2644,56 @@ var PhotoView = class extends import_obsidian.ItemView {
         this.changed();
         this.results.querySelector("[data-zone-apply]")?.focus({ preventScroll: true });
       };
+    } catch (e) {
+      node(card, "p", e instanceof Error ? e.message : String(e), "pfm-error");
+    }
+  }
+  /** ∞까지 선명하게: 지금 조리개에서 거리링을 둘 위치(과초점)와 조리개별 표. */
+  paintInfinity(card) {
+    const i = this.plugin.state.inputs;
+    try {
+      const r = infinityFocus(i);
+      const ringText = (d) => {
+        const p = ringPosition(d);
+        return p.on !== void 0 ? `\uB9C1 \uB208\uAE08 ${fmt(p.on)}` : `\uB9C1 \uB208\uAE08 ${fmt(p.between[0])}\uACFC ${p.between[1] === Infinity ? "\u221E" : fmt(p.between[1])} \uC0AC\uC774`;
+      };
+      node(card, "p", "\uAC70\uB9AC\uB9C1\uC744 \uC5EC\uAE30\uC5D0", "pfm-zone-eyebrow");
+      node(card, "strong", metres(r.ring), "pfm-zone-solution");
+      node(card, "p", `${ringText(r.ring)} \xB7 f/${fmt(r.aperture)}\uC774\uBA74 ${metres(r.near)}\uBD80\uD130 \u221E\uAE4C\uC9C0 \uC120\uBA85`);
+      node(card, "p", `\uB80C\uC988 \uC2EC\uB3C4 \uB208\uAE08\uC744 \uC4F4\uB2E4\uBA74: \u221E \uD45C\uC2DC\uB97C f/${fmt(r.aperture)} \uB208\uAE08\uC120\uC5D0 \uB9DE\uCD94\uBA74 \uAC19\uC2B5\uB2C8\uB2E4.`, "pfm-zone-tip");
+      const set = !i.focusInfinity && Math.abs(i.cameraDistance - r.ring) <= r.ring * 5e-3;
+      const apply = node(card, "button", set ? "\uCD08\uC810\uC774 \uC5EC\uAE30\uC5D0 \uB9DE\uCDB0\uC838 \uC788\uC74C" : "\uCD08\uC810\uC744 \uC5EC\uAE30\uC5D0 \uB9DE\uCD94\uAE30");
+      apply.type = "button";
+      apply.dataset.zoneApply = "true";
+      apply.disabled = set;
+      apply.onclick = () => {
+        this.plugin.update("focusInfinity", false);
+        this.plugin.update("cameraDistance", r.ring);
+        this.syncNumeric("cameraDistance");
+        this.changed();
+      };
+      const table = node(card, "details", void 0, "pfm-ring-table");
+      table.open = this.ringTableOpen;
+      this.listen(table, "toggle", () => {
+        this.ringTableOpen = table.open;
+      });
+      node(table, "summary", "\uC870\uB9AC\uAC1C\uBCC4 \uAC70\uB9AC\uB9C1 \uC704\uCE58");
+      for (const aperture of this.apertureStops()) {
+        const row = infinityFocus(i, aperture);
+        const button = node(table, "button");
+        button.type = "button";
+        button.className = "pfm-ring-row";
+        node(button, "span", `f/${fmt(aperture)}`);
+        node(button, "strong", metres(row.ring));
+        node(button, "span", `${metres(row.near)}~\u221E`);
+        if (aperture === i.aperture) button.setAttribute("aria-current", "true");
+        button.setAttribute("aria-label", `f/${fmt(aperture)}: \uAC70\uB9AC\uB9C1 ${metres(row.ring)}, ${metres(row.near)}\uBD80\uD130 \uBB34\uD55C\uB300\uAE4C\uC9C0 \uC120\uBA85. \uB204\uB974\uBA74 \uC774 \uC870\uB9AC\uAC1C\uB85C`);
+        button.onclick = () => {
+          this.plugin.update("aperture", aperture);
+          this.syncNumeric("aperture");
+          this.changed();
+        };
+      }
     } catch (e) {
       node(card, "p", e instanceof Error ? e.message : String(e), "pfm-error");
     }
@@ -2804,8 +2900,17 @@ var PhotoView = class extends import_obsidian.ItemView {
     const safe = i.flashOn && i.linked ? safeShootingRange(true, focusLimits, flashResult) : void 0;
     if (safe) node(this.results, "p", safeRangeText(safe), "pfm-safe-range").dataset.state = safe.kind;
     for (const pair of this.numeric.values()) pair.updateControls(focusLimits);
-    this.sceneMax = this.dragMax ?? sceneUpperLimit(i, focusLimits?.far);
-    diagram(this.picture, i, this.sceneMax, focusLimits, flashResult, safe);
+    let shown = i, shownLimits = focusLimits;
+    if (i.zoneOn && i.zoneGoal === "infinity") {
+      try {
+        const r = infinityFocus(i);
+        shown = { ...i, zoneNear: r.near, zoneInfinity: true, cameraDistance: r.ring, focusInfinity: false };
+        shownLimits = optics(shown);
+      } catch {
+      }
+    }
+    this.sceneMax = this.dragMax ?? sceneUpperLimit(shown, shownLimits?.far);
+    diagram(this.picture, shown, this.sceneMax, shownLimits, flashResult, safe);
   }
   syncFlashControls() {
     const i = this.plugin.state.inputs;
