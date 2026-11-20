@@ -1435,18 +1435,6 @@ var PhotoView = class extends import_obsidian.ItemView {
   presetManager() {
     const parent = this.details("\uCE74\uBA54\uB77C\xB7\uB80C\uC988\xB7\uD544\uB984 \uD504\uB9AC\uC14B", "presets"), state = this.plugin.state;
     const i = state.inputs;
-    const night = this.button(parent, "\uC57C\uAC04 \uBAA8\uB4DC", () => {
-      this.plugin.update("nightMode", !i.nightMode);
-      syncNight();
-      void this.plugin.persist().catch((e) => this.plugin.reportSaveError(e));
-      this.plugin.refresh(this);
-    });
-    night.className = "pfm-night-toggle";
-    const syncNight = () => {
-      this.root.dataset.night = String(i.nightMode);
-      night.setAttribute("aria-pressed", String(i.nightMode));
-    };
-    syncNight();
     for (const kind of presetKinds) {
       const section = node(parent, "details");
       section.dataset.presetManager = kind;
@@ -2457,6 +2445,19 @@ var PhotoView = class extends import_obsidian.ItemView {
       button.dataset.mode = key;
       button.setAttribute("aria-pressed", String(i[key]));
     }
+    const night = this.button(modes, "\uC57C\uAC04", () => {
+      this.plugin.update("nightMode", !i.nightMode);
+      syncNight();
+      void this.plugin.persist().catch((e) => this.plugin.reportSaveError(e));
+      this.plugin.refresh(this);
+    });
+    night.className = "pfm-night-toggle";
+    night.setAttribute("aria-label", "\uC801\uC0C9 \uC57C\uAC04 \uBAA8\uB4DC");
+    const syncNight = () => {
+      this.root.dataset.night = String(i.nightMode);
+      night.setAttribute("aria-pressed", String(i.nightMode));
+    };
+    syncNight();
     this.results = node(this.root, "section", void 0, "pfm-results");
     this.results.setAttribute("aria-live", "polite");
     this.picture = node(this.root, "figure", void 0, "pfm-diagram");
@@ -2677,7 +2678,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     const unit = node(p, "select");
     unit.setAttribute("aria-label", "\uD504\uB9AC\uC14B GN \uB2E8\uC704");
     for (const u of ["m", "ft"]) {
-      const o = node(unit, "option", u);
+      const o = node(unit, "option", `GN \uB2E8\uC704 ${u}`);
       o.value = u;
     }
     unit.value = draft.unit;
@@ -2845,6 +2846,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(stat, "strong", metres(value));
     }
     const bar = node(card, "div", void 0, "pfm-dof-bar");
+    node(bar, "p", "\uACFC\uCD08\uC810\uC5D0 \uB9DE\uCD94\uBA74 \uADF8 \uC808\uBC18 \uAC70\uB9AC\uBD80\uD130 \u221E\uAE4C\uC9C0 \uC120\uBA85", "pfm-dof-hint");
     const focus = node(bar, "button", "\uACFC\uCD08\uC810 \uB9DE\uCD94\uAE30");
     focus.type = "button";
     focus.dataset.pfmHyperfocal = "true";

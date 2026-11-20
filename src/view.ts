@@ -155,16 +155,6 @@ export class PhotoView extends ItemView {
   private presetManager():void {
     const parent=this.details('카메라·렌즈·필름 프리셋','presets'),state=this.plugin.state;
     const i=state.inputs;
-    const night=this.button(parent,'야간 모드',()=>{
-      this.plugin.update('nightMode',!i.nightMode);syncNight();
-      void this.plugin.persist().catch(e=>this.plugin.reportSaveError(e));this.plugin.refresh(this);
-    });
-    night.className='pfm-night-toggle';
-    const syncNight=()=>{
-      this.root.dataset.night=String(i.nightMode);
-      night.setAttribute('aria-pressed',String(i.nightMode));
-    };
-    syncNight();
     for(const kind of presetKinds){
       const section=node(parent,'details');
       section.dataset.presetManager=kind;
@@ -922,6 +912,17 @@ export class PhotoView extends ItemView {
       });
       button.dataset.mode=key;button.setAttribute('aria-pressed',String(i[key]));
     }
+    // 야간 모드는 촬영 중 자주 켜고 끄므로 모드 토글 줄 끝에 작게 둔다.
+    const night=this.button(modes,'야간',()=>{
+      this.plugin.update('nightMode',!i.nightMode);syncNight();
+      void this.plugin.persist().catch(e=>this.plugin.reportSaveError(e));this.plugin.refresh(this);
+    });
+    night.className='pfm-night-toggle';night.setAttribute('aria-label','적색 야간 모드');
+    const syncNight=()=>{
+      this.root.dataset.night=String(i.nightMode);
+      night.setAttribute('aria-pressed',String(i.nightMode));
+    };
+    syncNight();
     this.results=node(this.root,'section',undefined,'pfm-results');this.results.setAttribute('aria-live','polite');
     this.picture=node(this.root,'figure',undefined,'pfm-diagram');this.sceneControls();this.flushOnEnd();
     this.quickControls();
@@ -1051,7 +1052,7 @@ export class PhotoView extends ItemView {
     node(p,'p',draft.id?'기존 장비 편집 중 · 저장 시 같은 ID 유지':'새 장비 작성 · 작성 중 내용 자동 보존');
     const saveDraft=()=>{state.draft=draft;void this.plugin.persist().catch(e=>this.plugin.reportSaveError(e));};
     for(const [key,label]of [['name',draft.id?'장비 이름':'새 장비 이름'],['conditions','측정 조건 (ISO100·최대 출력·직접광 등)'],['source','출처 URL·설명서 페이지 또는 실측 방법'],['minDenominator','프리셋 최소 출력 분모'],['steps','프리셋 지원 출력 분모']] as const){const t=this.text(p,label,draft[key]);this.listen(t,'input',()=>{draft[key]=t.value;saveDraft();});}
-    const unit=node(p,'select');unit.setAttribute('aria-label','프리셋 GN 단위');for(const u of ['m','ft']as const){const o=node(unit,'option',u);o.value=u;}unit.value=draft.unit;this.listen(unit,'change',()=>{draft.unit=unit.value==='ft'?'ft':'m';saveDraft();});
+    const unit=node(p,'select');unit.setAttribute('aria-label','프리셋 GN 단위');for(const u of ['m','ft']as const){const o=node(unit,'option',`GN 단위 ${u}`);o.value=u;}unit.value=draft.unit;this.listen(unit,'change',()=>{draft.unit=unit.value==='ft'?'ft':'m';saveDraft();});
     const l=node(p,'label',undefined,'pfm-field');node(l,'span','줌mm,GN · 한 줄에 한 측정값');const table=node(l,'textarea');table.placeholder='줌mm,GN';table.rows=5;table.value=draft.table;this.listen(table,'input',()=>{draft.table=table.value;saveDraft();});
     this.button(p,draft.id?'장비 변경 저장':'새 장비 프리셋 저장',()=>{try{
       const e:Equipment={id:draft.id||equipmentId(state.equipment),name:draft.name.trim(),conditions:draft.conditions.trim(),source:draft.source.trim(),table:parseTable(draft.table,draft.unit),minDenominator:parseNumber(draft.minDenominator),steps:draft.steps};
@@ -1132,6 +1133,8 @@ export class PhotoView extends ItemView {
       stat.dataset.stat=key;node(stat,'span',label);node(stat,'strong',metres(value));
     }
     const bar=node(card,'div',undefined,'pfm-dof-bar');
+    // 과초점: 이 거리에 초점을 맞추면 그 절반 거리부터 무한대까지 선명하다.
+    node(bar,'p','과초점에 맞추면 그 절반 거리부터 ∞까지 선명','pfm-dof-hint');
     const focus=node(bar,'button','과초점 맞추기');focus.type='button';focus.dataset.pfmHyperfocal='true';
     focus.onclick=()=>{
       this.focusHyperfocal();

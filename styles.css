@@ -405,6 +405,26 @@
 .pfm-root .pfm-zone-handle-dot{fill:var(--pfm-surface);stroke:var(--pfm-signal);}
 .pfm-root .pfm-scene-legend{border-top-color:var(--pfm-line);}
 
+/* 다듬기: 모드 줄의 야간 버튼, 접은 설정의 세로 배치, 과초점 설명 */
+.pfm-root .pfm-mode-toggles{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 64px;}
+.pfm-root .pfm-mode-toggles .pfm-night-toggle{min-height:52px;margin:0;padding:6px;border-radius:26px;font-size:var(--pfm-label);font-weight:800;}
+.pfm-root .pfm-mode-toggles .pfm-night-toggle[aria-pressed=true]::before{content:none;}
+.pfm-root>details label.pfm-field{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin:0 0 12px;}
+.pfm-root>details label.pfm-field>:is(select,input,textarea){width:100%;}
+.pfm-root>details :is(.pfm-settings,.pfm-preset-manager,.pfm-preset-form,.pfm-fill,.pfm-calibration,.pfm-reciprocity) button:not(.pfm-number-entry>button):not(.pfm-value-picker){width:100%;margin:0 0 12px;}
+.pfm-root>details :is(.pfm-settings,.pfm-preset-manager)>select{margin:0 0 12px;}
+.pfm-root>details details{border-top-color:var(--pfm-line);}
+.pfm-root>details details>summary{font-size:var(--pfm-label);}
+.pfm-root .pfm-dof-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.pfm-root .pfm-dof-hint{flex:1 1 auto;margin:0;font-size:var(--pfm-small);color:var(--pfm-muted);line-height:1.35;}
+.pfm-root .pfm-dof-bar button{flex:0 0 auto;}
+
+.pfm-root .pfm-gear-option{gap:12px;padding:0 12px;}
+.pfm-root .pfm-gear-option input[type=radio]{-webkit-appearance:none;appearance:none;flex:0 0 22px;width:22px;height:22px;min-height:0;border-radius:50%;background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-gear-option input[type=radio]:checked{background:radial-gradient(circle,var(--pfm-signal) 0 5px,transparent 5.5px),var(--pfm-surface-2);}
+.pfm-root .pfm-gear-option input[type=radio]::before,.pfm-root .pfm-gear-option input[type=radio]::after{content:none!important;display:none!important;}
+.pfm-root .pfm-gear-option input[type=radio]:focus-visible{outline:2px solid var(--pfm-signal);outline-offset:2px;}
+
 /* 테마와 카드의 반전색을 야간 팔레트로 덮어쓴다. */
 .pfm-root[data-night=true]{
  --pfm-bg:#000;--pfm-surface:#090100;--pfm-surface-2:#220603;
