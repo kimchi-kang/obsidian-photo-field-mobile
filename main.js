@@ -1167,7 +1167,7 @@ function diagram(host, i, max, depth, light, safe) {
   host.append(legend);
   const hint = document.createElement("p");
   hint.className = "pfm-scene-hint";
-  hint.textContent = zone ? "\uC190\uC7A1\uC774\uB97C \uC6C0\uC9C1\uC5EC \uBAA9\uD45C \uC870\uC808" : "\uD53C\uC0AC\uCCB4 \uB4DC\uB798\uADF8 \xB7 \uAC70\uB9AC \uC9C1\uC811 \uC785\uB825";
+  hint.textContent = zone ? "\uC88C\uC6B0\uB85C \uB04C\uC5B4 \uBAA9\uD45C \uC870\uC808 \xB7 \uAD6C\uAC04 \uAC00\uC6B4\uB370\uB294 \uD1B5\uC9F8\uB85C \uC774\uB3D9" : "\uD53C\uC0AC\uCCB4 \uB4DC\uB798\uADF8 \xB7 \uAC70\uB9AC \uC9C1\uC811 \uC785\uB825";
   host.append(hint);
   if (showFlash) {
     const p = document.createElement("p");
@@ -1641,11 +1641,38 @@ var PhotoView = class extends import_obsidian.ItemView {
       this.numeric.get(key)?.input.setAttribute("aria-invalid", "false");
       this.changed();
     };
+    const fingerDistance = (x) => (x - SCENE.start) / (SCENE.end - SCENE.start) * (this.dragMax ?? this.sceneMax);
+    const moveBand = (x, band) => {
+      const minimum = this.minimumFocus(), maximum = this.dragMax ?? this.sceneMax;
+      const near = Math.max(minimum, Math.min(maximum - band.width, fingerDistance(x) - band.offset));
+      if (!Number.isFinite(near) || near < minimum) return;
+      this.plugin.update("zoneNear", near);
+      this.plugin.update("zoneFar", near + band.width);
+      this.syncNumeric("zoneNear");
+      this.syncNumeric("zoneFar");
+      this.changed();
+    };
+    const applyFree = (x) => {
+      const i = this.plugin.state.inputs, d = fingerDistance(x);
+      const finiteFar = !i.zoneInfinity && Number.isFinite(i.zoneFar);
+      const key = !finiteFar || !Number.isFinite(i.zoneNear) || Math.abs(d - i.zoneNear) <= Math.abs(d - i.zoneFar) ? "zoneNear" : "zoneFar";
+      update(key, d);
+    };
     this.listen(this.picture, "pointerdown", (event) => {
       if (!(event instanceof PointerEvent) || dragging) return;
       const control = target(event), x = coordinate(event);
-      if (!control || x === null) return;
+      if (x === null) return;
       const i = this.plugin.state.inputs;
+      if (!control) {
+        if (!i.zoneOn || !this.picture.querySelector("svg")?.contains(event.target)) return;
+        this.dragMax = this.sceneMax;
+        const d = fingerDistance(x), finiteFar = !i.zoneInfinity && Number.isFinite(i.zoneFar) && Number.isFinite(i.zoneNear);
+        const width = finiteFar ? i.zoneFar - i.zoneNear : 0;
+        if (finiteFar && d > i.zoneNear + width * 0.2 && d < i.zoneFar - width * 0.2) dragging = { pointer: event.pointerId, key: "zoneNear", offset: 0, band: { offset: d - i.zoneNear, width } };
+        else dragging = { pointer: event.pointerId, key: "zoneNear", offset: 0, free: { startX: x, moved: false } };
+        this.picture.setPointerCapture(event.pointerId);
+        return;
+      }
       const current = i[control.key];
       const fraction = control.key === "cameraDistance" && i.focusInfinity ? 1 : Number.isFinite(current) ? Math.max(0, Math.min(1, current / this.sceneMax)) : 0;
       const anchor = SCENE.start + (SCENE.end - SCENE.start) * fraction;
@@ -1659,8 +1686,23 @@ var PhotoView = class extends import_obsidian.ItemView {
       const x = coordinate(event);
       if (x === null) return;
       event.preventDefault();
+      if (dragging.band) {
+        moveBand(x, dragging.band);
+        return;
+      }
+      if (dragging.free) {
+        if (!dragging.free.moved && Math.abs(x - dragging.free.startX) < 4) return;
+        dragging.free.moved = true;
+        applyFree(x);
+        return;
+      }
       const { minimum, maximum } = limits(dragging.key);
       update(dragging.key, Math.min(maximum, sceneDistance(x - dragging.offset, this.sceneMax, this.plugin.state.inputs.focal, minimum)));
+    });
+    this.listen(this.picture, "pointerup", (event) => {
+      if (!(event instanceof PointerEvent) || event.pointerId !== dragging?.pointer || !dragging.free || dragging.free.moved) return;
+      const x = coordinate(event);
+      if (x !== null) applyFree(x);
     });
     for (const kind of ["pointerup", "pointercancel", "lostpointercapture"]) this.listen(this.picture, kind, (event) => {
       if (!(event instanceof PointerEvent) || event.pointerId !== dragging?.pointer) return;
@@ -2433,7 +2475,6 @@ var PhotoView = class extends import_obsidian.ItemView {
     const quick = node(this.root, "section", void 0, "pfm-quick");
     node(quick, "h2", "\uBE60\uB978 \uC870\uC808");
     if (i.zoneOn) {
-      this.number(quick, "\uBAA9\uD45C \uADFC\uAC70\uB9AC (m)", "zoneNear");
       this.number(quick, "\uBAA9\uD45C \uC6D0\uAC70\uB9AC (m)", "zoneFar");
       const wrap = node(quick, "label", void 0, "pfm-check");
       const infinity = node(wrap, "input");

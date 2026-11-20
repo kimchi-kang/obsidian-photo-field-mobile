@@ -280,7 +280,9 @@ export class PhotoView extends ItemView {
   }
   private sceneControls():void {
     type DragKey='cameraDistance'|'zoneNear'|'zoneFar';
-    let dragging:{pointer:number;key:DragKey;offset:number}|undefined;
+    // band: 목표 구간 전체를 폭을 유지한 채 옮김. free: 그림의 빈 곳을 짚어 가까운 경계를 손가락 위치로 옮김.
+    type Drag={pointer:number;key:DragKey;offset:number;band?:{offset:number;width:number};free?:{startX:number;moved:boolean}};
+    let dragging:Drag|undefined;
     const coordinate=(e:PointerEvent)=>{
       const rect=this.picture.querySelector('svg')?.getBoundingClientRect();
       return rect&&rect.width>0?(e.clientX-rect.left)/rect.width*SCENE.width:null;
@@ -304,11 +306,38 @@ export class PhotoView extends ItemView {
       this.plugin.update(key,Math.max(minimum,Math.min(maximum,distance)));
       this.syncNumeric(key);this.numeric.get(key)?.input.setAttribute('aria-invalid','false');this.changed();
     };
+    const fingerDistance=(x:number)=>(x-SCENE.start)/(SCENE.end-SCENE.start)*(this.dragMax??this.sceneMax);
+    const moveBand=(x:number,band:{offset:number;width:number})=>{
+      const minimum=this.minimumFocus(),maximum=this.dragMax??this.sceneMax;
+      const near=Math.max(minimum,Math.min(maximum-band.width,fingerDistance(x)-band.offset));
+      if(!Number.isFinite(near)||near<minimum)return;
+      this.plugin.update('zoneNear',near);this.plugin.update('zoneFar',near+band.width);
+      this.syncNumeric('zoneNear');this.syncNumeric('zoneFar');this.changed();
+    };
+    const applyFree=(x:number)=>{
+      const i=this.plugin.state.inputs,d=fingerDistance(x);
+      const finiteFar=!i.zoneInfinity&&Number.isFinite(i.zoneFar);
+      const key:DragKey=!finiteFar||!Number.isFinite(i.zoneNear)||Math.abs(d-i.zoneNear)<=Math.abs(d-i.zoneFar)?'zoneNear':'zoneFar';
+      update(key,d);
+    };
     this.listen(this.picture,'pointerdown',event=>{
       if(!(event instanceof PointerEvent)||dragging)return;
       const control=target(event),x=coordinate(event);
-      if(!control||x===null)return;
+      if(x===null)return;
       const i=this.plugin.state.inputs;
+      if(!control){
+        // 존 포커싱에서는 손잡이를 정확히 잡지 않아도 그림 어디서든 목표 구간을 움직인다.
+        if(!i.zoneOn||!this.picture.querySelector('svg')?.contains(event.target as Node))return;
+        this.dragMax=this.sceneMax;
+        const d=fingerDistance(x),finiteFar=!i.zoneInfinity&&Number.isFinite(i.zoneFar)&&Number.isFinite(i.zoneNear);
+        const width=finiteFar?i.zoneFar-i.zoneNear:0;
+        // 구간 안쪽 가운데를 짚으면 구간 전체를, 그 밖이면 가까운 경계를 옮긴다.
+        if(finiteFar&&d>i.zoneNear+width*.2&&d<i.zoneFar-width*.2)dragging={pointer:event.pointerId,key:'zoneNear',offset:0,band:{offset:d-i.zoneNear,width}};
+        else dragging={pointer:event.pointerId,key:'zoneNear',offset:0,free:{startX:x,moved:false}};
+        // 세로 스크롤은 브라우저에 맡기고(pan-y), 가로로 움직일 때만 구간을 옮긴다.
+        this.picture.setPointerCapture(event.pointerId);
+        return;
+      }
       const current=i[control.key];
       const fraction=control.key==='cameraDistance'&&i.focusInfinity?1:Number.isFinite(current)?Math.max(0,Math.min(1,current/this.sceneMax)):0;
       const anchor=SCENE.start+(SCENE.end-SCENE.start)*fraction;
@@ -321,8 +350,18 @@ export class PhotoView extends ItemView {
       const x=coordinate(event);
       if(x===null)return;
       event.preventDefault();
+      if(dragging.band){moveBand(x,dragging.band);return;}
+      if(dragging.free){
+        if(!dragging.free.moved&&Math.abs(x-dragging.free.startX)<4)return;
+        dragging.free.moved=true;applyFree(x);return;
+      }
       const {minimum,maximum}=limits(dragging.key);
       update(dragging.key,Math.min(maximum,sceneDistance(x-dragging.offset,this.sceneMax,this.plugin.state.inputs.focal,minimum)));
+    });
+    // 움직이지 않고 짧게 짚기만 해도 가까운 경계를 그 자리로 옮긴다.
+    this.listen(this.picture,'pointerup',event=>{
+      if(!(event instanceof PointerEvent)||event.pointerId!==dragging?.pointer||!dragging.free||dragging.free.moved)return;
+      const x=coordinate(event);if(x!==null)applyFree(x);
     });
     for(const kind of ['pointerup','pointercancel','lostpointercapture'])this.listen(this.picture,kind,event=>{
       if(!(event instanceof PointerEvent)||event.pointerId!==dragging?.pointer)return;
@@ -898,7 +937,7 @@ export class PhotoView extends ItemView {
     const quick=node(this.root,'section',undefined,'pfm-quick');
     node(quick,'h2','빠른 조절');
     if(i.zoneOn){
-      this.number(quick,'목표 근거리 (m)','zoneNear');
+      // 목표 근거리는 장면 그림에서 끌어 정하고, 입력칸은 원거리만 둔다.
       this.number(quick,'목표 원거리 (m)','zoneFar');
       const wrap=node(quick,'label',undefined,'pfm-check');
       const infinity=node(wrap,'input');infinity.type='checkbox';infinity.checked=i.zoneInfinity;infinity.dataset.key='zoneInfinity';

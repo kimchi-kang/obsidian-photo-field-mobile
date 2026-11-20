@@ -146,7 +146,7 @@ export function diagram(
   for(const [cls,text] of items){const label=document.createElement('span');label.className=cls;label.textContent=text;legend.append(label);}
   host.append(legend);
   const hint=document.createElement('p');hint.className='pfm-scene-hint';
-  hint.textContent=zone?'손잡이를 움직여 목표 조절':'피사체 드래그 · 거리 직접 입력';host.append(hint);
+  hint.textContent=zone?'좌우로 끌어 목표 조절 · 구간 가운데는 통째로 이동':'피사체 드래그 · 거리 직접 입력';host.append(hint);
   if(showFlash){
     const p=document.createElement('p');p.className='pfm-scene-note';
     p.textContent=i.linked?'플래시 띠: 점선 과다 · 빗금 허용 · 파선 부족':'오프카메라 플래시 거리는 카메라와 별도 축으로 표시합니다.';
