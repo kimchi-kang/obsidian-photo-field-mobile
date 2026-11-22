@@ -531,3 +531,29 @@
 .pfm-root .pfm-bulb-flash{
  position:fixed;inset:0;z-index:10;pointer-events:none;background:var(--pfm-ink);opacity:0;
 }
+
+/* Obsidian 화면 머리글(사이드바·⋯ 버튼, 제목)과 그 위 상태바 영역을 플러그인 바탕색에 맞춘다. 야간 모드면 검정·빨강. */
+.workspace>.mod-root:has(.workspace-leaf.mod-active>.workspace-leaf-content>.pfm-container),
+.workspace-leaf:has(>.workspace-leaf-content>.pfm-container),
+.workspace-leaf-content:has(>.pfm-container){
+ --pfm-page:#2a2d34;--pfm-page-ink:#eceef3;--pfm-page-hi:#363a43;--pfm-page-lo:#1b1d22;
+}
+.workspace>.mod-root:has(.workspace-leaf.mod-active>.workspace-leaf-content>.pfm-container .pfm-root[data-night=true]),
+.workspace-leaf:has(>.workspace-leaf-content>.pfm-container .pfm-root[data-night=true]),
+.workspace-leaf-content:has(>.pfm-container .pfm-root[data-night=true]){
+ --pfm-page:#000;--pfm-page-ink:#a52c20;--pfm-page-hi:#1a0503;--pfm-page-lo:#000;
+}
+.workspace>.mod-root:has(.workspace-leaf.mod-active>.workspace-leaf-content>.pfm-container){--system-status-background:var(--pfm-page);background-color:var(--pfm-page);}
+.workspace-leaf:has(>.workspace-leaf-content>.pfm-container),
+.workspace-leaf-content:has(>.pfm-container),
+.workspace-leaf-content>.view-content.pfm-container{background-color:var(--pfm-page);}
+.workspace-leaf-content:has(>.pfm-container)>.view-header{
+ --file-header-background:var(--pfm-page);--file-header-background-focused:var(--pfm-page);--file-header-border:0;
+ --raised-background:var(--pfm-page);--raised-shadow:4px 4px 8px var(--pfm-page-lo),-3px -3px 7px var(--pfm-page-hi);--raised-blur:none;--raised-mask-display:none;
+ color:var(--pfm-page-ink);
+}
+.workspace-leaf-content:has(>.pfm-container)>.view-header .view-header-title{color:var(--pfm-page-ink);}
+.workspace-leaf-content:has(>.pfm-container)>.view-header .view-action{
+ --icon-color:var(--pfm-page-ink);--icon-color-hover:var(--pfm-page-ink);--icon-color-active:var(--pfm-page-ink);--icon-color-focus:var(--pfm-page-ink);
+ color:var(--pfm-page-ink);
+}
