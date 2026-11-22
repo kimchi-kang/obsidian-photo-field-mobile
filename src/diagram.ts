@@ -106,8 +106,8 @@ export function diagram(
   for(let n=0;n<=4;n++){const d=max*n/4;el('line',{x1:x(d),x2:x(d),y1:axisY-3,y2:axisY+3,class:'pfm-distance-axis'});el('text',{x:x(d),y:axisY+16,'text-anchor':n===4?'end':'middle',class:'pfm-axis-label'},metres(d));}
   if(safe?.kind==='range'&&safe.near<=max){
     const start=x(safe.near),end=x(safe.far),attrs={class:'pfm-safe-band','aria-hidden':'true'};
-    if(end>start)el('rect',{...attrs,x:start,y:zone?232:170,width:end-start,height:12});
-    else el('line',{...attrs,x1:start,x2:start,y1:zone?232:170,y2:zone?244:182});
+    if(end>start)el('rect',{...attrs,x:start,y:170,width:end-start,height:12});
+    else el('line',{...attrs,x1:start,x2:start,y1:170,y2:182});
   }
   if(light){
     const f=light,y=axisY+36;

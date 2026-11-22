@@ -1,4 +1,5 @@
 import {Inputs} from './model';
+import {fmt} from './units';
 import {optics,positive,circleOfConfusion,filmFromLens,hyperfocalFilm} from './engine';
 
 export function equivalence(i:Inputs) {
@@ -77,6 +78,11 @@ export function infinityFocus(i:Inputs,aperture=i.aperture) {
   return {aperture,ring,near};
 }
 /** 거리 값이 거리링 눈금 어디쯤인지: 눈금 위(3% 이내)거나 두 눈금 사이. */
+/** 거리링 위치를 "링 눈금 3" 또는 "링 눈금 3과 5 사이"로 적는다. */
+export function ringLabel(distance:number,marks=RING_MARKS):string {
+  const p=ringPosition(distance,marks),f=fmt;
+  return p.on!==undefined?`링 눈금 ${f(p.on)}`:`링 눈금 ${f(p.between![0])}과 ${p.between![1]===Infinity?'∞':f(p.between![1])} 사이`;
+}
 export function ringPosition(distance:number,marks=RING_MARKS):{on?:number;between?:[number,number]} {
   positive(distance);
   const on=marks.find(m=>Math.abs(distance-m)/m<=.03);

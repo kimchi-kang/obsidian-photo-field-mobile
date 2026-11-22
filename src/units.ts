@@ -27,3 +27,18 @@ export function distanceParts(v:number,digits=DISTANCE_DIGITS):{value:string;uni
 export function metres(v:number,digits=DISTANCE_DIGITS):string {
   const d=distanceParts(v,digits);return d.unit?`${d.value} ${d.unit}`:d.value;
 }
+
+/** 셔터 입력 "1/125"·"2"를 초로 바꾼다. */
+export function parseSeconds(text:string):number {
+  const parts=text.split('/').map(parseNumber);
+  if(parts.length===1)return parts[0];
+  return parts.length===2&&parts.every(value=>Number.isFinite(value)&&value>0)?parts[0]/parts[1]:NaN;
+}
+/** 초를 편집 칸에 넣을 글자로: 1초 미만의 1/n은 분수로, 나머지는 숫자로. parseSeconds로 다시 읽으면 같은 값이 된다. */
+export function formatSeconds(seconds:number):string {
+  if(Number.isFinite(seconds)&&seconds>0&&seconds<1){
+    const n=Math.round(1/seconds);
+    if(1/n===seconds||Math.abs(n*seconds-1)<1e-9)return `1/${n}`;
+  }
+  return String(seconds);
+}

@@ -42,7 +42,7 @@ test('저장 범위별 입력값 표는 구분선 바로 다음부터 연속된 
  const metadata=['저장 범위','플러그인 버전','GN 입력 모드','선택 장비','장비 출처'];
  const zoneLabels=['존 흐름','목표 근거리','목표 유한 원거리 (무한대 선택 시 미사용)','목표 원거리 무한대','렌즈 최대 개방 f값','렌즈 최소 개방 f값','사용 가능한 실제 조리개 단계'];
  for(const scope of ['all','combined','flash','dof','zone'] as const){
-  const lines=note({...filmDefaults,zoneInfinity:true},new Date(0),{version:'시험',scope}).split('\n');
+  const lines=note({...filmDefaults,zoneFlow:'target',zoneInfinity:true},new Date(0),{version:'시험',scope}).split('\n');
   const header=lines.indexOf('| 항목 | 값 |');
   assert.ok(header>=0);
   assert.equal(lines[header+1],'| --- | --- |');
@@ -53,7 +53,7 @@ test('저장 범위별 입력값 표는 구분선 바로 다음부터 연속된 
   for(const label of zoneLabels)assert.equal(rows.some(row=>row.startsWith(`| ${label} | `)),scope!=='dof'&&scope!=='flash',label);
   if(scope==='zone')assert.ok(rows.includes('| 목표 유한 원거리 (무한대 선택 시 미사용) | 미사용 |'));
  }
- assert.match(note({...filmDefaults,zoneInfinity:false,zoneFar:5},new Date(0),{version:'시험',scope:'zone'}),/\| 목표 유한 원거리 \(무한대 선택 시 미사용\) \| 5 m \|/);
+ assert.match(note({...filmDefaults,zoneFlow:'target',zoneInfinity:false,zoneFar:5},new Date(0),{version:'시험',scope:'zone'}),/\| 목표 유한 원거리 \(무한대 선택 시 미사용\) \| 5 m \|/);
 });
 test('카메라 거리 슬라이더의 하한은 화면 갱신마다 초점거리와 선택 렌즈를 반영한다',()=>{
  assert.match(view,/const updateFocusScale=\(\)=>\{[\s\S]*?const \{focal\}=this\.plugin\.state\.inputs;[\s\S]*?const floor=this\.minimumFocus\(\);[\s\S]*?axis=focusScale\(focal,floor\);/);

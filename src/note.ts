@@ -1,6 +1,7 @@
 import {Inputs,Equipment,sensors} from './model';
 import {optics,flash,coverage} from './engine';
-import {equivalence,solveZone} from './zone';
+import {equivalence,ringLabel,solveZone} from './zone';
+import {lensFocusMarks} from './shooting-presets';
 import {fmt,metres} from './units';
 import {flashCheatsheet,safeRangeText,safeShootingRange} from './flash-tools';
 import type {CameraPreset,LensPreset,FilmPreset} from './shooting-presets';
@@ -89,15 +90,19 @@ export function note(i:Inputs,date=new Date(),context?:NoteContext):string {
   lines.push(`저장 범위: ${scope==='zone'?'존 포커싱 (플래시 제외)':scope==='dof'?'심도·화각 (플래시·조사 범위 제외)':scope==='flash'?'플래시 (심도·조사 범위 제외)':scope==='combined'?'통합 (전체 계산)':'전체 계산'}`);
   lines.push(`플러그인 버전: ${context?.version??'개발/미지정'}`,`GN 입력 모드: ${i.gnMode==='equipment'?'장비 표':'수동 GN'}`,`선택 장비: ${context?.equipment?.name??'없음 · 수동 GN'}`,`장비 출처: ${context?.equipment?.source??'GN 조건 참조'}`);
   lines.push('\n## 입력값\n','| 항목 | 값 |','| --- | --- |');
-  type NoteInputKey=Exclude<keyof Inputs,'zoneGoal'|'flashOn'|'zoneOn'|'flashWasEnabled'|'nightMode'|'shutter'|'fillRatio'|'reciprocityFilm'|'meteredSeconds'|'reciprocityOverrides'>;
+  type NoteInputKey=Exclude<keyof Inputs,'zoneGoal'|'exposureScene'|'framing'|'flashOn'|'zoneOn'|'flashWasEnabled'|'nightMode'|'shutter'|'fillRatio'|'reciprocityFilm'|'meteredSeconds'|'reciprocityOverrides'>;
   const labels:Record<NoteInputKey,string>={gnMode:'GN 모드',equipmentId:'장비 ID (수동 모드에서는 적용 안 함)',sensor:'필름·포맷 프리셋',width:'프레임 가로 mm',height:'프레임 세로 mm',focal:'실제 초점거리 mm',aperture:'조리개 f/',iso:'필름 감도 ISO',cameraDistance:'카메라 거리',focusInfinity:'무한대 초점 (켜면 카메라 거리는 마지막 유한값 보존)',linked:'온카메라 연동',flashDistance:'별도 플래시 거리',cocMode:'CoC 방식',coc:'사용자 CoC mm',gn:'ISO100 최대 출력 GN',gnUnit:'GN 단위',gnZoom:'GN 측정 줌 mm',zoom:'선택 플래시 줌 mm',conditions:'GN 조건',denominator:'출력 1/n의 n',loss:'추가 손실 stop',tolerance:'허용 오차 ±EV',minDenominator:'최소 출력 1/n의 n',steps:'지원 출력 분모',coverage:'조사각 방식 (approx=35mm 프레임 가정)',horizontal:'직접 입력 수평 조사각 °',vertical:'직접 입력 수직 조사각 °',mode:'발광 조건',diagramMax:'그림 최대 거리',tab:'화면',cropBasis:'35mm 환산 기준',zoneFlow:'존 흐름',zoneNear:'목표 근거리',zoneFar:'목표 유한 원거리 (무한대 선택 시 미사용)',zoneInfinity:'목표 원거리 무한대',apertureMin:'렌즈 최대 개방 f값',apertureMax:'렌즈 최소 개방 f값',apertureSteps:'사용 가능한 실제 조리개 단계'};
   const opticalKeys:ReadonlySet<keyof Inputs>=new Set(['sensor','width','height','focal','aperture','cameraDistance','focusInfinity','cocMode','coc','tab','cropBasis']);
   const flashKeys:ReadonlySet<keyof Inputs>=new Set(['gnMode','equipmentId','aperture','iso','linked','cameraDistance','focusInfinity','flashDistance','gn','gnUnit','gnZoom','zoom','conditions','denominator','loss','tolerance','minDenominator','steps','mode','tab']);
   const distanceKeys:ReadonlySet<keyof Inputs>=new Set(['cameraDistance','flashDistance','zoneNear','zoneFar','diagramMax']);
   const zoneKeys:ReadonlySet<keyof Inputs>=new Set(['zoneFlow','zoneNear','zoneFar','zoneInfinity','apertureMin','apertureMax','apertureSteps']);
+  const targetKeys:ReadonlySet<keyof Inputs>=new Set(['zoneFlow','zoneNear','zoneFar','zoneInfinity']);
+  const zoneScope=scope==='zone'||(scope==='all'&&i.zoneOn===true);
   for(const key of Object.keys(labels) as (keyof typeof labels)[]){
     if((scope==='dof'||scope==='zone')&&!opticalKeys.has(key)&&!(scope==='zone'&&zoneKeys.has(key)))continue;
     if(scope==='flash'&&!flashKeys.has(key))continue;
+    // 목표 구간 역산은 더 이상 화면에 없으므로, 역산 노트가 아니면 그 입력값도 적지 않는다.
+    if(i.zoneFlow!=='target'&&targetKeys.has(key))continue;
     const unused=(key==='flashDistance'&&i.linked)||(key==='cameraDistance'&&scope==='flash'&&!i.linked)
       ||(key==='coc'&&i.cocMode!=='custom')||(['horizontal','vertical'].includes(key)&&i.coverage==='approx')
       ||(key==='zoneFar'&&i.zoneInfinity);
@@ -118,7 +123,12 @@ export function note(i:Inputs,date=new Date(),context?:NoteContext):string {
   try {
     const o=depthResult=optics(i);
     Object.assign(properties,{coc_mm:rounded(o.c,5),dof_near_m:distanceProperty(o.near),dof_far_m:distanceProperty(o.far),hyperfocal_m:distanceProperty(o.hyperfocal)});
-    if(scope==='zone'&&i.zoneFlow==='current')Object.assign(properties,{zone_near_m:properties.dof_near_m,zone_far_m:properties.dof_far_m});
+    if(zoneScope&&i.zoneFlow!=='target') {
+      Object.assign(properties,{zone_near_m:properties.dof_near_m,zone_far_m:properties.dof_far_m});
+      // 화면의 존 포커싱 카드와 같은 내용: 거리링 위치와 선명 구간.
+      const ring=i.focusInfinity?'링 눈금 ∞':`${metres(i.cameraDistance)} · ${ringLabel(i.cameraDistance,lensFocusMarks(context?.lens))}`;
+      lines.push(`\n## 존 포커싱 · ${i.zoneGoal==='range'?'구간 옮기기':'∞까지 선명'}`,`- 거리링: ${ring}`,`- f/${fmt(i.aperture)}이면 ${metres(o.near)} ~ ${Number.isFinite(o.far)?metres(o.far):'∞'} 선명`);
+    }
     if(scope!=='flash')lines.push(`\n- 심도 근거리 ${metres(o.near)} / 원거리 ${metres(o.far)} / 전체 ${metres(o.total)}`,`- 과초점거리 ${metres(o.hyperfocal)} · CoC ${fmt(o.c,5)} mm`, `- 수평/수직/대각 화각 ${fmt(o.horizontal)}° / ${fmt(o.vertical)}° / ${fmt(o.diagonal)}°`, `- 실치수 대각 기준 35mm 환산 초점거리 ${fmt(o.equivalent)} mm`, `- 회절 Airy 지름 (파장 550nm) ${fmt(o.airy,5)} mm, CoC 대비 ${fmt(o.airy/o.c)}배 (근사)`);
   }catch(e){if(scope!=='flash')lines.push(`- 광학 계산 불가: ${e instanceof Error?e.message:String(e)}`);}
   if(scope==='all'||scope==='combined'){

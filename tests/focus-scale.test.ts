@@ -2,13 +2,13 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {minFocusDistance,optics} from '../src/engine';
 import {defaults} from '../src/model';
-import {focusScale,FOCUS_SCALE_MAX,FOCUS_SCALE_STEPS,FOCUS_SCALE_TICKS} from '../src/scale';
+import {focusScale,FOCUS_SCALE_FINITE_END,FOCUS_SCALE_MAX,FOCUS_SCALE_STEPS,FOCUS_SCALE_TICKS} from '../src/scale';
 
 test('초점거리별 로그 축은 거리와 정수 슬라이더 위치를 왕복한다',()=>{
   for(const focal of [14,50,85,135,200,1500]) {
     const axis=focusScale(focal);
     assert.ok(axis);
-    for(let step=0;step<=FOCUS_SCALE_STEPS;step++) {
+    for(let step=0;step<=FOCUS_SCALE_FINITE_END*FOCUS_SCALE_STEPS;step++) {
       const position=step/FOCUS_SCALE_STEPS;
       assert.equal(Math.round(axis.position(axis.distance(position))*FOCUS_SCALE_STEPS),step);
     }
@@ -26,10 +26,12 @@ test('양 끝과 근접 한계는 초점거리에 따르고 범위 밖 거리는
     assert.equal(axis.distance(0),min);
     assert.equal(axis.distance(1),FOCUS_SCALE_MAX);
     assert.equal(axis.position(min),0);
-    assert.equal(axis.position(FOCUS_SCALE_MAX),1);
+    // 30 m보다 먼 유한 거리는 유한 구간 끝에 두고, 그 뒤의 끝 칸은 ∞만 쓴다.
+    assert.equal(axis.position(FOCUS_SCALE_MAX),FOCUS_SCALE_FINITE_END);
     assert.equal(axis.position(min/2),0);
-    assert.equal(axis.position(100),1);
+    assert.equal(axis.position(100),FOCUS_SCALE_FINITE_END);
     assert.equal(axis.position(Infinity),1);
+    assert.ok((axis.position(Infinity)-axis.position(59.6))*FOCUS_SCALE_STEPS>=50);
   }
   const wide=focusScale(50), tele=focusScale(200);
   assert.ok(wide&&tele);

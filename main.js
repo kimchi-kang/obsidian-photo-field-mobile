@@ -49,6 +49,67 @@ __export(main_exports, {
 module.exports = __toCommonJS(main_exports);
 var import_obsidian2 = require("obsidian");
 
+// src/field-guide.ts
+var DIFFRACTION_RATIO = 0.6;
+var airyDiameter = (aperture) => 2.44 * 55e-5 * aperture;
+function diffractionRisk(aperture, coc) {
+  return Number.isFinite(aperture) && aperture > 0 && Number.isFinite(coc) && coc > 0 && airyDiameter(aperture) / coc >= DIFFRACTION_RATIO;
+}
+var EXPOSURE_SCENES = [
+  { id: "snow", label: "\uB208\xB7\uBAA8\uB798", ev: 16 },
+  { id: "sun", label: "\uB9D1\uC74C", ev: 15 },
+  { id: "haze", label: "\uC605\uC740 \uAD6C\uB984", ev: 14 },
+  { id: "cloud", label: "\uD750\uB9BC", ev: 13 },
+  { id: "shade", label: "\uADF8\uB298\xB7\uC9D9\uC740 \uD750\uB9BC", ev: 12 },
+  { id: "dusk", label: "\uD574\uC9C8\uB158", ev: 11 },
+  { id: "indoor", label: "\uBC1D\uC740 \uC2E4\uB0B4", ev: 8 },
+  { id: "night", label: "\uC57C\uAC04 \uAC70\uB9AC", ev: 6 }
+];
+var isExposureScene = (value) => EXPOSURE_SCENES.some((s) => s.id === value);
+function exposurePairs(ev100, ei, apertures, shutters, focal, syncDenominator) {
+  const ev = ev100 + Math.log2(ei / 100);
+  const dial = shutters.filter((n) => n > 0).sort((a, b) => a - b);
+  if (!dial.length || !Number.isFinite(ev)) return [];
+  const fastest = dial[dial.length - 1], slowest = dial[0];
+  return apertures.map((aperture) => {
+    const seconds = aperture * aperture / 2 ** ev;
+    let shutter;
+    let residual;
+    if (seconds > 1 / slowest * Math.SQRT2 && shutters.includes(0)) {
+      shutter = "B";
+      residual = 0;
+    } else {
+      const n = dial.reduce((best, v) => Math.abs(Math.log2(seconds * v)) < Math.abs(Math.log2(seconds * best)) ? v : best);
+      shutter = n;
+      residual = Math.log2(1 / n / seconds);
+    }
+    return {
+      aperture,
+      seconds,
+      shutter,
+      residual,
+      tooBright: seconds < 1 / fastest / Math.SQRT2,
+      shake: Number.isFinite(focal) && focal > 0 && seconds > 1 / focal * 1.05,
+      overSync: syncDenominator !== void 0 && typeof shutter === "number" && shutter > syncDenominator,
+      long: seconds >= 1
+    };
+  });
+}
+var STRIDE = 0.7;
+var FRAMINGS = [
+  { id: "face", label: "\uC5BC\uAD74", height: 0.35 },
+  { id: "bust", label: "\uBC14\uC2A4\uD2B8", height: 0.6 },
+  { id: "half", label: "\uC0C1\uBC18\uC2E0", height: 0.9 },
+  { id: "full", label: "\uC804\uC2E0", height: 2 }
+];
+function framingDistance(focal, frame, subject) {
+  if (![focal, frame, subject].every((v) => Number.isFinite(v) && v > 0)) return NaN;
+  const m = frame / (subject * 1e3);
+  return focal * (2 + m + 1 / m) / 1e3;
+}
+var strides = (distance) => Math.max(1, Math.round(distance / STRIDE));
+var FACE_DEPTH = 0.15;
+
 // src/model.ts
 var emptyDraft = () => ({ id: "", name: "", conditions: "", source: "", table: "", unit: "m", minDenominator: "256", steps: "1,2,4,8,16,32,64,128,256" });
 var FULL_STOP_APERTURES = "1.2,1.4,1.8,2,2.8,4,5.6,8,11,16,22,32";
@@ -98,6 +159,8 @@ var defaults = {
   cropBasis: "nominal",
   zoneFlow: "current",
   zoneGoal: "infinity",
+  exposureScene: "sun",
+  framing: "portrait",
   zoneNear: 2,
   zoneFar: 5,
   zoneInfinity: false,
@@ -154,6 +217,18 @@ function distanceParts(v, digits = DISTANCE_DIGITS) {
 function metres(v, digits = DISTANCE_DIGITS) {
   const d = distanceParts(v, digits);
   return d.unit ? `${d.value} ${d.unit}` : d.value;
+}
+function parseSeconds(text) {
+  const parts = text.split("/").map(parseNumber);
+  if (parts.length === 1) return parts[0];
+  return parts.length === 2 && parts.every((value) => Number.isFinite(value) && value > 0) ? parts[0] / parts[1] : NaN;
+}
+function formatSeconds(seconds) {
+  if (Number.isFinite(seconds) && seconds > 0 && seconds < 1) {
+    const n = Math.round(1 / seconds);
+    if (1 / n === seconds || Math.abs(n * seconds - 1) < 1e-9) return `1/${n}`;
+  }
+  return String(seconds);
 }
 
 // src/engine.ts
@@ -788,6 +863,8 @@ function restore(data) {
   if (!["nominal", "dimensions"].includes(i.cropBasis)) i.cropBasis = "nominal";
   if (!["current", "target"].includes(i.zoneFlow)) i.zoneFlow = "current";
   if (!["infinity", "range"].includes(i.zoneGoal)) i.zoneGoal = "infinity";
+  if (!isExposureScene(i.exposureScene)) i.exposureScene = "sun";
+  if (!["portrait", "landscape"].includes(i.framing)) i.framing = "portrait";
   if (typeof d.inputs === "object" && d.inputs && !("zoneFlow" in d.inputs) && !result.migrationBackup) result.migrationBackup = JSON.parse(JSON.stringify(data));
   if (!["manual", "ttl", "hss", "bounce", "modifier", "near"].includes(i.mode)) i.mode = "manual";
   if (!["flash", "dof", "combined", "zone"].includes(i.tab)) i.tab = "combined";
@@ -1044,8 +1121,8 @@ function diagram(host, i, max, depth, light, safe) {
   }
   if (safe?.kind === "range" && safe.near <= max) {
     const start = x(safe.near), end = x(safe.far), attrs = { class: "pfm-safe-band", "aria-hidden": "true" };
-    if (end > start) el("rect", { ...attrs, x: start, y: zone ? 232 : 170, width: end - start, height: 12 });
-    else el("line", { ...attrs, x1: start, x2: start, y1: zone ? 232 : 170, y2: zone ? 244 : 182 });
+    if (end > start) el("rect", { ...attrs, x: start, y: 170, width: end - start, height: 12 });
+    else el("line", { ...attrs, x1: start, x2: start, y1: 170, y2: 182 });
   }
   if (light) {
     const f = light, y = axisY + 36;
@@ -1185,6 +1262,10 @@ function infinityFocus(i, aperture = i.aperture) {
   const near = optics({ ...at, cameraDistance: ring }).near;
   return { aperture, ring, near };
 }
+function ringLabel(distance, marks = RING_MARKS) {
+  const p = ringPosition(distance, marks), f = fmt;
+  return p.on !== void 0 ? `\uB9C1 \uB208\uAE08 ${f(p.on)}` : `\uB9C1 \uB208\uAE08 ${f(p.between[0])}\uACFC ${p.between[1] === Infinity ? "\u221E" : f(p.between[1])} \uC0AC\uC774`;
+}
 function ringPosition(distance, marks = RING_MARKS) {
   positive(distance);
   const on = marks.find((m) => Math.abs(distance - m) / m <= 0.03);
@@ -1198,6 +1279,7 @@ function ringPosition(distance, marks = RING_MARKS) {
 // src/scale.ts
 var FOCUS_SCALE_MAX = 30;
 var FOCUS_SCALE_STEPS = 1e3;
+var FOCUS_SCALE_FINITE_END = 0.92;
 var FOCUS_SCALE_TICKS = [0.5, 0.7, 1, 1.5, 2, 3, 5, 10, Infinity];
 function focusScale(focal, minimum = minFocusDistance(focal)) {
   if (!Number.isFinite(focal) || focal <= 0 || minimum >= FOCUS_SCALE_MAX) return;
@@ -1208,17 +1290,21 @@ function focusScale(focal, minimum = minFocusDistance(focal)) {
   const right = Math.log(FOCUS_SCALE_MAX / upper);
   const weight = minimum <= 0.5 ? Math.max(1, (left + right) * 0.55 / (middle * 0.45)) : 1;
   const total = left + middle * weight + right;
-  function position(distance2) {
-    if (Number.isNaN(distance2) || distance2 <= minimum) return 0;
-    if (distance2 >= FOCUS_SCALE_MAX) return 1;
+  function finite(distance2) {
     if (distance2 <= lower) return Math.log(distance2 / minimum) / total;
     if (distance2 <= upper) return (left + weight * Math.log(distance2 / lower)) / total;
     return (left + middle * weight + Math.log(distance2 / upper)) / total;
   }
+  function position(distance2) {
+    if (Number.isNaN(distance2) || distance2 <= minimum) return 0;
+    if (distance2 === Infinity) return 1;
+    if (distance2 >= FOCUS_SCALE_MAX) return FOCUS_SCALE_FINITE_END;
+    return finite(distance2) * FOCUS_SCALE_FINITE_END;
+  }
   function distance(position2) {
     if (position2 <= 0) return minimum;
-    if (position2 >= 1) return FOCUS_SCALE_MAX;
-    const offset = position2 * total;
+    if (position2 >= FOCUS_SCALE_FINITE_END) return FOCUS_SCALE_MAX;
+    const offset = position2 / FOCUS_SCALE_FINITE_END * total;
     if (offset <= left) return minimum * Math.exp(offset);
     if (offset <= left + middle * weight) return lower * Math.exp((offset - left) / weight);
     return upper * Math.exp(offset - left - middle * weight);
@@ -1314,11 +1400,6 @@ function shutterLabel(denominator) {
   if (denominator > 1 && Number.isInteger(denominator)) return `1/${denominator}\uCD08`;
   return `${Number((1 / denominator).toPrecision(12))}\uCD08`;
 }
-function parseSeconds(text) {
-  const parts = text.split("/").map(parseNumber);
-  if (parts.length === 1) return parts[0];
-  return parts.length === 2 && parts.every((value) => Number.isFinite(value) && value > 0) ? parts[0] / parts[1] : NaN;
-}
 function filmInfo(film, ei) {
   const stops = eiStops(ei, film.iso);
   const delta = Number.isFinite(stops) && stops !== 0 ? ` \xB7 ${stops > 0 ? "+" : ""}${fmt(stops)} \uC99D\uAC10` : "";
@@ -1336,6 +1417,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.detailState = /* @__PURE__ */ new Map();
     this.calibrationMessage = "";
     this.calibrationDraft = {};
+    this.paintGuides = [];
     this.numeric = /* @__PURE__ */ new Map();
   }
   gearBar() {
@@ -1485,14 +1567,14 @@ var PhotoView = class extends import_obsidian.ItemView {
         if (kind === "cameras") {
           const camera = existing && "shutters" in existing ? existing : void 0;
           const sensor = description("\uD3EC\uB9F7", Object.fromEntries(Object.entries(sensors).map(([key, value]) => [key, value.name])), camera?.sensor ?? "ff");
-          const shutters = this.text(editor, "\uC154\uD130 \uC18D\uB3C4 (\uCD08, \uC27C\uD45C \uAD6C\uBD84)", camera?.shutters.join(",") ?? "");
+          const shutters = this.text(editor, "\uC154\uD130 \uC18D\uB3C4 (\uCD08, \uC27C\uD45C \uAD6C\uBD84)", camera?.shutters.map(formatSeconds).join(",") ?? "");
           shutters.placeholder = "1,1/2,1/125";
           const label = node(editor, "label", void 0, "pfm-check");
           const bulb = node(label, "input");
           bulb.type = "checkbox";
           bulb.checked = camera?.bulb ?? false;
           node(label, "span", "B \uC154\uD130 \uC9C0\uC6D0");
-          const sync = this.text(editor, "\uCD5C\uB300 \uD50C\uB798\uC2DC \uB3D9\uC870 (\uCD08)", camera ? String(camera.syncSeconds) : "");
+          const sync = this.text(editor, "\uCD5C\uB300 \uD50C\uB798\uC2DC \uB3D9\uC870 (\uCD08)", camera ? formatSeconds(camera.syncSeconds) : "");
           sync.placeholder = "1/250";
           const isoMin = numeric("ISO \uCD5C\uC18C", camera?.isoMin), isoMax = numeric("ISO \uCD5C\uB300", camera?.isoMax);
           fields = () => ({ sensor: sensor.value, shutters: shutters.value.split(",").map(parseSeconds), bulb: bulb.checked, syncSeconds: parseSeconds(sync.value), isoMin: isoMin(), isoMax: isoMax() });
@@ -1808,6 +1890,14 @@ var PhotoView = class extends import_obsidian.ItemView {
       const r = range;
       this.listen(r, "input", () => {
         const position = Number(r.value);
+        if (isFocus && position / FOCUS_SCALE_STEPS >= (1 + FOCUS_SCALE_FINITE_END) / 2) {
+          if (!infinite()) {
+            this.plugin.setFocusInfinity(true);
+            sync();
+            this.changed();
+          }
+          return;
+        }
         const value = isFocus ? axis?.distance(position / FOCUS_SCALE_STEPS) : stops ? stops[position] : position;
         if (value === void 0) return;
         this.plugin.update(key, value);
@@ -2115,6 +2205,122 @@ var PhotoView = class extends import_obsidian.ItemView {
       this.paintBulbTimer?.();
     };
     tick();
+  }
+  /** 상황별 노출: 장면 EV(Sunny 16 확장)와 필름 EI로 조리개·셔터 짝을 보여 준다. 대략값. */
+  exposurePanel() {
+    const body = this.details("\uC0C1\uD669\uBCC4 \uB178\uCD9C \xB7 Sunny 16");
+    body.classList.add("pfm-exposure-guide");
+    const paint = () => {
+      const i = this.plugin.state.inputs, state = this.plugin.state;
+      const camera = selectedPreset(state, "cameras"), film = selectedPreset(state, "films");
+      body.replaceChildren();
+      const chips = node(body, "div", void 0, "pfm-scene-chips");
+      chips.setAttribute("role", "group");
+      chips.setAttribute("aria-label", "\uC7A5\uBA74 \uBC1D\uAE30");
+      for (const scene2 of EXPOSURE_SCENES) {
+        const chip = this.button(chips, "", () => {
+          if (i.exposureScene === scene2.id) return;
+          this.plugin.update("exposureScene", scene2.id);
+          this.changed();
+          body.querySelector(`[data-exposure-scene=${scene2.id}]`)?.focus({ preventScroll: true });
+        });
+        node(chip, "span", scene2.label);
+        node(chip, "small", `EV${scene2.ev}`);
+        chip.dataset.exposureScene = scene2.id;
+        chip.setAttribute("aria-pressed", String(i.exposureScene === scene2.id));
+      }
+      const scene = EXPOSURE_SCENES.find((s) => s.id === i.exposureScene) ?? EXPOSURE_SCENES[1];
+      const ei = i.iso, ev = scene.ev + Math.log2(ei / 100);
+      node(body, "p", `${scene.label} EV${scene.ev} \xB7 EI ${fmt(ei, 0)}\uC774\uBA74 EV${fmt(ev, 1)} \xB7 \uB204\uB974\uBA74 \uADF8 \uC870\uB9AC\uAC1C\uB85C`, "pfm-exposure-basis");
+      const sync = i.flashOn ? syncLimit(camera) : void 0;
+      const pairs = exposurePairs(scene.ev, ei, this.apertureStops(), cameraShutters(camera), i.focal, sync);
+      const list = node(body, "div", void 0, "pfm-exposure-pairs");
+      for (const pair of pairs) {
+        const row = node(list, "button");
+        row.type = "button";
+        row.className = "pfm-exposure-row";
+        row.dataset.exposureAperture = String(pair.aperture);
+        const shutter = pair.shutter === "B" ? `B ${formatExposureSeconds(pair.seconds)}` : pair.shutter === 1 ? "1\uCD08" : `1/${pair.shutter}`;
+        const off = pair.shutter !== "B" && Math.abs(pair.residual) >= 0.45 ? ` ${pair.residual > 0 ? "+" : ""}${fmt(pair.residual, 1)}` : "";
+        node(row, "span", `f/${fmt(pair.aperture)}`);
+        node(row, "strong", shutter + off);
+        const flags = [pair.tooBright ? "\uC154\uD130 \uD55C\uACC4 \xB7 \uACFC\uB2E4" : "", pair.overSync ? "\uB3D9\uC870 \uCD08\uACFC" : "", pair.shake ? "\uC190\uB5A8\uB9BC" : "", pair.long ? "\uC0C1\uBC18\uCE59" : ""].filter(Boolean);
+        node(row, "small", flags.join(" \xB7 "));
+        if (pair.tooBright || pair.overSync) row.dataset.state = "bad";
+        else if (pair.shake || pair.long) row.dataset.state = "warn";
+        if (pair.aperture === i.aperture) row.setAttribute("aria-current", "true");
+        row.setAttribute("aria-label", `f/${fmt(pair.aperture)} ${shutter}${off ? ` (${off.trim()} \uC2A4\uD1B1)` : ""}${flags.length ? " \xB7 " + flags.join(", ") : ""}. \uB204\uB974\uBA74 \uC774 \uC870\uB9AC\uAC1C\uC640 \uC154\uD130\uB85C`);
+        this.listen(row, "click", () => {
+          this.plugin.update("aperture", pair.aperture);
+          if (typeof pair.shutter === "number") this.plugin.update("shutter", pair.shutter);
+          this.syncNumeric("aperture");
+          this.changed();
+          body.querySelector(`[data-exposure-aperture="${pair.aperture}"]`)?.focus({ preventScroll: true });
+        });
+      }
+      const notes = [`\uC190\uB5A8\uB9BC \uAE30\uC900 1/${fmt(i.focal, 0)}\uCD08\uBCF4\uB2E4 \uB290\uB9AC\uBA74 \uD45C\uC2DC`];
+      if (sync) notes.push(`\uD50C\uB798\uC2DC \uB3D9\uC870 1/${sync} \uC774\uD558`);
+      node(body, "p", notes.join(" \xB7 "), "pfm-exposure-note");
+      if (film?.type === "slide") node(body, "p", "\uC2AC\uB77C\uC774\uB4DC \uD544\uB984\uC740 \uAD00\uC6A9\uB3C4\uAC00 \xB1\xBD\uC2A4\uD1B1 \uC815\uB3C4\uB85C \uC881\uC544\uC694 \xB7 \uB178\uCD9C\uACC4\uB85C \uD655\uC778\uD558\uC138\uC694.", "pfm-warning");
+      if (film && /텅스텐/.test(film.memo ?? "")) node(body, "p", "\uD145\uC2A4\uD150 \uD544\uB984 \xB7 \uC8FC\uAD11\uC5D0\uC11C 85 \uD544\uD130\uB97C \uC4F0\uBA74 EI\uB97C \uC57D \u2154\uC2A4\uD1B1 \uB0AE\uCD94\uC138\uC694(500T \u2192 320).", "pfm-exposure-note");
+      node(body, "p", "\uC7A5\uBA74 EV\uB294 \uB300\uB7B5\uAC12\uC774\uC5D0\uC694. \uC815\uD655\uD55C \uAE30\uC900\uC740 \uB9D1\uC74C(Sunny 16)\uBFD0\uC774\uACE0 \uD574\uC9C8\uB158\xB7\uC2E4\uB0B4\xB7\uC57C\uAC04\uC740 \xB12\uC2A4\uD1B1 \uC774\uC0C1 \uB2EC\uB77C\uC9C8 \uC218 \uC788\uC2B5\uB2C8\uB2E4.", "pfm-exposure-note");
+    };
+    this.paintGuides.push(paint);
+  }
+  /** 구도별 거리: 현재 렌즈로 얼굴·바스트·상반신·전신이 프레임에 차는 거리와 걸음 수. 누르면 그 거리에 초점. */
+  framingPanel() {
+    const body = this.details("\uAD6C\uB3C4\uBCC4 \uAC70\uB9AC \xB7 \uBCF4\uD3ED");
+    body.classList.add("pfm-framing-guide");
+    const paint = () => {
+      const i = this.plugin.state.inputs, lens = selectedPreset(this.plugin.state, "lenses");
+      body.replaceChildren();
+      const toggle = node(body, "div", void 0, "pfm-zone-goals pfm-framing-toggle");
+      toggle.setAttribute("role", "group");
+      toggle.setAttribute("aria-label", "\uCE74\uBA54\uB77C \uBC29\uD5A5");
+      for (const [value, label] of [["portrait", "\uC138\uB85C"], ["landscape", "\uAC00\uB85C"]]) {
+        const b = this.button(toggle, label, () => {
+          if (i.framing === value) return;
+          this.plugin.update("framing", value);
+          this.changed();
+          body.querySelector(`[data-framing=${value}]`)?.focus({ preventScroll: true });
+        });
+        b.dataset.framing = value;
+        b.setAttribute("aria-pressed", String(i.framing === value));
+      }
+      const frame = i.framing === "portrait" ? Math.max(i.width, i.height) : Math.min(i.width, i.height);
+      const minimum = effectiveMinFocus(i, lens);
+      node(body, "p", `${fmt(i.focal)}mm \xB7 \uD504\uB808\uC784 \uB192\uC774\uC5D0 \uAF49 \uCC30 \uB54C \xB7 \uD55C \uAC78\uC74C ${metres(STRIDE)}`, "pfm-exposure-basis");
+      for (const framing of FRAMINGS) {
+        const distance = framingDistance(i.focal, frame, framing.height);
+        const row = node(body, "button");
+        row.type = "button";
+        row.className = "pfm-exposure-row pfm-framing-row";
+        row.dataset.framingTarget = framing.id;
+        node(row, "span", framing.label);
+        if (!Number.isFinite(distance)) {
+          node(row, "strong", "\u2014");
+          row.disabled = true;
+          continue;
+        }
+        const close = distance < minimum;
+        node(row, "strong", metres(distance));
+        node(row, "small", close ? "\uCD5C\uB2E8 \uAC70\uB9AC\uBCF4\uB2E4 \uAC00\uAE4C\uC6C0" : `\uC57D ${strides(distance)}\uAC78\uC74C`);
+        if (close) {
+          row.dataset.state = "bad";
+          row.disabled = true;
+        }
+        if (!i.focusInfinity && Math.abs(i.cameraDistance - distance) <= distance * 0.01) row.setAttribute("aria-current", "true");
+        row.setAttribute("aria-label", `${framing.label}: ${metres(distance)}${close ? ", \uB80C\uC988 \uCD5C\uB2E8 \uAC70\uB9AC\uBCF4\uB2E4 \uAC00\uAE4C\uC6C0" : `, \uC57D ${strides(distance)}\uAC78\uC74C. \uB204\uB974\uBA74 \uC774 \uAC70\uB9AC\uC5D0 \uCD08\uC810`}`);
+        this.listen(row, "click", () => {
+          this.plugin.update("cameraDistance", distance);
+          this.syncNumeric("cameraDistance");
+          this.changed();
+          body.querySelector(`[data-framing-target=${framing.id}]`)?.focus({ preventScroll: true });
+        });
+      }
+      node(body, "p", "\uC0AC\uB78C \uD0A4 170cm \uAE30\uC900\uC5D0 \uC5EC\uBC31\uC744 \uC870\uAE08 \uB454 \uB300\uB7B5\uAC12\uC774\uC5D0\uC694. \uAC78\uC74C \uC218\uB294 \uD53C\uC0AC\uCCB4\uAE4C\uC9C0 \uAC78\uC5B4\uAC00\uBA70 \uC138\uB294 \uBAA9\uCE21\uC6A9\uC785\uB2C8\uB2E4.", "pfm-exposure-note");
+    };
+    this.paintGuides.push(paint);
   }
   reciprocityPanel() {
     const body = this.details("\uC7A5\uB178\uCD9C \xB7 \uC0C1\uBC18\uCE59 \uBD88\uADA4");
@@ -2440,6 +2646,9 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.sceneControls();
     this.flushOnEnd();
     this.quickControls();
+    this.paintGuides = [];
+    this.exposurePanel();
+    this.framingPanel();
     if (i.flashOn) this.flashPanel();
     this.reciprocityPanel();
     this.saveControls();
@@ -2568,8 +2777,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     node(card, "p", "\uADF8\uB9BC\uC758 \uC120\uBA85 \uAD6C\uAC04\uC744 \uC88C\uC6B0\uB85C \uB04C\uC5B4 \uC62E\uAE30\uC138\uC694. \uC870\uB9AC\uAC1C\uB97C \uBC14\uAFB8\uBA74 \uAD6C\uAC04 \uD3ED\uC774 \uBC14\uB01D\uB2C8\uB2E4.", "pfm-zone-tip");
   }
   ringText(distance) {
-    const p = ringPosition(distance, lensFocusMarks(selectedPreset(this.plugin.state, "lenses")));
-    return p.on !== void 0 ? `\uB9C1 \uB208\uAE08 ${fmt(p.on)}` : `\uB9C1 \uB208\uAE08 ${fmt(p.between[0])}\uACFC ${p.between[1] === Infinity ? "\u221E" : fmt(p.between[1])} \uC0AC\uC774`;
+    return ringLabel(distance, lensFocusMarks(selectedPreset(this.plugin.state, "lenses")));
   }
   /** ∞까지 선명하게: 지금 조리개에서 거리링을 둘 위치(과초점)와 조리개별 표. */
   paintInfinity(card) {
@@ -2580,6 +2788,7 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(card, "strong", metres(r.ring), "pfm-zone-solution");
       node(card, "p", `${this.ringText(r.ring)} \xB7 f/${fmt(r.aperture)}\uC774\uBA74 ${metres(r.near)}\uBD80\uD130 \u221E\uAE4C\uC9C0 \uC120\uBA85`);
       node(card, "p", `\uB80C\uC988 \uC2EC\uB3C4 \uB208\uAE08\uC744 \uC4F4\uB2E4\uBA74: \u221E \uD45C\uC2DC\uB97C f/${fmt(r.aperture)} \uB208\uAE08\uC120\uC5D0 \uB9DE\uCD94\uBA74 \uAC19\uC2B5\uB2C8\uB2E4.`, "pfm-zone-tip");
+      if (diffractionRisk(r.aperture, circleOfConfusion(i))) node(card, "p", `f/${fmt(r.aperture)}\uBD80\uD130\uB294 \uD68C\uC808\uB85C \uC6D0\uACBD \uB514\uD14C\uC77C\uC774 \uBB34\uB38C\uC9C8 \uC218 \uC788\uC5B4\uC694. \uD48D\uACBD\uC740 \uBCF4\uD1B5 f/8~f/11\uC774 \uD0C0\uD611\uC810\uC785\uB2C8\uB2E4.`, "pfm-zone-tip pfm-diffraction-tip");
       const set = !i.focusInfinity && Math.abs(i.cameraDistance - r.ring) <= r.ring * 5e-3;
       const apply = node(card, "button", set ? "\uCD08\uC810\uC774 \uC5EC\uAE30\uC5D0 \uB9DE\uCDB0\uC838 \uC788\uC74C" : "\uCD08\uC810\uC744 \uC5EC\uAE30\uC5D0 \uB9DE\uCD94\uAE30");
       apply.type = "button";
@@ -2597,16 +2806,21 @@ var PhotoView = class extends import_obsidian.ItemView {
         this.ringTableOpen = table.open;
       });
       node(table, "summary", "\uC870\uB9AC\uAC1C\uBCC4 \uAC70\uB9AC\uB9C1 \uC704\uCE58");
+      const coc = circleOfConfusion(i);
       for (const aperture of this.apertureStops()) {
-        const row = infinityFocus(i, aperture);
+        const row = infinityFocus(i, aperture), soft = diffractionRisk(aperture, coc);
         const button = node(table, "button");
         button.type = "button";
         button.className = "pfm-ring-row";
-        node(button, "span", `f/${fmt(aperture)}`);
+        const stop = node(button, "span", `f/${fmt(aperture)}`);
+        if (soft) {
+          node(stop, "small", "\uD68C\uC808", "pfm-diffraction");
+          button.dataset.diffraction = "true";
+        }
         node(button, "strong", metres(row.ring));
         node(button, "span", `${metres(row.near)}~\u221E`);
         if (aperture === i.aperture) button.setAttribute("aria-current", "true");
-        button.setAttribute("aria-label", `f/${fmt(aperture)}: \uAC70\uB9AC\uB9C1 ${metres(row.ring)}, ${metres(row.near)}\uBD80\uD130 \uBB34\uD55C\uB300\uAE4C\uC9C0 \uC120\uBA85. \uB204\uB974\uBA74 \uC774 \uC870\uB9AC\uAC1C\uB85C`);
+        button.setAttribute("aria-label", `f/${fmt(aperture)}: \uAC70\uB9AC\uB9C1 ${metres(row.ring)}, ${metres(row.near)}\uBD80\uD130 \uBB34\uD55C\uB300\uAE4C\uC9C0 \uC120\uBA85${soft ? ", \uD68C\uC808\uB85C \uC6D0\uACBD \uB514\uD14C\uC77C\uC774 \uBB34\uB38C\uC9C8 \uC218 \uC788\uC74C" : ""}. \uB204\uB974\uBA74 \uC774 \uC870\uB9AC\uAC1C\uB85C`);
         button.onclick = () => {
           this.plugin.update("aperture", aperture);
           this.syncNumeric("aperture");
@@ -2797,6 +3011,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     const coc = this.numeric.get("coc");
     if (coc) coc.input.disabled = i.cocMode !== "custom";
     this.paintGear();
+    for (const paintGuide of this.paintGuides) paintGuide();
     this.results.replaceChildren();
     if (this.outputUndo && this.outputUndo.applied !== i.denominator) this.outputUndo = void 0;
     let flashResult;
@@ -2814,8 +3029,6 @@ var PhotoView = class extends import_obsidian.ItemView {
     }
     if (i.zoneOn) this.paintZone(focusLimits);
     else this.paintDepth(focusLimits, focusError);
-    const safe = i.flashOn && i.linked ? safeShootingRange(true, focusLimits, flashResult) : void 0;
-    if (safe) node(this.results, "p", safeRangeText(safe), "pfm-safe-range").dataset.state = safe.kind;
     for (const pair of this.numeric.values()) pair.updateControls(focusLimits);
     let shown = i, shownLimits = focusLimits;
     if (i.zoneOn && i.zoneGoal === "infinity") {
@@ -2826,6 +3039,8 @@ var PhotoView = class extends import_obsidian.ItemView {
       } catch {
       }
     }
+    const safe = i.flashOn && i.linked ? safeShootingRange(true, shownLimits, flashResult) : void 0;
+    if (safe) node(this.results, "p", safeRangeText(safe), "pfm-safe-range").dataset.state = safe.kind;
     this.sceneMax = this.dragMax ?? sceneUpperLimit(shown, shownLimits?.far);
     diagram(this.picture, shown, this.sceneMax, shownLimits, flashResult, safe);
   }
@@ -2872,6 +3087,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     total.dataset.stat = "total";
     node(total, "span", "\uBC94\uC704 ");
     node(total, "strong", metres(limits.total));
+    if (limits.total < FACE_DEPTH) node(card, "p", `\uC5BC\uAD74 \uC55E\uB4A4(\uC57D ${metres(FACE_DEPTH)})\uBCF4\uB2E4 \uC595\uC544\uC694 \xB7 \uAC00\uAE4C\uC6B4 \uB208\uC5D0 \uCD08\uC810\uC744 \uB9DE\uCD94\uC138\uC694.`, "pfm-shallow");
     const bar = node(card, "div", void 0, "pfm-dof-bar");
     const focus = node(bar, "button", Number.isFinite(limits.hyperfocal) ? `\u221E\uAE4C\uC9C0 \uC120\uBA85\uD558\uAC8C \xB7 ${metres(limits.hyperfocal)}\uC5D0 \uB9DE\uCD94\uAE30` : "\u221E\uAE4C\uC9C0 \uC120\uBA85\uD558\uAC8C");
     focus.type = "button";
@@ -2981,9 +3197,12 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
   const flashKeys = /* @__PURE__ */ new Set(["gnMode", "equipmentId", "aperture", "iso", "linked", "cameraDistance", "focusInfinity", "flashDistance", "gn", "gnUnit", "gnZoom", "zoom", "conditions", "denominator", "loss", "tolerance", "minDenominator", "steps", "mode", "tab"]);
   const distanceKeys = /* @__PURE__ */ new Set(["cameraDistance", "flashDistance", "zoneNear", "zoneFar", "diagramMax"]);
   const zoneKeys = /* @__PURE__ */ new Set(["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity", "apertureMin", "apertureMax", "apertureSteps"]);
+  const targetKeys = /* @__PURE__ */ new Set(["zoneFlow", "zoneNear", "zoneFar", "zoneInfinity"]);
+  const zoneScope = scope === "zone" || scope === "all" && i.zoneOn === true;
   for (const key of Object.keys(labels)) {
     if ((scope === "dof" || scope === "zone") && !opticalKeys.has(key) && !(scope === "zone" && zoneKeys.has(key))) continue;
     if (scope === "flash" && !flashKeys.has(key)) continue;
+    if (i.zoneFlow !== "target" && targetKeys.has(key)) continue;
     const unused = key === "flashDistance" && i.linked || key === "cameraDistance" && scope === "flash" && !i.linked || key === "coc" && i.cocMode !== "custom" || ["horizontal", "vertical"].includes(key) && i.coverage === "approx" || key === "zoneFar" && i.zoneInfinity;
     const value = unused ? "\uBBF8\uC0AC\uC6A9" : key === "cameraDistance" && i.focusInfinity ? "\u221E (\uBB34\uD55C\uB300 \uCD08\uC810)" : distanceKeys.has(key) ? metres(i[key]) : i[key];
     lines.push(`| ${labels[key]} | ${String(value).replace(/\|/g, "\\|").replace(/\n/g, " / ")} |`);
@@ -3004,7 +3223,12 @@ function note(i, date = /* @__PURE__ */ new Date(), context) {
   try {
     const o = depthResult = optics(i);
     Object.assign(properties, { coc_mm: rounded(o.c, 5), dof_near_m: distanceProperty(o.near), dof_far_m: distanceProperty(o.far), hyperfocal_m: distanceProperty(o.hyperfocal) });
-    if (scope === "zone" && i.zoneFlow === "current") Object.assign(properties, { zone_near_m: properties.dof_near_m, zone_far_m: properties.dof_far_m });
+    if (zoneScope && i.zoneFlow !== "target") {
+      Object.assign(properties, { zone_near_m: properties.dof_near_m, zone_far_m: properties.dof_far_m });
+      const ring = i.focusInfinity ? "\uB9C1 \uB208\uAE08 \u221E" : `${metres(i.cameraDistance)} \xB7 ${ringLabel(i.cameraDistance, lensFocusMarks(context?.lens))}`;
+      lines.push(`
+## \uC874 \uD3EC\uCEE4\uC2F1 \xB7 ${i.zoneGoal === "range" ? "\uAD6C\uAC04 \uC62E\uAE30\uAE30" : "\u221E\uAE4C\uC9C0 \uC120\uBA85"}`, `- \uAC70\uB9AC\uB9C1: ${ring}`, `- f/${fmt(i.aperture)}\uC774\uBA74 ${metres(o.near)} ~ ${Number.isFinite(o.far) ? metres(o.far) : "\u221E"} \uC120\uBA85`);
+    }
     if (scope !== "flash") lines.push(`
 - \uC2EC\uB3C4 \uADFC\uAC70\uB9AC ${metres(o.near)} / \uC6D0\uAC70\uB9AC ${metres(o.far)} / \uC804\uCCB4 ${metres(o.total)}`, `- \uACFC\uCD08\uC810\uAC70\uB9AC ${metres(o.hyperfocal)} \xB7 CoC ${fmt(o.c, 5)} mm`, `- \uC218\uD3C9/\uC218\uC9C1/\uB300\uAC01 \uD654\uAC01 ${fmt(o.horizontal)}\xB0 / ${fmt(o.vertical)}\xB0 / ${fmt(o.diagonal)}\xB0`, `- \uC2E4\uCE58\uC218 \uB300\uAC01 \uAE30\uC900 35mm \uD658\uC0B0 \uCD08\uC810\uAC70\uB9AC ${fmt(o.equivalent)} mm`, `- \uD68C\uC808 Airy \uC9C0\uB984 (\uD30C\uC7A5 550nm) ${fmt(o.airy, 5)} mm, CoC \uB300\uBE44 ${fmt(o.airy / o.c)}\uBC30 (\uADFC\uC0AC)`);
   } catch (e) {
@@ -3133,8 +3357,9 @@ var PhotoPlugin = class extends import_obsidian2.Plugin {
   saveNote() {
     const i = { ...this.state.inputs }, equipment = selectedEquipment(this.state), date = /* @__PURE__ */ new Date();
     const scope = modeNoteScope(i);
-    i.zoneFlow = i.zoneOn ? "target" : "current";
+    i.zoneFlow = "current";
     try {
+      if (i.zoneOn && i.zoneGoal === "infinity") Object.assign(i, { cameraDistance: infinityFocus(i).ring, focusInfinity: false });
       validateNote(i, scope);
       return this.writeNote(note(i, date, { version: this.manifest.version, equipment, scope, ...this.notePresets() }), date, "\uCD2C\uC601 \uACC4\uC0B0");
     } catch (e) {

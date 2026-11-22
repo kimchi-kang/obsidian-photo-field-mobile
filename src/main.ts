@@ -6,6 +6,7 @@ import {applyEquipment,selectedEquipment,setGnMode} from './presets';
 import {PhotoView,VIEW} from './view';
 import {cheatsheetNote,note,noteTimestamp,validateNote,modeNoteScope} from './note';
 import {selectedPreset,updateShootingInput} from './shooting-presets';
+import {infinityFocus} from './zone';
 export default class PhotoPlugin extends Plugin {
   state!:Saved;
   private writer!:LatestWriter<Saved>;
@@ -53,8 +54,10 @@ export default class PhotoPlugin extends Plugin {
   saveNote():Promise<string> {
     const i={...this.state.inputs},equipment=selectedEquipment(this.state),date=new Date();
     const scope=modeNoteScope(i);
-    i.zoneFlow=i.zoneOn?'target':'current';
+    // 존 포커싱은 화면에 보이는 그대로 적는다. ∞까지 선명이면 안내한 거리링 위치에 초점을 둔 결과다.
+    i.zoneFlow='current';
     try{
+      if(i.zoneOn&&i.zoneGoal==='infinity')Object.assign(i,{cameraDistance:infinityFocus(i).ring,focusInfinity:false});
       validateNote(i,scope);
       return this.writeNote(note(i,date,{version:this.manifest.version,equipment,scope,...this.notePresets()}),date,'촬영 계산');
     }catch(e){return Promise.reject(e);}

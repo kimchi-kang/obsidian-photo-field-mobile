@@ -1,12 +1,17 @@
 {
   "inputs": {
+    "src/field-guide.ts": {
+      "bytes": 4148,
+      "imports": [],
+      "format": "esm"
+    },
     "src/model.ts": {
-      "bytes": 4331,
+      "bytes": 4485,
       "imports": [],
       "format": "esm"
     },
     "src/units.ts": {
-      "bytes": 1848,
+      "bytes": 2546,
       "imports": [],
       "format": "esm"
     },
@@ -96,8 +101,13 @@
       "format": "esm"
     },
     "src/storage.ts": {
-      "bytes": 6201,
+      "bytes": 6383,
       "imports": [
+        {
+          "path": "src/field-guide.ts",
+          "kind": "import-statement",
+          "original": "./field-guide"
+        },
         {
           "path": "src/field.ts",
           "kind": "import-statement",
@@ -132,7 +142,7 @@
       "format": "esm"
     },
     "src/diagram.ts": {
-      "bytes": 11912,
+      "bytes": 11885,
       "imports": [
         {
           "path": "./model",
@@ -153,12 +163,17 @@
       "format": "esm"
     },
     "src/zone.ts": {
-      "bytes": 5403,
+      "bytes": 5784,
       "imports": [
         {
           "path": "./model",
           "kind": "import-statement",
           "external": true
+        },
+        {
+          "path": "src/units.ts",
+          "kind": "import-statement",
+          "original": "./units"
         },
         {
           "path": "src/engine.ts",
@@ -169,7 +184,7 @@
       "format": "esm"
     },
     "src/scale.ts": {
-      "bytes": 1487,
+      "bytes": 1916,
       "imports": [
         {
           "path": "src/engine.ts",
@@ -206,7 +221,7 @@
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 74829,
+      "bytes": 82605,
       "imports": [
         {
           "path": "src/field.ts",
@@ -232,6 +247,11 @@
           "path": "src/engine.ts",
           "kind": "import-statement",
           "original": "./engine"
+        },
+        {
+          "path": "src/field-guide.ts",
+          "kind": "import-statement",
+          "original": "./field-guide"
         },
         {
           "path": "src/units.ts",
@@ -277,7 +297,7 @@
       "format": "esm"
     },
     "src/note.ts": {
-      "bytes": 17065,
+      "bytes": 17991,
       "imports": [
         {
           "path": "src/model.ts",
@@ -295,6 +315,11 @@
           "original": "./zone"
         },
         {
+          "path": "src/shooting-presets.ts",
+          "kind": "import-statement",
+          "original": "./shooting-presets"
+        },
+        {
           "path": "src/units.ts",
           "kind": "import-statement",
           "original": "./units"
@@ -308,7 +333,7 @@
       "format": "esm"
     },
     "src/main.ts": {
-      "bytes": 6927,
+      "bytes": 7210,
       "imports": [
         {
           "path": "obsidian",
@@ -349,6 +374,11 @@
           "path": "src/shooting-presets.ts",
           "kind": "import-statement",
           "original": "./shooting-presets"
+        },
+        {
+          "path": "src/zone.ts",
+          "kind": "import-statement",
+          "original": "./zone"
         }
       ],
       "format": "esm"
@@ -372,13 +402,16 @@
       "entryPoint": "src/main.ts",
       "inputs": {
         "src/main.ts": {
-          "bytesInOutput": 7344
+          "bytesInOutput": 7454
+        },
+        "src/field-guide.ts": {
+          "bytesInOutput": 2529
         },
         "src/model.ts": {
-          "bytesInOutput": 2351
+          "bytesInOutput": 2398
         },
         "src/units.ts": {
-          "bytesInOutput": 1566
+          "bytesInOutput": 2060
         },
         "src/engine.ts": {
           "bytesInOutput": 8133
@@ -396,31 +429,31 @@
           "bytesInOutput": 10978
         },
         "src/storage.ts": {
-          "bytesInOutput": 6039
+          "bytesInOutput": 6183
         },
         "src/writer.ts": {
           "bytesInOutput": 1413
         },
         "src/view.ts": {
-          "bytesInOutput": 80898
+          "bytesInOutput": 89898
         },
         "src/diagram.ts": {
-          "bytesInOutput": 13129
+          "bytesInOutput": 13090
         },
         "src/zone.ts": {
-          "bytesInOutput": 5226
+          "bytesInOutput": 5512
         },
         "src/scale.ts": {
-          "bytesInOutput": 1432
+          "bytesInOutput": 1666
         },
         "src/flash-tools.ts": {
           "bytesInOutput": 5291
         },
         "src/note.ts": {
-          "bytesInOutput": 21567
+          "bytesInOutput": 22293
         }
       },
-      "bytes": 180566
+      "bytes": 194120
     }
   }
 }

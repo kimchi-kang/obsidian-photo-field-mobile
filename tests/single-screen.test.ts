@@ -123,7 +123,7 @@ test('모드별 DOM, 권장 출력, 존 조절과 저장 상태가 함께 갱신
     ])assert.equal(query(selector),null,selector);
     const sections=[...host.querySelector('.pfm-root')!.children].filter(element=>!element.classList.contains('pfm-bulb-flash'));
     assert.deepEqual(sections.map(section=>section.className||section.querySelector('summary')?.textContent||section.tagName),[
-      'pfm-gear-bar','pfm-mode-toggles','pfm-results','pfm-diagram','pfm-quick','장노출 · 상반칙 불궤','FOOTER','카메라·렌즈·필름 프리셋',
+      'pfm-gear-bar','pfm-mode-toggles','pfm-results','pfm-diagram','pfm-quick','상황별 노출 · Sunny 16','구도별 거리 · 보폭','장노출 · 상반칙 불궤','FOOTER','카메라·렌즈·필름 프리셋',
     ]);
 
     button(flash).click();
@@ -211,6 +211,28 @@ test('모드별 DOM, 권장 출력, 존 조절과 저장 상태가 함께 갱신
     button(flash).click();
     assert.deepEqual(cards(),['pfm-zone-result']);
     assert.equal(state.inputs.zoneFlow,'current');
+
+    // 상황별 노출: 장면 칩 8개, 조리개별 셔터 짝, 누르면 조리개·셔터 적용. 동조 초과는 field-guide 테스트에서 본다.
+    assert.equal(host.querySelectorAll('[data-exposure-scene]').length,8);
+    assert.equal(attribute('[data-exposure-scene=sun]','aria-pressed'),'true');
+    button('[data-exposure-scene=cloud]').click();
+    assert.equal(state.inputs.exposureScene,'cloud');
+    assert.equal(attribute('[data-exposure-scene=cloud]','aria-pressed'),'true');
+    button('[data-exposure-scene=sun]').click();
+    assert.ok(host.querySelectorAll('.pfm-exposure-row[data-exposure-aperture]').length>=3);
+    assert.match(query('[data-exposure-aperture="16"]')?.textContent??'',/1\/250|1\/500/);
+    button('[data-exposure-aperture="8"]').click();
+    assert.equal(state.inputs.aperture,8);
+    assert.equal(attribute('[data-exposure-aperture="8"]','aria-current'),'true');
+    // 구도별 거리: 네 구도, 세로·가로 전환, 누르면 그 거리에 초점.
+    assert.equal(host.querySelectorAll('[data-framing-target]').length,4);
+    const portrait=query('[data-framing-target=full] strong')?.textContent;
+    button('[data-framing=landscape]').click();
+    assert.equal(state.inputs.framing,'landscape');
+    assert.notEqual(query('[data-framing-target=full] strong')?.textContent,portrait);
+    button('[data-framing-target=half]').click();
+    assert.equal(attribute('[data-framing-target=half]','aria-current'),'true');
+    assert.match(query('[data-framing-target=half]')?.textContent??'',/걸음/);
   }finally{window.close();}
 });
 

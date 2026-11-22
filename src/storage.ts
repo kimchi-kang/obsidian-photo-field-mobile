@@ -1,3 +1,4 @@
+import {isExposureScene} from './field-guide';
 import {restoreField} from './field';
 import {defaults,Equipment,Inputs,Saved,emptyDraft,FILL_RATIOS} from './model';
 import {equipmentValid,applyEquipment,manualFlash} from './presets';
@@ -37,6 +38,8 @@ export function restore(data:unknown):Saved {
   if(!['nominal','dimensions'].includes(i.cropBasis))i.cropBasis='nominal';
   if(!['current','target'].includes(i.zoneFlow))i.zoneFlow='current';
   if(!['infinity','range'].includes(i.zoneGoal))i.zoneGoal='infinity';
+  if(!isExposureScene(i.exposureScene))i.exposureScene='sun';
+  if(!['portrait','landscape'].includes(i.framing))i.framing='portrait';
   if(typeof d.inputs==='object'&&d.inputs&&!('zoneFlow' in d.inputs)&&!result.migrationBackup)result.migrationBackup=JSON.parse(JSON.stringify(data));
   if(!['manual','ttl','hss','bounce','modifier','near'].includes(i.mode))i.mode='manual';
   if(!['flash','dof','combined','zone'].includes(i.tab))i.tab='combined';

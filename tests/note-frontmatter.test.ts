@@ -76,7 +76,7 @@ test('무한대 속성은 문자열이고 실패한 계산 속성은 생략한�
 test('입력값과 출력별 거리 표는 프론트매터 뒤에서 연속된 행을 유지한다',()=>{
   const {body}=splitNote(note(defaults,date,{version}));
   assert.match(body,/^# 사진 촬영 계산\n/);
-  assert.match(body,/## 입력값\n\n\| 항목 \| 값 \|\n\| --- \| --- \|\n(?:\|[^\n]+\n){38}\n## 계산 결과/);
+  assert.match(body,/## 입력값\n\n\| 항목 \| 값 \|\n\| --- \| --- \|\n(?:\|[^\n]+\n){34}\n## 계산 결과/);
   assert.match(body,/### 출력별 거리\n\n\| 출력 \| 적정 노출 예상 거리 \|\n\| --- \| --- \|\n(?:\|[^\n]+\n){9}\n/);
   assert.equal(note({...defaults,nightMode:true},date,{version}),note(defaults,date,{version}));
 });

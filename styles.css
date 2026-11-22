@@ -302,6 +302,8 @@
 
 /* 버튼은 양각, 누름·켜짐은 음각 + 빨간 글자 */
 .pfm-root button{border:0;border-radius:var(--pfm-control-radius);background:var(--pfm-surface);box-shadow:var(--pfm-out-sm);transition:box-shadow .12s,color .12s;}
+/* Obsidian 기본 hover 배경(밝은 회색)이 탭 뒤에 남지 않게 한다. iOS는 탭한 버튼에 hover가 붙어 있다. */
+.pfm-root button:hover{background:var(--pfm-surface);}
 .pfm-root button:active:not(:disabled){background:var(--pfm-surface);box-shadow:var(--pfm-in);}
 .pfm-root button:disabled{box-shadow:var(--pfm-in-sm);}
 .pfm-root :is(.pfm-mode-toggles button,.pfm-link-toggle,.pfm-night-toggle)[aria-pressed=true],
@@ -443,6 +445,29 @@
 .pfm-root .pfm-ring-row[aria-current=true]{background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
 .pfm-root .pfm-ring-row[aria-current=true] :is(span:first-child,strong){color:var(--pfm-signal);}
 
+.pfm-root .pfm-ring-row span .pfm-diffraction{display:block;margin-top:2px;font-size:var(--pfm-tag);font-weight:700;color:var(--pfm-error);}
+
+/* 현장 도우미: 상황별 노출·구도별 거리 */
+.pfm-root .pfm-scene-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:4px 0 14px;}
+.pfm-root .pfm-scene-chips button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:52px;margin:0;padding:4px 2px;border-radius:12px;line-height:1.15;}
+.pfm-root .pfm-scene-chips button span{font-size:var(--pfm-small);font-weight:700;word-break:keep-all;text-align:center;}
+.pfm-root .pfm-scene-chips button small{font-size:var(--pfm-tag);color:var(--pfm-muted);font-variant-numeric:tabular-nums;}
+.pfm-root .pfm-scene-chips button[aria-pressed=true]{background:var(--pfm-surface-2);color:var(--pfm-signal);box-shadow:var(--pfm-in);}
+.pfm-root .pfm-scene-chips button[aria-pressed=true] small{color:inherit;}
+.pfm-root .pfm-exposure-basis{margin:0 0 10px;font-size:var(--pfm-small);font-weight:700;color:var(--pfm-muted);}
+.pfm-root .pfm-exposure-row{display:grid;grid-template-columns:4.25rem minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;min-height:44px;margin:0 0 8px;padding:6px 12px;text-align:left;font-variant-numeric:tabular-nums;}
+.pfm-root .pfm-exposure-row span{font-size:var(--pfm-small);color:var(--pfm-muted);font-weight:650;}
+.pfm-root .pfm-exposure-row strong{font-size:1.0625rem;font-weight:600;}
+.pfm-root .pfm-exposure-row small{font-size:var(--pfm-tag);font-weight:700;color:var(--pfm-muted);text-align:right;}
+.pfm-root .pfm-exposure-row[data-state=warn] small{color:var(--pfm-signal);}
+.pfm-root .pfm-exposure-row[data-state=bad] :is(strong,small){color:var(--pfm-error);}
+.pfm-root .pfm-exposure-row[aria-current=true]{background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
+.pfm-root .pfm-exposure-row[aria-current=true] :is(span,strong){color:var(--pfm-signal);}
+.pfm-root .pfm-exposure-row:disabled{opacity:1;}
+.pfm-root .pfm-exposure-note{margin:6px 0 0;font-size:var(--pfm-small);color:var(--pfm-muted);}
+.pfm-root .pfm-framing-toggle{margin-top:4px;}
+.pfm-root .pfm-dof-results .pfm-shallow{margin:10px 0 0;padding:8px 12px;border-radius:12px;font-size:var(--pfm-small);font-weight:700;box-shadow:var(--pfm-in-sm),inset 3px 0 0 var(--pfm-signal);}
+
 /* 렌즈 거리링 눈금: 숫자 없는 보조 눈금은 짧은 선만 */
 .pfm-root .pfm-focus-ticks span.pfm-tick-a{padding-top:7px;}
 .pfm-root .pfm-focus-ticks span.pfm-tick-a::before{height:5px;}
@@ -477,14 +502,11 @@
 .pfm-root[data-night=true] option{background:var(--pfm-bg);color:var(--pfm-ink);}
 .pfm-root[data-night=true] a{color:var(--pfm-muted);}
 
-.pfm-root .pfm-safe-range{
- margin:0;padding:var(--pfm-space-2) var(--pfm-space-3);
- border:1px solid var(--pfm-line);background:var(--pfm-surface);font-weight:750;
-}
-.pfm-root .pfm-safe-range:is([data-state=range],[data-state=empty]){border-inline-start-color:var(--pfm-signal);}
+.pfm-root .pfm-safe-range{margin:0;padding:12px 16px;font-weight:750;}
+.pfm-root .pfm-safe-range:is([data-state=range],[data-state=empty]){box-shadow:var(--pfm-out),inset 3px 0 0 var(--pfm-signal);}
 .pfm-root .pfm-safe-band{fill:none;stroke:var(--pfm-signal);stroke-width:1px;vector-effect:non-scaling-stroke;pointer-events:none;}
 .pfm-root .pfm-key-safe::before{border:1px solid var(--pfm-signal);}
-.pfm-root .pfm-fill{padding:0 var(--pfm-space-3);border:1px solid var(--pfm-line);background:var(--pfm-surface);}
+.pfm-root .pfm-fill{padding:0 var(--pfm-space-3);}
 .pfm-root :is(.pfm-fill,.pfm-calibration)>button{
  width:100%;margin:0 0 var(--pfm-space-2);min-height:var(--pfm-control);
 }
@@ -504,9 +526,8 @@
  font-size:1.5rem;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;
 }
 .pfm-root .pfm-reciprocity .pfm-bulb-countdown{
- padding:var(--pfm-space-3);background:var(--pfm-ink);color:var(--pfm-bg);font-size:2.25rem;text-align:center;
+ padding:var(--pfm-space-3);font-size:2.25rem;text-align:center;
 }
 .pfm-root .pfm-bulb-flash{
  position:fixed;inset:0;z-index:10;pointer-events:none;background:var(--pfm-ink);opacity:0;
 }
-.pfm-root[data-bulb-ended=true] .pfm-bulb-countdown{background:var(--pfm-bg);color:var(--pfm-ink);outline:1px solid var(--pfm-ink);}
