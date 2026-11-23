@@ -18,6 +18,7 @@ export const VIEW='photo-field-mobile';
 const FILM_SPEEDS=[12,25,50,100,200,400,800,1600,3200,6400];
 type NumericKey = {[K in keyof Inputs]: Inputs[K] extends number ? K : never}[keyof Inputs];
 type FocusLimits = ReturnType<typeof optics>;
+const EI_MIN=6,EI_MAX=25600;
 let nextControlId=0;
 function node<K extends keyof HTMLElementTagNameMap>(parent:HTMLElement,tag:K,text?:string,cls?:string):HTMLElementTagNameMap[K] {
   const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;parent.append(e);return e;
@@ -69,8 +70,8 @@ export class PhotoView extends ItemView {
       });
       chip.className='pfm-gear-chip';
       chip.dataset.presetChip=kind;
-      node(chip,'span',presetLabels[kind],'pfm-gear-label');
-      return {kind,chip,value:node(chip,'strong'),tag:node(chip,'small',undefined,'pfm-gear-tag')};
+      const label=node(chip,'span',presetLabels[kind],'pfm-gear-label');
+      return {kind,chip,label,value:node(chip,'strong'),tag:node(chip,'small',undefined,'pfm-gear-tag')};
     });
     this.gearList=node(bar,'div',undefined,'pfm-gear-picker');
     this.gearList.id=`pfm-presets-${++nextControlId}`;
@@ -82,13 +83,17 @@ export class PhotoView extends ItemView {
       const values={
         cameras:camera?.id==='nikon-fm2n'&&camera.name==='Nikon FM2N (신형, 1984~)'?'FM2N':camera?.name??'선택 안 함',
         lenses:lens?.id==='nikkor-50-14-ais'&&lens.name==='Nikkor 50mm f/1.4 AI-S'
-          ?`${fmt(lens.focal)}mm f/${fmt(lens.apertureMin)}`:lens?.name??`${fmt(s.inputs.focal)}mm · 저장값`,
-        films:film?`${filmName} · EI ${Number.isFinite(s.inputs.iso)?s.inputs.iso:'—'}`:'선택 안 함',
+          ?`${fmt(lens.focal)}mm f/${fmt(lens.apertureMin)}`:lens?.name??`${fmt(s.inputs.focal)}mm`,
+        films:film?filmName??film.name:'선택 안 함',
       };
       const accessible={cameras:camera?.name,lenses:lens?.name,films:film?filmInfo(film,s.inputs.iso):undefined};
-      for(const {kind,chip,value,tag} of controls){
+      // 좁은 폰에서도 EI가 잘리지 않도록 필름 칩은 위 작은 라벨에 EI를 둔다.
+      const ei=Number.isFinite(s.inputs.iso)?fmt(s.inputs.iso,0):'—';
+      for(const {kind,chip,label,value,tag} of controls){
+        label.textContent=kind==='films'?`${presetLabels[kind]} · EI ${ei}`:presetLabels[kind];
         value.textContent=values[kind];
-        tag.textContent=kind==='films'&&film?filmTypes[film.type]:'';
+        // 렌즈를 안 골랐으면 초점거리만 크게, '저장값'은 아래 작은 태그로 내려 잘리지 않게 한다.
+        tag.textContent=kind==='films'&&film?filmTypes[film.type]:kind==='lenses'&&!lens?'저장값':'';
         tag.hidden=!tag.textContent;
         chip.setAttribute('aria-expanded',String(this.gearOpen===kind));
         const description=accessible[kind]??values[kind];
@@ -117,6 +122,29 @@ export class PhotoView extends ItemView {
     };
     this.paintGearList();
   }
+  /** 필름 피커 맨 위의 EI 한 스톱 증감. 증감 현상 테스트나 필름 없이 감도만 바꿀 때 쓴다. */
+  private eiStepper(parent:HTMLElement):void {
+    const i=this.plugin.state.inputs;
+    const row=node(parent,'div',undefined,'pfm-ei-stepper');
+    row.setAttribute('role','group');row.setAttribute('aria-label','사용 감도 EI');
+    const film=selectedPreset(this.plugin.state,'films');
+    const current=node(row,'output');
+    const paint=()=>{
+      const delta=film&&Number.isFinite(i.iso)?eiStops(i.iso,film.iso):0;
+      const push=Math.abs(delta)<0.05?'':` · ${delta>0?'+':'−'}${fmt(Math.abs(delta),1)}스톱`;
+      current.textContent=`EI ${Number.isFinite(i.iso)?fmt(i.iso,0):'—'}${push}`;
+      down.disabled=!(i.iso/2>=EI_MIN);up.disabled=!(i.iso*2<=EI_MAX);
+    };
+    const step=(factor:number)=>{
+      const next=Math.round(i.iso*factor);
+      if(!Number.isFinite(next)||next<EI_MIN||next>EI_MAX)return;
+      this.plugin.update('iso',next);this.syncNumeric('iso');this.changed();paint();
+    };
+    const down=this.button(row,'−1',()=>step(0.5));down.setAttribute('aria-label','EI 한 스톱 낮추기');down.dataset.eiStep='down';
+    row.append(current);
+    const up=this.button(row,'+1',()=>step(2));up.setAttribute('aria-label','EI 한 스톱 올리기');up.dataset.eiStep='up';
+    paint();
+  }
   private paintGearList():void {
     const kind=this.gearOpen,list=this.gearList;
     list.replaceChildren();
@@ -124,6 +152,7 @@ export class PhotoView extends ItemView {
     if(!kind)return;
     const state=this.plugin.state;
     const selected=selectedPreset(state,kind)?.id??'';
+    if(kind==='films')this.eiStepper(list);
     const group=node(list,'div');
     group.setAttribute('role','radiogroup');group.setAttribute('aria-label',`${presetLabels[kind]} 프리셋 선택`);
     const items=[{id:'',name:'선택 안 함'},...state[kind]];
@@ -828,9 +857,9 @@ export class PhotoView extends ItemView {
     syncExponent();
     paintResult();
   }
-  private fillPanel(parent:HTMLElement):void {
-    const fill=node(parent,'details',undefined,'pfm-fill');
-    node(fill,'summary','필인 플래시');
+  private fillPanel():void {
+    // 야외 역광에서 바로 꺼내 쓰도록 상황별 노출·구도별 거리와 같은 단계에 둔다.
+    const fill=this.details('필인 플래시','fill');fill.classList.add('pfm-fill-tool');
     node(fill,'p','주광 노출을 먼저 맞추세요. 현재 조리개로 필인 출력을 계산합니다.');
     const camera=selectedPreset(this.plugin.state,'cameras');const limit=syncLimit(camera);
     const shutter=this.select(fill,'셔터 속도','shutter',{});
@@ -978,15 +1007,17 @@ export class PhotoView extends ItemView {
     };
     syncNight();
     this.results=node(this.root,'section',undefined,'pfm-results');this.results.setAttribute('aria-live','polite');
-    this.picture=node(this.root,'figure',undefined,'pfm-diagram');this.sceneControls();this.flushOnEnd();
-    this.quickControls();
+    // 결과를 보면서 바로 조절하도록 빠른 조절을 결과 바로 밑에 둔다.
+    // 존 포커싱은 그림의 선명 구간 띠를 끄는 것이 조작이라 그림을 먼저 둔다.
+    const scene=()=>{this.picture=node(this.root,'figure',undefined,'pfm-diagram');this.sceneControls();this.flushOnEnd();};
+    if(i.zoneOn){scene();this.quickControls();}else{this.quickControls();scene();}
     this.paintGuides=[];
     this.exposurePanel();
     this.framingPanel();
-    if(i.flashOn)this.flashPanel();
+    if(i.flashOn){this.fillPanel();this.flashPanel();}
     this.reciprocityPanel();
-    this.saveControls();
     this.presetManager();
+    this.saveControls();
     this.restoreDetails();
     this.paint();
   }
@@ -998,16 +1029,20 @@ export class PhotoView extends ItemView {
     if(!(i.zoneOn&&i.zoneGoal==='infinity'))this.number(quick,'초점 맞출 거리 (m)','cameraDistance');
     this.number(quick,'조리개 (f/)','aperture',{min:0.7,max:32,step:0.1});
     if(!i.flashOn)return;
-    this.power=this.select(quick,'출력 선택','denominator',{},()=>this.numeric.get('denominator')?.sync());
-    const powerAdjust=node(quick,'div',undefined,'pfm-field-power');
-    for(const [direction,label] of [['weaker','출력 약하게'],['stronger','출력 강하게']] as const){
-      const button=this.button(powerAdjust,label,()=>{
+    // 플래시 출력은 [− | 출력 ▾ | +] 한 줄로 둔다.
+    const powerRow=node(quick,'div',undefined,'pfm-field-power');
+    const powerButton=(direction:'weaker'|'stronger',sign:string,label:string)=>{
+      const button=this.button(powerRow,sign,()=>{
         const next=nextPower(i,direction);if(next===undefined)return;
         this.plugin.update('denominator',next);this.syncNumeric('denominator');this.changed();
         if(button.disabled)this.powerButtons[direction==='weaker'?'stronger':'weaker']?.focus({preventScroll:true});
       });
+      button.setAttribute('aria-label',label);button.title=label;
       button.dataset.powerDirection=direction;this.powerButtons[direction]=button;
-    }
+    };
+    powerButton('weaker','−','출력 약하게');
+    this.power=this.select(powerRow,'플래시 출력','denominator',{},()=>this.numeric.get('denominator')?.sync());
+    powerButton('stronger','+','출력 강하게');
     this.linkToggle=this.button(quick,'',()=>{this.plugin.update('linked',!i.linked);this.changed();});
     this.linkToggle.className='pfm-link-toggle';
     this.number(quick,'플래시 → 피사체 거리 (m)','flashDistance',{min:0.1,max:30,step:0.1});
@@ -1039,7 +1074,6 @@ export class PhotoView extends ItemView {
     const steps=this.text(output,'지원 출력 분모 (쉼표 구분)',i.steps);steps.dataset.key='steps';
     this.listen(steps,'input',()=>{this.plugin.update('steps',steps.value);this.changed();});
     this.calibrationPanel(fl);
-    this.fillPanel(fl);
   }
   private saveControls():void {
     const footer=node(this.root,'footer');
@@ -1149,13 +1183,15 @@ export class PhotoView extends ItemView {
     const flashPanel=node(this.results,'div',undefined,'pfm-flash-results');const equipment=selectedEquipment(this.plugin.state);
     if(i.gnMode==='equipment')node(flashPanel,'small',equipment?`${equipment.name} · 사용 가능 줌 ${Object.keys(equipment.table).join(', ')}mm`:'선택 장비 없음 · 장비를 선택하거나 수동 GN으로 전환하세요.');
     try {const f=flash(i);if(!f.supported)node(flashPanel,'p',f.powerLabel,'pfm-warning');node(flashPanel,'p','적정 노출 예상 거리','pfm-eyebrow');const hero=node(flashPanel,'div',undefined,'pfm-hero');const display=distanceParts(f.d);node(hero,'span',display.value,'pfm-value');hero.append(document.createTextNode(' '));node(hero,'span',display.unit,'pfm-unit');
-      node(flashPanel,'p',`1/${i.denominator} · f/${fmt(i.aperture)} · ISO ${fmt(i.iso,0)} · ${equipment?'GN':'수동 GN'} ${fmt(f.g)}m (${fmt(i.zoom)}mm·ISO100 최대) · ${i.linked?'온카메라':'오프카메라'} · 직접광·일반 동조`);
+      node(flashPanel,'p',`1/${i.denominator} · f/${fmt(i.aperture)} · ISO ${fmt(i.iso,0)} · GN ${fmt(f.g)}m@${fmt(i.zoom)}mm · ${i.linked?'온카메라':'오프카메라'}`);
       if(i.conditions.includes('연습용 가상 GN'))node(flashPanel,'small','연습용 GN · 실제 장비 사양 아님','pfm-model-note');
       const label=f.ev>i.tolerance?'예상 과다 노출':f.ev< -i.tolerance?'예상 부족 노출':'허용 범위 내';
       node(flashPanel,'p',`${metres(f.r)}에서 ${f.ev>0?'+':''}${fmt(f.ev)} EV · ${label}`,'pfm-ev').dataset.state=f.ev>i.tolerance?'over':f.ev< -i.tolerance?'under':'ok';
       const action=node(flashPanel,'div',undefined,'pfm-output-action');
-      node(action,'p',`권장 지원 출력 1/${f.nearest} · 적용 후 남는 오차 ${f.residual>0?'+':''}${fmt(f.residual)} EV${f.status==='장비 출력 범위 안'?'':` · ${f.status}`}`);
-      const apply=node(action,'button',i.denominator===f.nearest?'권장 출력과 같음':`권장 출력 1/${f.nearest} 적용`);apply.type='button';apply.dataset.flashApply='true';apply.disabled=i.denominator===f.nearest;apply.onclick=()=>{this.applyOutput(f.nearest);this.root.querySelector<HTMLElement>('[data-flash-undo]')?.focus({preventScroll:true});};
+      // 이미 권장 출력이면 버튼 없이 한 줄만 남긴다.
+      const matched=i.denominator===f.nearest;action.dataset.matched=String(matched);
+      node(action,'p',`${matched?'권장 출력 1/'+f.nearest+' 사용 중 · 남는 오차':'권장 지원 출력 1/'+f.nearest+' · 적용 후 남는 오차'} ${f.residual>0?'+':''}${fmt(f.residual)} EV${f.status==='장비 출력 범위 안'?'':` · ${f.status}`}`);
+      if(!matched){const apply=node(action,'button',`권장 출력 1/${f.nearest} 적용`);apply.type='button';apply.dataset.flashApply='true';apply.onclick=()=>{this.applyOutput(f.nearest);this.root.querySelector<HTMLElement>('[data-flash-undo]')?.focus({preventScroll:true});};}
       if(this.outputUndo){const before=this.outputUndo.before;const undo=node(action,'button',`권장 출력 적용 취소 · 1/${before}로`);undo.type='button';undo.dataset.flashUndo='true';undo.onclick=()=>{this.outputUndo=undefined;this.plugin.update('denominator',before);this.syncNumeric('denominator');this.changed();this.root.querySelector<HTMLElement>('[data-flash-apply]')?.focus({preventScroll:true});};}
       return f;
     }catch(e){node(flashPanel,'p','적정 노출 예상 거리','pfm-eyebrow');node(flashPanel,'div','—','pfm-hero');node(flashPanel,'p',i.gnMode==='equipment'&&!equipment?'선택 장비를 찾을 수 없습니다. 내 장비에서 복구하거나 장비를 다시 선택하세요.':i.gnMode==='equipment'&&i.gn<=0?(equipment?.table[String(i.zoom)]===undefined?`${fmt(i.zoom)}mm 줌의 GN 자료가 없습니다. 이 장비의 사용 가능 줌: ${Object.keys(equipment?.table??{}).join(', ')}mm. 플래시 줌 또는 장비 GN 표를 확인하세요.`:i.conditions):!Number.isFinite(i.gn)||i.gn<=0?'수동 GN이 비었거나 0 이하입니다. ISO100 최대 출력 GN을 입력하세요.':e instanceof Error?e.message:String(e),'pfm-error');const disabled=node(flashPanel,'button','권장 출력 적용 불가');disabled.type='button';disabled.disabled=true;disabled.dataset.flashApply='true';disabled.className='pfm-error-action';const fix=node(flashPanel,'button',i.gnMode==='equipment'&&i.gn<=0?(equipment?'장비 줌·GN 확인':'장비 선택 확인'):'플래시 조건 확인');fix.type='button';fix.className='pfm-error-action';fix.onclick=()=>this.jumpSettings('flash');}

@@ -1387,6 +1387,8 @@ function flashCheatsheet(i) {
 // src/view.ts
 var VIEW = "photo-field-mobile";
 var FILM_SPEEDS = [12, 25, 50, 100, 200, 400, 800, 1600, 3200, 6400];
+var EI_MIN = 6;
+var EI_MAX = 25600;
 var nextControlId = 0;
 function node(parent, tag, text, cls) {
   const e = document.createElement(tag);
@@ -1432,8 +1434,8 @@ var PhotoView = class extends import_obsidian.ItemView {
       });
       chip.className = "pfm-gear-chip";
       chip.dataset.presetChip = kind;
-      node(chip, "span", presetLabels[kind], "pfm-gear-label");
-      return { kind, chip, value: node(chip, "strong"), tag: node(chip, "small", void 0, "pfm-gear-tag") };
+      const label = node(chip, "span", presetLabels[kind], "pfm-gear-label");
+      return { kind, chip, label, value: node(chip, "strong"), tag: node(chip, "small", void 0, "pfm-gear-tag") };
     });
     this.gearList = node(bar, "div", void 0, "pfm-gear-picker");
     this.gearList.id = `pfm-presets-${++nextControlId}`;
@@ -1444,13 +1446,15 @@ var PhotoView = class extends import_obsidian.ItemView {
       const filmName = film?.name.replace(/^Kodak /, "");
       const values = {
         cameras: camera?.id === "nikon-fm2n" && camera.name === "Nikon FM2N (\uC2E0\uD615, 1984~)" ? "FM2N" : camera?.name ?? "\uC120\uD0DD \uC548 \uD568",
-        lenses: lens?.id === "nikkor-50-14-ais" && lens.name === "Nikkor 50mm f/1.4 AI-S" ? `${fmt(lens.focal)}mm f/${fmt(lens.apertureMin)}` : lens?.name ?? `${fmt(s.inputs.focal)}mm \xB7 \uC800\uC7A5\uAC12`,
-        films: film ? `${filmName} \xB7 EI ${Number.isFinite(s.inputs.iso) ? s.inputs.iso : "\u2014"}` : "\uC120\uD0DD \uC548 \uD568"
+        lenses: lens?.id === "nikkor-50-14-ais" && lens.name === "Nikkor 50mm f/1.4 AI-S" ? `${fmt(lens.focal)}mm f/${fmt(lens.apertureMin)}` : lens?.name ?? `${fmt(s.inputs.focal)}mm`,
+        films: film ? filmName ?? film.name : "\uC120\uD0DD \uC548 \uD568"
       };
       const accessible = { cameras: camera?.name, lenses: lens?.name, films: film ? filmInfo(film, s.inputs.iso) : void 0 };
-      for (const { kind, chip, value, tag } of controls) {
+      const ei = Number.isFinite(s.inputs.iso) ? fmt(s.inputs.iso, 0) : "\u2014";
+      for (const { kind, chip, label, value, tag } of controls) {
+        label.textContent = kind === "films" ? `${presetLabels[kind]} \xB7 EI ${ei}` : presetLabels[kind];
         value.textContent = values[kind];
-        tag.textContent = kind === "films" && film ? filmTypes[film.type] : "";
+        tag.textContent = kind === "films" && film ? filmTypes[film.type] : kind === "lenses" && !lens ? "\uC800\uC7A5\uAC12" : "";
         tag.hidden = !tag.textContent;
         chip.setAttribute("aria-expanded", String(this.gearOpen === kind));
         const description = accessible[kind] ?? values[kind];
@@ -1480,6 +1484,38 @@ var PhotoView = class extends import_obsidian.ItemView {
     };
     this.paintGearList();
   }
+  /** 필름 피커 맨 위의 EI 한 스톱 증감. 증감 현상 테스트나 필름 없이 감도만 바꿀 때 쓴다. */
+  eiStepper(parent) {
+    const i = this.plugin.state.inputs;
+    const row = node(parent, "div", void 0, "pfm-ei-stepper");
+    row.setAttribute("role", "group");
+    row.setAttribute("aria-label", "\uC0AC\uC6A9 \uAC10\uB3C4 EI");
+    const film = selectedPreset(this.plugin.state, "films");
+    const current = node(row, "output");
+    const paint = () => {
+      const delta = film && Number.isFinite(i.iso) ? eiStops(i.iso, film.iso) : 0;
+      const push = Math.abs(delta) < 0.05 ? "" : ` \xB7 ${delta > 0 ? "+" : "\u2212"}${fmt(Math.abs(delta), 1)}\uC2A4\uD1B1`;
+      current.textContent = `EI ${Number.isFinite(i.iso) ? fmt(i.iso, 0) : "\u2014"}${push}`;
+      down.disabled = !(i.iso / 2 >= EI_MIN);
+      up.disabled = !(i.iso * 2 <= EI_MAX);
+    };
+    const step = (factor) => {
+      const next = Math.round(i.iso * factor);
+      if (!Number.isFinite(next) || next < EI_MIN || next > EI_MAX) return;
+      this.plugin.update("iso", next);
+      this.syncNumeric("iso");
+      this.changed();
+      paint();
+    };
+    const down = this.button(row, "\u22121", () => step(0.5));
+    down.setAttribute("aria-label", "EI \uD55C \uC2A4\uD1B1 \uB0AE\uCD94\uAE30");
+    down.dataset.eiStep = "down";
+    row.append(current);
+    const up = this.button(row, "+1", () => step(2));
+    up.setAttribute("aria-label", "EI \uD55C \uC2A4\uD1B1 \uC62C\uB9AC\uAE30");
+    up.dataset.eiStep = "up";
+    paint();
+  }
   paintGearList() {
     const kind = this.gearOpen, list = this.gearList;
     list.replaceChildren();
@@ -1487,6 +1523,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (!kind) return;
     const state = this.plugin.state;
     const selected = selectedPreset(state, kind)?.id ?? "";
+    if (kind === "films") this.eiStepper(list);
     const group = node(list, "div");
     group.setAttribute("role", "radiogroup");
     group.setAttribute("aria-label", `${presetLabels[kind]} \uD504\uB9AC\uC14B \uC120\uD0DD`);
@@ -2451,9 +2488,9 @@ var PhotoView = class extends import_obsidian.ItemView {
     syncExponent();
     paintResult();
   }
-  fillPanel(parent) {
-    const fill = node(parent, "details", void 0, "pfm-fill");
-    node(fill, "summary", "\uD544\uC778 \uD50C\uB798\uC2DC");
+  fillPanel() {
+    const fill = this.details("\uD544\uC778 \uD50C\uB798\uC2DC", "fill");
+    fill.classList.add("pfm-fill-tool");
     node(fill, "p", "\uC8FC\uAD11 \uB178\uCD9C\uC744 \uBA3C\uC800 \uB9DE\uCD94\uC138\uC694. \uD604\uC7AC \uC870\uB9AC\uAC1C\uB85C \uD544\uC778 \uCD9C\uB825\uC744 \uACC4\uC0B0\uD569\uB2C8\uB2E4.");
     const camera = selectedPreset(this.plugin.state, "cameras");
     const limit = syncLimit(camera);
@@ -2642,17 +2679,28 @@ var PhotoView = class extends import_obsidian.ItemView {
     syncNight();
     this.results = node(this.root, "section", void 0, "pfm-results");
     this.results.setAttribute("aria-live", "polite");
-    this.picture = node(this.root, "figure", void 0, "pfm-diagram");
-    this.sceneControls();
-    this.flushOnEnd();
-    this.quickControls();
+    const scene = () => {
+      this.picture = node(this.root, "figure", void 0, "pfm-diagram");
+      this.sceneControls();
+      this.flushOnEnd();
+    };
+    if (i.zoneOn) {
+      scene();
+      this.quickControls();
+    } else {
+      this.quickControls();
+      scene();
+    }
     this.paintGuides = [];
     this.exposurePanel();
     this.framingPanel();
-    if (i.flashOn) this.flashPanel();
+    if (i.flashOn) {
+      this.fillPanel();
+      this.flashPanel();
+    }
     this.reciprocityPanel();
-    this.saveControls();
     this.presetManager();
+    this.saveControls();
     this.restoreDetails();
     this.paint();
   }
@@ -2663,10 +2711,9 @@ var PhotoView = class extends import_obsidian.ItemView {
     if (!(i.zoneOn && i.zoneGoal === "infinity")) this.number(quick, "\uCD08\uC810 \uB9DE\uCD9C \uAC70\uB9AC (m)", "cameraDistance");
     this.number(quick, "\uC870\uB9AC\uAC1C (f/)", "aperture", { min: 0.7, max: 32, step: 0.1 });
     if (!i.flashOn) return;
-    this.power = this.select(quick, "\uCD9C\uB825 \uC120\uD0DD", "denominator", {}, () => this.numeric.get("denominator")?.sync());
-    const powerAdjust = node(quick, "div", void 0, "pfm-field-power");
-    for (const [direction, label] of [["weaker", "\uCD9C\uB825 \uC57D\uD558\uAC8C"], ["stronger", "\uCD9C\uB825 \uAC15\uD558\uAC8C"]]) {
-      const button = this.button(powerAdjust, label, () => {
+    const powerRow = node(quick, "div", void 0, "pfm-field-power");
+    const powerButton = (direction, sign, label) => {
+      const button = this.button(powerRow, sign, () => {
         const next = nextPower(i, direction);
         if (next === void 0) return;
         this.plugin.update("denominator", next);
@@ -2674,9 +2721,14 @@ var PhotoView = class extends import_obsidian.ItemView {
         this.changed();
         if (button.disabled) this.powerButtons[direction === "weaker" ? "stronger" : "weaker"]?.focus({ preventScroll: true });
       });
+      button.setAttribute("aria-label", label);
+      button.title = label;
       button.dataset.powerDirection = direction;
       this.powerButtons[direction] = button;
-    }
+    };
+    powerButton("weaker", "\u2212", "\uCD9C\uB825 \uC57D\uD558\uAC8C");
+    this.power = this.select(powerRow, "\uD50C\uB798\uC2DC \uCD9C\uB825", "denominator", {}, () => this.numeric.get("denominator")?.sync());
+    powerButton("stronger", "+", "\uCD9C\uB825 \uAC15\uD558\uAC8C");
     this.linkToggle = this.button(quick, "", () => {
       this.plugin.update("linked", !i.linked);
       this.changed();
@@ -2719,7 +2771,6 @@ var PhotoView = class extends import_obsidian.ItemView {
       this.changed();
     });
     this.calibrationPanel(fl);
-    this.fillPanel(fl);
   }
   saveControls() {
     const footer = node(this.root, "footer");
@@ -2961,20 +3012,23 @@ var PhotoView = class extends import_obsidian.ItemView {
       node(hero, "span", display.value, "pfm-value");
       hero.append(document.createTextNode(" "));
       node(hero, "span", display.unit, "pfm-unit");
-      node(flashPanel, "p", `1/${i.denominator} \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} \xB7 ${equipment ? "GN" : "\uC218\uB3D9 GN"} ${fmt(f.g)}m (${fmt(i.zoom)}mm\xB7ISO100 \uCD5C\uB300) \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"} \xB7 \uC9C1\uC811\uAD11\xB7\uC77C\uBC18 \uB3D9\uC870`);
+      node(flashPanel, "p", `1/${i.denominator} \xB7 f/${fmt(i.aperture)} \xB7 ISO ${fmt(i.iso, 0)} \xB7 GN ${fmt(f.g)}m@${fmt(i.zoom)}mm \xB7 ${i.linked ? "\uC628\uCE74\uBA54\uB77C" : "\uC624\uD504\uCE74\uBA54\uB77C"}`);
       if (i.conditions.includes("\uC5F0\uC2B5\uC6A9 \uAC00\uC0C1 GN")) node(flashPanel, "small", "\uC5F0\uC2B5\uC6A9 GN \xB7 \uC2E4\uC81C \uC7A5\uBE44 \uC0AC\uC591 \uC544\uB2D8", "pfm-model-note");
       const label = f.ev > i.tolerance ? "\uC608\uC0C1 \uACFC\uB2E4 \uB178\uCD9C" : f.ev < -i.tolerance ? "\uC608\uC0C1 \uBD80\uC871 \uB178\uCD9C" : "\uD5C8\uC6A9 \uBC94\uC704 \uB0B4";
       node(flashPanel, "p", `${metres(f.r)}\uC5D0\uC11C ${f.ev > 0 ? "+" : ""}${fmt(f.ev)} EV \xB7 ${label}`, "pfm-ev").dataset.state = f.ev > i.tolerance ? "over" : f.ev < -i.tolerance ? "under" : "ok";
       const action = node(flashPanel, "div", void 0, "pfm-output-action");
-      node(action, "p", `\uAD8C\uC7A5 \uC9C0\uC6D0 \uCD9C\uB825 1/${f.nearest} \xB7 \uC801\uC6A9 \uD6C4 \uB0A8\uB294 \uC624\uCC28 ${f.residual > 0 ? "+" : ""}${fmt(f.residual)} EV${f.status === "\uC7A5\uBE44 \uCD9C\uB825 \uBC94\uC704 \uC548" ? "" : ` \xB7 ${f.status}`}`);
-      const apply = node(action, "button", i.denominator === f.nearest ? "\uAD8C\uC7A5 \uCD9C\uB825\uACFC \uAC19\uC74C" : `\uAD8C\uC7A5 \uCD9C\uB825 1/${f.nearest} \uC801\uC6A9`);
-      apply.type = "button";
-      apply.dataset.flashApply = "true";
-      apply.disabled = i.denominator === f.nearest;
-      apply.onclick = () => {
-        this.applyOutput(f.nearest);
-        this.root.querySelector("[data-flash-undo]")?.focus({ preventScroll: true });
-      };
+      const matched = i.denominator === f.nearest;
+      action.dataset.matched = String(matched);
+      node(action, "p", `${matched ? "\uAD8C\uC7A5 \uCD9C\uB825 1/" + f.nearest + " \uC0AC\uC6A9 \uC911 \xB7 \uB0A8\uB294 \uC624\uCC28" : "\uAD8C\uC7A5 \uC9C0\uC6D0 \uCD9C\uB825 1/" + f.nearest + " \xB7 \uC801\uC6A9 \uD6C4 \uB0A8\uB294 \uC624\uCC28"} ${f.residual > 0 ? "+" : ""}${fmt(f.residual)} EV${f.status === "\uC7A5\uBE44 \uCD9C\uB825 \uBC94\uC704 \uC548" ? "" : ` \xB7 ${f.status}`}`);
+      if (!matched) {
+        const apply = node(action, "button", `\uAD8C\uC7A5 \uCD9C\uB825 1/${f.nearest} \uC801\uC6A9`);
+        apply.type = "button";
+        apply.dataset.flashApply = "true";
+        apply.onclick = () => {
+          this.applyOutput(f.nearest);
+          this.root.querySelector("[data-flash-undo]")?.focus({ preventScroll: true });
+        };
+      }
       if (this.outputUndo) {
         const before = this.outputUndo.before;
         const undo2 = node(action, "button", `\uAD8C\uC7A5 \uCD9C\uB825 \uC801\uC6A9 \uCDE8\uC18C \xB7 1/${before}\uB85C`);

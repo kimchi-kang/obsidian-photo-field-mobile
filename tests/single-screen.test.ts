@@ -123,7 +123,7 @@ test('모드별 DOM, 권장 출력, 존 조절과 저장 상태가 함께 갱신
     ])assert.equal(query(selector),null,selector);
     const sections=[...host.querySelector('.pfm-root')!.children].filter(element=>!element.classList.contains('pfm-bulb-flash'));
     assert.deepEqual(sections.map(section=>section.className||section.querySelector('summary')?.textContent||section.tagName),[
-      'pfm-gear-bar','pfm-mode-toggles','pfm-results','pfm-diagram','pfm-quick','상황별 노출 · Sunny 16','구도별 거리 · 보폭','장노출 · 상반칙 불궤','FOOTER','카메라·렌즈·필름 프리셋',
+      'pfm-gear-bar','pfm-mode-toggles','pfm-results','pfm-quick','pfm-diagram','상황별 노출 · Sunny 16','구도별 거리 · 보폭','장노출 · 상반칙 불궤','카메라·렌즈·필름 프리셋','FOOTER',
     ]);
 
     button(flash).click();
@@ -136,6 +136,21 @@ test('모드별 DOM, 권장 출력, 존 조절과 저장 상태가 함께 갱신
     assert.ok(state.inputs.denominator>initialPower);
     button('[data-power-direction=stronger]').click();
     assert.equal(state.inputs.denominator,initialPower);
+    // 출력은 [− | 선택 | +] 한 줄, 필인 플래시는 1단계 아코디언.
+    assert.deepEqual([...query('.pfm-field-power')!.children].map(n=>n.tagName),['BUTTON','LABEL','BUTTON']);
+    assert.equal(query('[data-pfm-settings=fill]')?.parentElement?.classList.contains('pfm-root'),true);
+    // 권장 출력과 같으면 적용 버튼 없이 한 줄만 남는다.
+    const matched=query<HTMLElement>('.pfm-output-action')!.dataset.matched==='true';
+    assert.equal(!!query('[data-flash-apply]'),!matched);
+    // 필름 피커의 EI 한 스톱 증감과 칩 라벨.
+    const iso=state.inputs.iso;
+    button('[data-preset-chip=films]').click();
+    button('[data-ei-step=up]').click();
+    assert.equal(state.inputs.iso,iso*2);
+    assert.match(query('[data-preset-chip=films] .pfm-gear-label')!.textContent!,new RegExp(`EI ${iso*2}`));
+    button('[data-ei-step=down]').click();
+    assert.equal(state.inputs.iso,iso);
+    button('[data-preset-chip=films]').click();
     const recommend='.pfm-output-action p',ev='.pfm-ev';
     const checkExposureChanges=(edit:()=>void)=>{
       const before=[query(recommend)?.textContent,query(ev)?.textContent];

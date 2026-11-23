@@ -70,8 +70,6 @@
 .pfm-root .pfm-preset-manager,.pfm-root .pfm-preset-form{display:grid;gap:var(--pfm-space-2);min-width:0;}
 .pfm-root .pfm-preset-manager select,.pfm-root .pfm-preset-form input:not([type=checkbox]){width:100%;min-width:0;}
 
-/* 플래시 결과 카드 식별자 */
-.pfm-root .pfm-flash-results::before{content:'● 01 — EXPOSURE';display:block;margin:0 0 6px;font-family:var(--pfm-round);font-size:var(--pfm-tag);font-weight:700;letter-spacing:.09em;color:var(--pfm-muted);line-height:1;order:-3;flex-basis:100%;}
 
 /* 결과 카드 묶음 */
 .pfm-root .pfm-results{display:flex;flex-direction:column;gap:var(--pfm-space-3);}
@@ -200,7 +198,7 @@
 .pfm-root .pfm-number-entry>button:disabled{cursor:not-allowed;}
 .pfm-root .pfm-value-picker{min-height:44px;font-size:var(--pfm-label);}
 .pfm-root .pfm-quick>.pfm-check{padding-top:var(--pfm-space-2);border-top:1px solid var(--pfm-line);}
-.pfm-root .pfm-field-power{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.pfm-root .pfm-field-power{display:grid;grid-template-columns:var(--pfm-control) minmax(0,1fr) var(--pfm-control);align-items:end;gap:8px;}
 .pfm-root .pfm-field-power>button{margin:0;padding-inline:6px;}
 .pfm-root .pfm-link-toggle{align-self:stretch;margin:var(--pfm-space-2) 0 0;}
 .pfm-root[data-linked=true] .pfm-flash-distance{display:none;}
@@ -361,7 +359,7 @@
 /* 결과 숫자 */
 .pfm-root .pfm-ev{border:0;border-radius:12px;background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
 .pfm-root .pfm-ev[data-state=ok]{background:var(--pfm-surface-2);color:var(--pfm-ink);}
-.pfm-root .pfm-ev[data-state=ok]::before{color:var(--pfm-signal);}
+.pfm-root .pfm-ev[data-state=ok]::before{color:var(--pfm-muted);}
 .pfm-root .pfm-stat{padding:10px 7px;border-radius:12px;background:var(--pfm-surface-2);box-shadow:var(--pfm-in-sm);}
 .pfm-root .pfm-stat[data-stat=total]{background:var(--pfm-surface);color:var(--pfm-signal);box-shadow:var(--pfm-out-sm);}
 .pfm-root .pfm-stat[data-stat=total] span{color:var(--pfm-muted);opacity:1;}
@@ -513,7 +511,7 @@
 .pfm-root :is(.pfm-fill,.pfm-calibration)>label.pfm-field{
  display:grid;grid-template-columns:minmax(0,1fr);gap:var(--pfm-space-1);margin:0 0 var(--pfm-space-2);
 }
-.pfm-root :is(.pfm-fill,.pfm-calibration)>.pfm-flash-warning{color:var(--pfm-error);}
+.pfm-root :is(.pfm-fill,.pfm-fill-tool,.pfm-calibration)>.pfm-flash-warning{color:var(--pfm-error);}
 
 /* 장노출 도구는 테마의 전경색과 배경색으로 종료를 알린다. */
 .pfm-root .pfm-reciprocity>label.pfm-field{display:grid;grid-template-columns:minmax(0,1fr);}
@@ -557,3 +555,14 @@
  --icon-color:var(--pfm-page-ink);--icon-color-hover:var(--pfm-page-ink);--icon-color-active:var(--pfm-page-ink);--icon-color-focus:var(--pfm-page-ink);
  color:var(--pfm-page-ink);
 }
+
+/* 1.13.0 · 현장 동선 정리 */
+/* 출력 한 줄: [− | 출력 ▾ | +] */
+.pfm-root .pfm-field-power>.pfm-field{margin:0;padding:0;border:0;}
+.pfm-root .pfm-field-power>button{min-height:var(--pfm-control);padding-inline:0;font-size:1.25em;font-weight:700;}
+/* 이미 권장 출력이면 구분선 아래 한 줄만 */
+.pfm-root .pfm-output-action[data-matched=true] p{margin:0;font-weight:600;color:var(--pfm-muted);}
+/* 필름 피커의 EI 한 스톱 증감 */
+.pfm-root .pfm-ei-stepper{display:grid;grid-template-columns:var(--pfm-control) minmax(0,1fr) var(--pfm-control);align-items:center;gap:8px;margin:0 0 8px;padding:0 0 8px;border-bottom:1px solid var(--pfm-line);}
+.pfm-root .pfm-ei-stepper>button{margin:0;min-height:var(--pfm-control);padding-inline:0;font-weight:700;}
+.pfm-root .pfm-ei-stepper>output{text-align:center;font-weight:700;font-variant-numeric:tabular-nums;}
