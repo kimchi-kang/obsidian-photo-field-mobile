@@ -1,0 +1,4 @@
+PASS 100 tab transitions with numeric focus preserve every other input and equipment
+PASS 15 close/reopen cycles preserve every input and equipment
+PASS persisted inputs agree with runtime after navigation
+PASS mutation trace changes only tab

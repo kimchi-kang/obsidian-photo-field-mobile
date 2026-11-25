@@ -9,7 +9,7 @@ try{
  assert.ok(page,'dedicated QA vault only');page.setDefaultTimeout(6000);
  original=await page.evaluate(async()=>{const p=app.plugins.plugins['photo-field-mobile'];await p?.flush();return p?await p.loadData():null;});
  await page.evaluate(async()=>app.plugins.disablePlugin('photo-field-mobile'));
- for(const f of ['main.js','styles.css','manifest.json'])await copyFile(f,`${vault}/.obsidian/plugins/photo-field-mobile/${f}`);
+ for(const f of ['main.js','styles.css','manifest.json'])await copyFile(`${process.env.QA_SOURCE??'.'}/${f}`,`${vault}/.obsidian/plugins/photo-field-mobile/${f}`);
  await writeFile(`${vault}/.obsidian/plugins/photo-field-mobile/data.json`,'null');
  await page.evaluate(async()=>{await app.plugins.loadManifest('.obsidian/plugins/photo-field-mobile');await app.plugins.enablePlugin('photo-field-mobile');if(!app.isMobile)app.emulateMobile(true);await app.plugins.plugins['photo-field-mobile'].open();app.workspace.leftSplit.collapse();app.workspace.rightSplit.collapse();});
  page.on('pageerror',e=>errors.push(e.message));const cdp=await page.context().newCDPSession(page);await cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,mobile:true,deviceScaleFactor:1});
@@ -44,7 +44,7 @@ try{
  });
 }finally{
  if(page&&original!==undefined){await page.evaluate(async()=>{await app.plugins.plugins['photo-field-mobile']?.flush();await app.plugins.disablePlugin('photo-field-mobile');});await writeFile(`${vault}/.obsidian/plugins/photo-field-mobile/data.json`,JSON.stringify(original));await page.evaluate(async()=>{await app.plugins.enablePlugin('photo-field-mobile');await app.plugins.plugins['photo-field-mobile'].open();});}
- const fingerprints={};for(const f of ['main.js','styles.css','manifest.json'])fingerprints[f]=createHash('sha256').update(await readFile(f)).digest('hex');
+ const fingerprints={};for(const f of ['main.js','styles.css','manifest.json'])fingerprints[f]=createHash('sha256').update(await readFile(`${process.env.QA_SOURCE??'.'}/${f}`)).digest('hex');
  await writeFile(`${out}/results.json`,JSON.stringify({checks,errors,fingerprints,host:'actual Obsidian mobile emulation',actualIOS:false},null,2));await browser.close();
 }
 assert.ok(checks.length===4&&checks.every(c=>c.passed));

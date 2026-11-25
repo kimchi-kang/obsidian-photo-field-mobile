@@ -1,0 +1,9 @@
+{
+  "release": "1.3.4",
+  "filesMatchPriorPublication": {
+    "main.js": true,
+    "manifest.json": true,
+    "styles.css": true
+  },
+  "source": "fresh GitHub release asset download"
+}

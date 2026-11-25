@@ -1,0 +1,29 @@
+{
+  "checks": [
+    {
+      "name": "100 tab transitions with numeric focus preserve every other input and equipment",
+      "passed": true
+    },
+    {
+      "name": "15 close/reopen cycles preserve every input and equipment",
+      "passed": true
+    },
+    {
+      "name": "persisted inputs agree with runtime after navigation",
+      "passed": true
+    },
+    {
+      "name": "mutation trace changes only tab",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "fingerprints": {
+    "main.js": "4203078e138ed44b2f8b1e13a5b52d16123e7f301f62b2e0ff8bc8c06c24ec40",
+    "manifest.json": "e3c4000f966493874d96d11624ca80e2e74dfdc414cd11d4d4ae5e1478cf11bc",
+    "styles.css": "5b6769d843ff4c7d29400509814fc158f1ccab6524a7497628016bb2df273d97"
+  },
+  "syntheticOnly": true,
+  "actualIOS": false,
+  "actualAndroid": false
+}
