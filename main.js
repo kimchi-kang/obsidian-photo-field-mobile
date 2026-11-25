@@ -1414,6 +1414,7 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.sceneMax = 5;
     this.powerButtons = {};
     this.aborters = [];
+    this.painting = false;
     this.ringTableOpen = false;
     this.gnDisplayUnit = "m";
     this.detailState = /* @__PURE__ */ new Map();
@@ -1711,6 +1712,9 @@ var PhotoView = class extends import_obsidian.ItemView {
   clean() {
     for (const a of this.aborters) a.abort();
     this.aborters.length = 0;
+    this.paintAborter?.abort();
+    this.paintAborter = void 0;
+    this.cancelDragFrame();
     this.numeric.clear();
     this.power = void 0;
     this.powerButtons = {};
@@ -1719,6 +1723,10 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.paintBulbTimer = void 0;
   }
   listen(el, event, fn) {
+    if (this.painting && this.paintAborter) {
+      el.addEventListener(event, fn, { signal: this.paintAborter.signal });
+      return;
+    }
     const a = new AbortController();
     el.addEventListener(event, fn, { signal: a.signal });
     this.aborters.push(a);
@@ -1739,8 +1747,9 @@ var PhotoView = class extends import_obsidian.ItemView {
   }
   sceneControls() {
     let dragging;
-    const coordinate = (e) => {
-      const rect = this.picture.querySelector("svg")?.getBoundingClientRect();
+    let pendingX;
+    const coordinate = (e, cached) => {
+      const rect = cached ?? this.picture.querySelector("svg")?.getBoundingClientRect();
       return rect && rect.width > 0 ? (e.clientX - rect.left) / rect.width * SCENE.width : null;
     };
     const grabbable = (e) => {
@@ -1757,26 +1766,49 @@ var PhotoView = class extends import_obsidian.ItemView {
       this.numeric.get("cameraDistance")?.input.setAttribute("aria-invalid", "false");
       this.changed();
     };
+    const move = (x) => {
+      if (!dragging) return;
+      update(sceneDistance(x - dragging.offset, this.dragMax ?? this.sceneMax, this.plugin.state.inputs.focal, this.minimumFocus()));
+    };
+    const tick = () => {
+      this.dragFrame = void 0;
+      if (pendingX === void 0) return;
+      const x = pendingX;
+      pendingX = void 0;
+      move(x);
+      this.dragFrame = this.requestFrame(tick);
+    };
     this.listen(this.picture, "pointerdown", (event) => {
       if (!(event instanceof PointerEvent) || dragging || !grabbable(event)) return;
-      const x = coordinate(event);
-      if (x === null) return;
+      const rect = this.picture.querySelector("svg")?.getBoundingClientRect();
+      const x = coordinate(event, rect);
+      if (x === null || !rect) return;
       const i = this.plugin.state.inputs;
       const fraction = i.focusInfinity ? 1 : Number.isFinite(i.cameraDistance) ? Math.max(0, Math.min(1, i.cameraDistance / this.sceneMax)) : 0;
       const anchor = SCENE.start + (SCENE.end - SCENE.start) * fraction;
       this.dragMax = this.sceneMax;
-      dragging = { pointer: event.pointerId, offset: x - anchor };
+      dragging = { pointer: event.pointerId, offset: x - anchor, rect };
+      pendingX = void 0;
       this.picture.setPointerCapture(event.pointerId);
     });
     this.listen(this.picture, "pointermove", (event) => {
       if (!(event instanceof PointerEvent) || event.pointerId !== dragging?.pointer) return;
-      const x = coordinate(event);
+      const x = coordinate(event, dragging.rect);
       if (x === null) return;
       event.preventDefault();
-      update(sceneDistance(x - dragging.offset, this.dragMax ?? this.sceneMax, this.plugin.state.inputs.focal, this.minimumFocus()));
+      if (this.dragFrame === void 0) {
+        move(x);
+        this.dragFrame = this.requestFrame(tick);
+      } else pendingX = x;
     });
     for (const kind of ["pointerup", "pointercancel", "lostpointercapture"]) this.listen(this.picture, kind, (event) => {
       if (!(event instanceof PointerEvent) || event.pointerId !== dragging?.pointer) return;
+      this.cancelDragFrame();
+      if (pendingX !== void 0) {
+        const x = pendingX;
+        pendingX = void 0;
+        move(x);
+      }
       dragging = void 0;
       this.dragMax = void 0;
       if (this.picture.hasPointerCapture(event.pointerId)) this.picture.releasePointerCapture(event.pointerId);
@@ -1802,6 +1834,15 @@ var PhotoView = class extends import_obsidian.ItemView {
     this.paint();
     void this.plugin.persist().catch((e) => this.plugin.reportSaveError(e));
     this.plugin.refresh(this);
+  }
+  requestFrame(fn) {
+    return typeof window.requestAnimationFrame === "function" ? window.requestAnimationFrame(fn) : window.setTimeout(fn, 16);
+  }
+  cancelDragFrame() {
+    if (this.dragFrame === void 0) return;
+    if (typeof window.cancelAnimationFrame === "function") window.cancelAnimationFrame(this.dragFrame);
+    else window.clearTimeout(this.dragFrame);
+    this.dragFrame = void 0;
   }
   button(parent, text, fn) {
     const b = node(parent, "button", text);
@@ -3059,6 +3100,16 @@ var PhotoView = class extends import_obsidian.ItemView {
     }
   }
   paint() {
+    this.paintAborter?.abort();
+    this.paintAborter = new AbortController();
+    this.painting = true;
+    try {
+      this.paintScene();
+    } finally {
+      this.painting = false;
+    }
+  }
+  paintScene() {
     const i = this.plugin.state.inputs;
     this.root.dataset.cocMode = i.cocMode;
     this.root.dataset.linked = String(i.linked);

@@ -222,6 +222,10 @@ test('모드별 DOM, 권장 출력, 존 조절과 저장 상태가 함께 갱신
     assert.equal(Number(attribute('[data-scene]','data-scene-max')),sceneMax);
     pointer(picture,'pointerup',240);
     assert.equal(captured,false);
+    // 드래그로 여러 번 다시 그려도 render 단위 리스너 컨트롤러는 늘지 않는다(paint 리스너는 다음 paint에서 정리).
+    const aborters=(view as unknown as {aborters:unknown[]}).aborters,listeners=aborters.length;
+    for(const x of [240,260,280]){pointer(query('[data-scene]')!,'pointerdown',x);pointer(picture,'pointermove',x+10);pointer(picture,'pointermove',x+20);pointer(picture,'pointerup',x+20);}
+    assert.equal(aborters.length,listeners);
     assert.match(query('.pfm-zone-axis-label')?.textContent??'',/거리링/);
     button(flash).click();
     assert.deepEqual(cards(),['pfm-zone-result']);

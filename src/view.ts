@@ -41,6 +41,9 @@ export class PhotoView extends ItemView {
   private powerButtons:Partial<Record<'weaker'|'stronger',HTMLButtonElement>>={};
   private linkToggle?:HTMLButtonElement;
   private readonly aborters:AbortController[]=[];
+  // paint()가 다시 만드는 요소의 리스너는 다음 paint() 때 한꺼번에 떼어, 드래그 중 컨트롤러가 쌓이지 않게 한다.
+  private paintAborter?:AbortController;private painting=false;
+  private dragFrame?:number;
   private ringTableOpen=false;
   private gnDisplayUnit:'m'|'ft'='m';private power?:HTMLSelectElement;private saveStatus?:HTMLElement;
   private gearList!:HTMLElement;
@@ -285,8 +288,8 @@ export class PhotoView extends ItemView {
   async onOpen():Promise<void>{this.containerEl.dataset.ignoreSwipe='true';this.render();}
   async onClose():Promise<void>{delete this.containerEl.dataset.ignoreSwipe;this.dispose();this.contentEl.replaceChildren();await this.plugin.flush().catch(e=>this.plugin.reportSaveError(e));}
   dispose():void {this.stopBulbTimer();this.clean();}
-  private clean():void {for(const a of this.aborters)a.abort();this.aborters.length=0;this.numeric.clear();this.power=undefined;this.powerButtons={};this.linkToggle=undefined;this.dragMax=undefined;this.paintBulbTimer=undefined;}
-  private listen(el:HTMLElement,event:string,fn:(e:Event)=>void):void {const a=new AbortController();el.addEventListener(event,fn,{signal:a.signal});this.aborters.push(a);}
+  private clean():void {for(const a of this.aborters)a.abort();this.aborters.length=0;this.paintAborter?.abort();this.paintAborter=undefined;this.cancelDragFrame();this.numeric.clear();this.power=undefined;this.powerButtons={};this.linkToggle=undefined;this.dragMax=undefined;this.paintBulbTimer=undefined;}
+  private listen(el:HTMLElement,event:string,fn:(e:Event)=>void):void {if(this.painting&&this.paintAborter){el.addEventListener(event,fn,{signal:this.paintAborter.signal});return;}const a=new AbortController();el.addEventListener(event,fn,{signal:a.signal});this.aborters.push(a);}
   private minimumFocus():number {
     const s=this.plugin.state;
     return effectiveMinFocus(s.inputs,selectedPreset(s,'lenses'));
@@ -300,9 +303,12 @@ export class PhotoView extends ItemView {
   }
   private sceneControls():void {
     // 끌 수 있는 것은 초점 거리 하나: 기본 화면은 피사체, 존 포커싱 "구간 옮기기"는 선명 구간 띠.
-    let dragging:{pointer:number;offset:number}|undefined;
-    const coordinate=(e:PointerEvent)=>{
-      const rect=this.picture.querySelector('svg')?.getBoundingClientRect();
+    let dragging:{pointer:number;offset:number;rect:DOMRect}|undefined;
+    // 첫 이동은 바로 반영하고, 같은 프레임 안의 나머지 이동은 마지막 위치만 다음 프레임에 한 번 반영한다.
+    let pendingX:number|undefined;
+    // 드래그 중 그림 크기는 그대로이므로 pointerdown 때 잰 rect를 재사용해 매 이동마다 강제 리플로우를 피한다.
+    const coordinate=(e:PointerEvent,cached?:DOMRect)=>{
+      const rect=cached??this.picture.querySelector('svg')?.getBoundingClientRect();
       return rect&&rect.width>0?(e.clientX-rect.left)/rect.width*SCENE.width:null;
     };
     const grabbable=(e:Event)=>{
@@ -318,25 +324,38 @@ export class PhotoView extends ItemView {
       this.plugin.update('cameraDistance',Math.max(minimum,Math.min(maximum,distance)));
       this.syncNumeric('cameraDistance');this.numeric.get('cameraDistance')?.input.setAttribute('aria-invalid','false');this.changed();
     };
+    const move=(x:number)=>{
+      if(!dragging)return;
+      update(sceneDistance(x-dragging.offset,this.dragMax??this.sceneMax,this.plugin.state.inputs.focal,this.minimumFocus()));
+    };
+    const tick=()=>{
+      this.dragFrame=undefined;
+      if(pendingX===undefined)return;
+      const x=pendingX;pendingX=undefined;move(x);this.dragFrame=this.requestFrame(tick);
+    };
     this.listen(this.picture,'pointerdown',event=>{
       if(!(event instanceof PointerEvent)||dragging||!grabbable(event))return;
-      const x=coordinate(event);if(x===null)return;
+      const rect=this.picture.querySelector('svg')?.getBoundingClientRect();
+      const x=coordinate(event,rect);if(x===null||!rect)return;
       const i=this.plugin.state.inputs;
       const fraction=i.focusInfinity?1:Number.isFinite(i.cameraDistance)?Math.max(0,Math.min(1,i.cameraDistance/this.sceneMax)):0;
       const anchor=SCENE.start+(SCENE.end-SCENE.start)*fraction;
       this.dragMax=this.sceneMax;
       // 짚은 자리와 초점 위치의 차이를 유지해, 띠가 손가락을 따라 그대로 움직이게 한다.
-      dragging={pointer:event.pointerId,offset:x-anchor};
+      dragging={pointer:event.pointerId,offset:x-anchor,rect};pendingX=undefined;
       this.picture.setPointerCapture(event.pointerId);
     });
     this.listen(this.picture,'pointermove',event=>{
       if(!(event instanceof PointerEvent)||event.pointerId!==dragging?.pointer)return;
-      const x=coordinate(event);if(x===null)return;
+      const x=coordinate(event,dragging.rect);if(x===null)return;
       event.preventDefault();
-      update(sceneDistance(x-dragging.offset,this.dragMax??this.sceneMax,this.plugin.state.inputs.focal,this.minimumFocus()));
+      if(this.dragFrame===undefined){move(x);this.dragFrame=this.requestFrame(tick);}
+      else pendingX=x;
     });
     for(const kind of ['pointerup','pointercancel','lostpointercapture'])this.listen(this.picture,kind,event=>{
       if(!(event instanceof PointerEvent)||event.pointerId!==dragging?.pointer)return;
+      this.cancelDragFrame();
+      if(pendingX!==undefined){const x=pendingX;pendingX=undefined;move(x);}
       dragging=undefined;this.dragMax=undefined;
       if(this.picture.hasPointerCapture(event.pointerId))this.picture.releasePointerCapture(event.pointerId);
       this.paint();void this.plugin.flush().catch(e=>this.plugin.reportSaveError(e));
@@ -356,6 +375,12 @@ export class PhotoView extends ItemView {
     const i=this.plugin.state.inputs;
     if(i.linked&&Number.isFinite(i.cameraDistance)&&!i.focusInfinity&&i.flashDistance!==i.cameraDistance){this.plugin.update('flashDistance',i.cameraDistance);this.syncNumeric('flashDistance');}
     this.paint();void this.plugin.persist().catch(e=>this.plugin.reportSaveError(e));this.plugin.refresh(this);
+  }
+  private requestFrame(fn:()=>void):number {return typeof window.requestAnimationFrame==='function'?window.requestAnimationFrame(fn):window.setTimeout(fn,16);}
+  private cancelDragFrame():void {
+    if(this.dragFrame===undefined)return;
+    if(typeof window.cancelAnimationFrame==='function')window.cancelAnimationFrame(this.dragFrame);else window.clearTimeout(this.dragFrame);
+    this.dragFrame=undefined;
   }
   private button(parent:HTMLElement,text:string,fn:()=>void):HTMLButtonElement {const b=node(parent,'button',text);b.type='button';this.listen(b,'click',fn);return b;}
   private rangeProgress(range:HTMLInputElement):void {
@@ -1197,6 +1222,10 @@ export class PhotoView extends ItemView {
     }catch(e){node(flashPanel,'p','적정 노출 예상 거리','pfm-eyebrow');node(flashPanel,'div','—','pfm-hero');node(flashPanel,'p',i.gnMode==='equipment'&&!equipment?'선택 장비를 찾을 수 없습니다. 내 장비에서 복구하거나 장비를 다시 선택하세요.':i.gnMode==='equipment'&&i.gn<=0?(equipment?.table[String(i.zoom)]===undefined?`${fmt(i.zoom)}mm 줌의 GN 자료가 없습니다. 이 장비의 사용 가능 줌: ${Object.keys(equipment?.table??{}).join(', ')}mm. 플래시 줌 또는 장비 GN 표를 확인하세요.`:i.conditions):!Number.isFinite(i.gn)||i.gn<=0?'수동 GN이 비었거나 0 이하입니다. ISO100 최대 출력 GN을 입력하세요.':e instanceof Error?e.message:String(e),'pfm-error');const disabled=node(flashPanel,'button','권장 출력 적용 불가');disabled.type='button';disabled.disabled=true;disabled.dataset.flashApply='true';disabled.className='pfm-error-action';const fix=node(flashPanel,'button',i.gnMode==='equipment'&&i.gn<=0?(equipment?'장비 줌·GN 확인':'장비 선택 확인'):'플래시 조건 확인');fix.type='button';fix.className='pfm-error-action';fix.onclick=()=>this.jumpSettings('flash');}
   }
   private paint():void {
+    this.paintAborter?.abort();this.paintAborter=new AbortController();this.painting=true;
+    try{this.paintScene();}finally{this.painting=false;}
+  }
+  private paintScene():void {
     const i=this.plugin.state.inputs;
     this.root.dataset.cocMode=i.cocMode;this.root.dataset.linked=String(i.linked);
     const coc=this.numeric.get('coc');if(coc)coc.input.disabled=i.cocMode!=='custom';

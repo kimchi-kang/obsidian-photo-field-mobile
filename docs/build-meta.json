@@ -221,7 +221,7 @@
       "format": "esm"
     },
     "src/view.ts": {
-      "bytes": 85084,
+      "bytes": 87072,
       "imports": [
         {
           "path": "src/field.ts",
@@ -435,7 +435,7 @@
           "bytesInOutput": 1413
         },
         "src/view.ts": {
-          "bytesInOutput": 91999
+          "bytesInOutput": 93601
         },
         "src/diagram.ts": {
           "bytesInOutput": 13090
@@ -453,7 +453,7 @@
           "bytesInOutput": 22293
         }
       },
-      "bytes": 196221
+      "bytes": 197823
     }
   }
 }
