@@ -72,9 +72,14 @@ export function solveZone(i:Inputs) {
 export const RING_MARKS=[0.45,0.5,0.6,0.7,0.8,1,1.2,1.5,2,3,5,10];
 /** ∞까지 선명하게 찍을 때 거리링을 둘 위치(과초점)와 그때 선명해지는 가장 가까운 거리. */
 export function infinityFocus(i:Inputs,aperture=i.aperture) {
-  const at={...i,aperture,focusInfinity:false};
-  const ring=optics(at).hyperfocal;
-  const near=optics({...at,cameraDistance:ring}).near;
+  positive(i.width,i.height,i.focal,aperture);
+  const c=circleOfConfusion(i);
+  positive(c);
+  const f=i.focal,h0=f*f/(aperture*c),H=h0+f;
+  positive(h0,H);
+  const ring=hyperfocalFilm(h0,f)/1000;
+  positive(ring);
+  const near=optics({...i,aperture,focusInfinity:false,cameraDistance:ring}).near;
   return {aperture,ring,near};
 }
 /** 거리 값이 거리링 눈금 어디쯤인지: 눈금 위(3% 이내)거나 두 눈금 사이. */

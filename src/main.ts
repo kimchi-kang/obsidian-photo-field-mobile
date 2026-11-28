@@ -9,7 +9,7 @@ import {selectedPreset,updateShootingInput} from './shooting-presets';
 import {infinityFocus} from './zone';
 export default class PhotoPlugin extends Plugin {
   state!:Saved;
-  private writer!:LatestWriter<Saved>;
+  private writer!:LatestWriter<()=>Saved>;
   private notes:Promise<unknown>=Promise.resolve();
   saveError='';private noteNotice?:Notice;
   private active=false;
@@ -18,7 +18,7 @@ export default class PhotoPlugin extends Plugin {
   async onload():Promise<void> {
     const data:unknown=await this.loadData();
     this.state=restore(data);this.stableInputs={...this.state.inputs};this.active=true;
-    this.writer=new LatestWriter(data=>verifiedWrite(data,()=>this.saveData(data),()=>this.app.vault.adapter.read(normalizePath(`${this.manifest.dir??`${this.app.vault.configDir}/plugins/${this.manifest.id}`}/data.json`))),()=>{if(this.writer.error&&!this.saveError)this.report(this.writer.error);this.saveError=this.writer.error?`설정 저장 실패: ${this.writer.error instanceof Error?this.writer.error.message:String(this.writer.error)} · 다시 저장하세요.`:'';for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.updateSaveStatus();});
+    this.writer=new LatestWriter(produce=>{const data=produce();return verifiedWrite(data,()=>this.saveData(data),()=>this.app.vault.adapter.read(normalizePath(`${this.manifest.dir??`${this.app.vault.configDir}/plugins/${this.manifest.id}`}/data.json`)));},()=>{if(this.writer.error&&!this.saveError)this.report(this.writer.error);this.saveError=this.writer.error?`설정 저장 실패: ${this.writer.error instanceof Error?this.writer.error.message:String(this.writer.error)} · 다시 저장하세요.`:'';for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.updateSaveStatus();});
     const flush=()=>{void this.flush().catch(e=>this.reportSaveError(e));};
     this.registerDomEvent(document,'visibilitychange',()=>{if(document.visibilityState==='hidden')flush();});
     this.registerDomEvent(window,'pagehide',flush);
@@ -46,7 +46,12 @@ export default class PhotoPlugin extends Plugin {
     if(this.active)await this.app.workspace.revealLeaf(leaf);
   }
   persist():Promise<void> {
-    const data=snapshot(this.state,this.stableInputs);this.stableInputs={...data.inputs};return this.writer.request(data);
+    // 유한한 입력값은 즉시 stableInputs에 기록하고, 전체 상태의 깊은 복사는 실제 저장(flush) 직전에 한 번만 수행한다.
+    for(const key of Object.keys(this.state.inputs) as (keyof Inputs)[]){
+      const value=this.state.inputs[key];
+      if(typeof value!=='number'||Number.isFinite(value))Object.assign(this.stableInputs,{[key]:value});
+    }
+    return this.writer.request(()=>snapshot(this.state,this.stableInputs));
   }
   async flush():Promise<void>{if(this.writer)await this.writer.flush();}
   reportSaveError(e:unknown):void {if(!this.saveError){this.saveError='설정 저장 실패 · 다시 저장하세요.';this.report(e);}for(const leaf of this.app.workspace.getLeavesOfType(VIEW))if(leaf.view instanceof PhotoView)leaf.view.updateSaveStatus();}

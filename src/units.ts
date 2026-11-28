@@ -1,10 +1,16 @@
 export const feetToMetres = (v:number):number => v*0.3048;
 export const metresToFeet = (v:number):number => v/0.3048;
 export function parseNumber(v:string):number {return v.trim()==='' ? NaN : Number(v);}
+const numberFormats=new Map<number,Intl.NumberFormat>();
+function numberFormat(digits:number):Intl.NumberFormat {
+  let nf=numberFormats.get(digits);
+  if(!nf){nf=new Intl.NumberFormat('ko-KR',{maximumFractionDigits:digits});numberFormats.set(digits,nf);}
+  return nf;
+}
 export function fmt(v:number,digits=2):string {
   if(v===Infinity)return '∞';if(!Number.isFinite(v))return '—';
   // Normalize only the displayed value; status decisions always keep the original number.
-  return (Math.abs(v)<0.5*10**(-digits)?0:v).toLocaleString('ko-KR',{maximumFractionDigits:digits});
+  return numberFormat(digits).format(Math.abs(v)<0.5*10**(-digits)?0:v);
 }
 /** Distances are shown with at most one decimal place (display only; calculations keep full precision). */
 export const DISTANCE_DIGITS=1;

@@ -17,9 +17,10 @@ export function footprint(r:number,h:number,v:number):{width:number;height:numbe
 }
 /** Circle of confusion in mm. 'film' = 0.03 mm on the 36x24 frame (Nikon DOF-scale convention), scaled with the frame diagonal. */
 export const FILM_COC_35MM=0.03;
+const DIAGONAL_35MM=Math.hypot(36,24);
 export function circleOfConfusion(i:Pick<Inputs,'cocMode'|'coc'|'width'|'height'>):number {
   const diagonal=Math.hypot(i.width,i.height);
-  return i.cocMode==='custom'?i.coc:i.cocMode==='estimate'?diagonal/1500:FILM_COC_35MM*diagonal/Math.hypot(36,24);
+  return i.cocMode==='custom'?i.coc:i.cocMode==='estimate'?diagonal/1500:FILM_COC_35MM*diagonal/DIAGONAL_35MM;
 }
 /** Distances are measured from the film plane, like a lens distance scale. Thin lens focused at lens distance s: D = s + v = s²/(s−f). All in mm. */
 export const filmFromLens=(s:number,f:number):number=>s*s/(s-f);
@@ -48,10 +49,11 @@ export function optics(i:Inputs) {
     if(!atInfinity)positive(far);
   }
   positive(near);
-  const equivalent=f*(Math.hypot(36,24)/Math.hypot(i.width,i.height)),airy=2.44*0.00055*i.aperture;
+  const diagonal=Math.hypot(i.width,i.height);
+  const equivalent=f*(DIAGONAL_35MM/diagonal),airy=2.44*0.00055*i.aperture;
   positive(equivalent,airy);
   return {c,hyperfocal,near,far,total:far-near,
-    horizontal:angle(i.width,f),vertical:angle(i.height,f),diagonal:angle(Math.hypot(i.width,i.height),f),
+    horizontal:angle(i.width,f),vertical:angle(i.height,f),diagonal:angle(diagonal,f),
     equivalent,airy};
 }
 export function effectiveGN(g:number,p:number,iso:number,loss:number):number {
@@ -62,15 +64,24 @@ export function effectiveGN(g:number,p:number,iso:number,loss:number):number {
 export function flashDistance(g:number,p:number,iso:number,n:number,loss=0):number {positive(n);const result=effectiveGN(g,p,iso,loss)/n;positive(result);return result;}
 export function requiredPower(g:number,n:number,r:number,iso:number,loss=0):number {positive(n,r);const result=(n*r/effectiveGN(g,1,iso,loss))**2;positive(result);return result;}
 export function exposureEV(d:number,r:number):number {positive(d,r);return 2*(Math.log2(d)-Math.log2(r));}
+let lastPowerStepsKey='';
+let lastPowerSteps:number[]=[];
 export function powerSteps(text:string,minDenominator:number):number[] {
+  const key=`${minDenominator}\0${text}`;
+  if(key===lastPowerStepsKey)return [...lastPowerSteps];
   const list=text.split(',').map(v=>Number(v.trim()));
   if(!list.length||list.some(v=>!Number.isFinite(v)||v<1||v>minDenominator)||!list.includes(1)||!list.includes(minDenominator))throw Error('지원 출력 분모는 1과 최소 출력 분모를 포함하고 그 사이의 수여야 합니다.');
-  return [...new Set(list)].sort((a,b)=>a-b);
+  const sorted=[...new Set(list)].sort((a,b)=>a-b);
+  lastPowerStepsKey=key;lastPowerSteps=sorted;
+  return [...sorted];
 }
 export function nearestPower(steps:readonly number[],targetEV:number):{nearest:number;residual:number} {
-  const residualFor=(n:number)=>-Math.log2(n)-targetEV;
-  const nearest=steps.reduce((best,n)=>Math.abs(residualFor(n))<Math.abs(residualFor(best))?n:best);
-  return {nearest,residual:residualFor(nearest)};
+  let nearest=steps[0],residual=-Math.log2(nearest)-targetEV,bestAbs=Math.abs(residual);
+  for(let k=1;k<steps.length;k++){
+    const n=steps[k],r=-Math.log2(n)-targetEV,abs=Math.abs(r);
+    if(abs<bestAbs){nearest=n;residual=r;bestAbs=abs;}
+  }
+  return {nearest,residual};
 }
 export function flash(i:Inputs) {
   if(i.mode!=='manual')throw Error('선택 조건은 기본 GN 모델로 계산할 수 없습니다. 실측 또는 전용 자료가 필요합니다.');
@@ -84,18 +95,23 @@ export function flash(i:Inputs) {
   const steps=powerSteps(i.steps,i.minDenominator);
   const g=i.gnUnit==='ft'?feetToMetres(i.gn):i.gn;
   const r=i.linked?i.cameraDistance:i.flashDistance;
+  const fullGN=effectiveGN(g,1,i.iso,i.loss);
+  const isoScale=Math.sqrt(i.iso/100),lossScale=2**(-i.loss/2);
   const gn=effectiveGN(g,1/i.denominator,i.iso,i.loss),d=gn/i.aperture;
-  positive(i.aperture,d); const needed=requiredPower(g,i.aperture,r,i.iso,i.loss);
+  positive(i.aperture,d);
+  const needed=(i.aperture*r/fullGN)**2;positive(needed);
   // log(a/b) can overflow even while both a, b and the EV result are representable.
   // Compute before squaring the power fraction: subnormal p has fewer significant bits.
-  const neededEV=2*(Math.log2(i.aperture)+Math.log2(r)-Math.log2(effectiveGN(g,1,i.iso,i.loss)));
+  const neededEV=2*(Math.log2(i.aperture)+Math.log2(r)-Math.log2(fullGN));
   const {nearest,residual}=nearestPower(steps,neededEV);
   const low=d/2**(i.tolerance/2),high=d*2**(i.tolerance/2),requiredAperture=gn/r;
   positive(low,high,requiredAperture);
-  return {gn,d,r,g,supported:steps.includes(i.denominator),powerLabel:steps.includes(i.denominator)?(i.gnMode==='equipment'?'장비 지원 출력':'수동 GN · 입력한 지원 단계'):'이론값·장비 미지원 출력',nearestDistance:flashDistance(g,1/nearest,i.iso,i.aperture,i.loss),ev:exposureEV(d,r),needed,requiredAperture,nearest,
+  const distanceAt=(n:number)=>{const result=g*Math.sqrt(1/n)*isoScale*lossScale/i.aperture;positive(result);return result;};
+  const supported=steps.includes(i.denominator);
+  return {gn,d,r,g,supported,powerLabel:supported?(i.gnMode==='equipment'?'장비 지원 출력':'수동 GN · 입력한 지원 단계'):'이론값·장비 미지원 출력',nearestDistance:distanceAt(nearest),ev:exposureEV(d,r),needed,requiredAperture,nearest,
     residual,low,high,
     status:needed>1?'최대 출력으로도 부족':needed<1/i.minDenominator?'최소 출력보다 낮은 출력 필요':'장비 출력 범위 안',steps,
-    distances:steps.map(n=>({n,d:flashDistance(g,1/n,i.iso,i.aperture,i.loss)}))};
+    distances:steps.map(n=>({n,d:distanceAt(n)}))};
 }
 export function coverage(i:Inputs) {
   if(i.focusInfinity)throw Error('초점 무한대에서는 프레임·조사 범위를 계산하지 않습니다.');

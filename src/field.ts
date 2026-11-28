@@ -10,7 +10,7 @@ export const freshField=():FieldData=>({version:1,simple:false,shots:[],zones:[]
 export function patch(i:Inputs,values:Partial<Inputs>):Patch {const before:Partial<Inputs>={},after:Partial<Inputs>={};for(const k of Object.keys(values) as (keyof Inputs)[])if(!Object.is(i[k],values[k])){Object.assign(before,{[k]:i[k]});Object.assign(after,{[k]:values[k]});}Object.assign(i,after);return {before,after};}
 export function canUndo(i:Inputs,p:Patch):boolean{return Object.entries(p.after).every(([k,v])=>Object.is(i[k as keyof Inputs],v));}
 export function undo(i:Inputs,p:Patch):boolean{if(!canUndo(i,p))return false;Object.assign(i,p.before);return true;}
-export function nextPower(i:Inputs,direction:'weaker'|'stronger'):number|undefined {try{const list=powerSteps(i.steps,i.minDenominator);return direction==='weaker'?list.find(n=>n>i.denominator):[...list].reverse().find(n=>n<i.denominator);}catch{return undefined;}}
+export function nextPower(i:Inputs,direction:'weaker'|'stronger'):number|undefined {try{const list=powerSteps(i.steps,i.minDenominator);if(direction==='weaker')return list.find(n=>n>i.denominator);for(let k=list.length-1;k>=0;k--)if(list[k]<i.denominator)return list[k];return undefined;}catch{return undefined;}}
 export function restoreField(raw:unknown):FieldData {
  const f=freshField();if(!raw||typeof raw!=='object')return f;
  const d=raw as Partial<FieldData>;if(typeof d.version==='number'&&d.version>1)throw Error('더 새 현장 설정 스키마입니다. 덮어쓰지 않도록 로드를 중단합니다.');

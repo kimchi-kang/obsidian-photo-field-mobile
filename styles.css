@@ -88,6 +88,7 @@
 .pfm-root .pfm-flash-results::after{content:'';position:absolute;top:0;right:0;width:22px;height:22px;background:linear-gradient(225deg,var(--pfm-signal) 0 50%,transparent 50%);}
 .pfm-root .pfm-eyebrow{order:0;flex-basis:100%;margin:0 0 4px;font-size:var(--pfm-small);font-weight:700;color:var(--pfm-muted);}
 .pfm-root .pfm-hero{order:1;flex:0 0 auto;max-width:100%;font-size:4.25rem;line-height:1;font-weight:350;letter-spacing:-.03em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.pfm-root .pfm-hero .pfm-value{display:inline-block;}
 .pfm-root .pfm-unit{margin-left:4px;font-family:var(--pfm-round);font-size:.3em;font-weight:700;letter-spacing:.06em;color:var(--pfm-signal);}
 .pfm-root .pfm-ev{order:2;flex:0 1 auto;margin:6px 0;padding:6px 10px;border:1px solid var(--pfm-ink);font-size:var(--pfm-label);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.35;}
 .pfm-root .pfm-ev::before{margin-right:6px;font-family:var(--pfm-round);}
@@ -209,6 +210,11 @@
 .pfm-root summary::-webkit-details-marker{display:none;}
 .pfm-root summary::after{content:'+';flex:0 0 auto;width:24px;height:24px;border:1px solid var(--pfm-ink);font-family:var(--pfm-round);font-size:16px;font-weight:400;line-height:22px;text-align:center;}
 .pfm-root details[open]>summary::after{content:'−';background:var(--pfm-ink);color:var(--pfm-bg);}
+@supports (interpolate-size:allow-keywords){
+ .pfm-root{interpolate-size:allow-keywords;}
+ .pfm-root details::details-content{block-size:0;overflow:clip;transition:block-size .18s cubic-bezier(.2,.8,.2,1),content-visibility .18s allow-discrete;}
+ .pfm-root details[open]::details-content{block-size:auto;}
+}
 .pfm-root>details{margin:var(--pfm-space-3) 0 0;padding:0 var(--pfm-space-4);border:1px solid var(--pfm-line);background:var(--pfm-surface);}
 .pfm-root>details>summary{min-height:52px;}
 .pfm-root .pfm-settings{padding:0 0 var(--pfm-space-4);}
@@ -237,9 +243,19 @@
 .pfm-root footer [role=status]{margin:0;padding:10px 12px;border-left:3px solid var(--pfm-error);background:var(--pfm-surface);}
 .pfm-root [hidden]{display:none!important;}
 
+.pfm-root .pfm-slide-group{position:relative;}
+.pfm-root .pfm-slide-ghost{position:absolute;pointer-events:none;border-radius:inherit;background:var(--pfm-signal);opacity:.35;z-index:1;}
+.pfm-root button[data-pfm-hold]{position:relative;overflow:hidden;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;}
+.pfm-root button[data-pfm-hold]::after{content:'';position:absolute;inset:auto 0 0;height:3px;pointer-events:none;background:var(--pfm-error);transform:scaleX(0);transform-origin:left;transition:transform .1s ease-out;}
+.pfm-root button[data-pfm-holding]::after{transform:scaleX(1);transition:transform var(--pfm-hold-ms) linear;}
+.pfm-root button[data-pfm-done]{outline:2px solid var(--pfm-ok);outline-offset:2px;}
+
 @media(max-width:370px){.pfm-root{padding-inline:var(--pfm-space-3);}.pfm-root div.pfm-field{grid-template-columns:44px minmax(0,1fr) 80px 44px;}.pfm-root .pfm-hero{font-size:3.5rem;}.pfm-root .pfm-stat strong{font-size:1rem;}}
 @media(min-width:600px){.pfm-root{padding-inline:24px;}}
-@media(prefers-reduced-motion:reduce){.pfm-root *,.pfm-root *::before,.pfm-root *::after{scroll-behavior:auto!important;transition:none!important;}}
+@media(prefers-reduced-motion:reduce){
+ .pfm-root *,.pfm-root *::before,.pfm-root *::after{scroll-behavior:auto!important;transition:none!important;animation:none!important;}
+ .pfm-root details::details-content{transition:none!important;}
+}
 
 /* 초점 거리 옆에 무한대 토글을 배치한다. */
 .pfm-root div.pfm-field[data-field=cameraDistance]{grid-template-columns:44px minmax(0,1fr) 92px 44px 44px;}
@@ -424,7 +440,7 @@
 .pfm-root .pfm-dof-total[data-stat=total]{margin:10px 2px 0;padding:0;background:none;box-shadow:none;font-size:var(--pfm-label);color:var(--pfm-muted);}
 .pfm-root .pfm-dof-total[data-stat=total]::after{content:none;}
 .pfm-root .pfm-dof-total[data-stat=total] span{display:inline;margin:0;font-size:inherit;}
-.pfm-root .pfm-dof-total[data-stat=total] strong{display:inline;font-size:inherit;font-weight:750;color:var(--pfm-signal);}
+.pfm-root .pfm-dof-total[data-stat=total] strong{display:inline-block;font-size:inherit;font-weight:750;color:var(--pfm-signal);}
 .pfm-root .pfm-dof-bar button{flex:1 1 auto;width:100%;}
 
 /* 존 포커싱: 목표 방식 전환과 ∞ 거리링 안내 */

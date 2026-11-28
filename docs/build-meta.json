@@ -11,12 +11,12 @@
       "format": "esm"
     },
     "src/units.ts": {
-      "bytes": 2546,
+      "bytes": 2789,
       "imports": [],
       "format": "esm"
     },
     "src/engine.ts": {
-      "bytes": 8657,
+      "bytes": 9146,
       "imports": [
         {
           "path": "./model",
@@ -32,7 +32,7 @@
       "format": "esm"
     },
     "src/field.ts": {
-      "bytes": 4135,
+      "bytes": 4183,
       "imports": [
         {
           "path": "src/model.ts",
@@ -163,7 +163,7 @@
       "format": "esm"
     },
     "src/zone.ts": {
-      "bytes": 5784,
+      "bytes": 5944,
       "imports": [
         {
           "path": "./model",
@@ -220,8 +220,13 @@
       ],
       "format": "esm"
     },
+    "src/motion.ts": {
+      "bytes": 6340,
+      "imports": [],
+      "format": "esm"
+    },
     "src/view.ts": {
-      "bytes": 87072,
+      "bytes": 92457,
       "imports": [
         {
           "path": "src/field.ts",
@@ -292,6 +297,11 @@
           "path": "src/shooting-presets.ts",
           "kind": "import-statement",
           "original": "./shooting-presets"
+        },
+        {
+          "path": "src/motion.ts",
+          "kind": "import-statement",
+          "original": "./motion"
         }
       ],
       "format": "esm"
@@ -333,7 +343,7 @@
       "format": "esm"
     },
     "src/main.ts": {
-      "bytes": 7210,
+      "bytes": 7585,
       "imports": [
         {
           "path": "obsidian",
@@ -402,58 +412,61 @@
       "entryPoint": "src/main.ts",
       "inputs": {
         "src/main.ts": {
-          "bytesInOutput": 7454
+          "bytesInOutput": 5438
         },
         "src/field-guide.ts": {
-          "bytesInOutput": 2529
+          "bytesInOutput": 1418
         },
         "src/model.ts": {
-          "bytesInOutput": 2398
+          "bytesInOutput": 1843
         },
         "src/units.ts": {
-          "bytesInOutput": 2060
+          "bytesInOutput": 1131
         },
         "src/engine.ts": {
-          "bytesInOutput": 8133
+          "bytesInOutput": 5831
         },
         "src/field.ts": {
-          "bytesInOutput": 3732
+          "bytesInOutput": 2851
         },
         "src/presets.ts": {
-          "bytesInOutput": 4979
+          "bytesInOutput": 3645
         },
         "src/reciprocity.ts": {
-          "bytesInOutput": 4152
+          "bytesInOutput": 3128
         },
         "src/shooting-presets.ts": {
-          "bytesInOutput": 10978
+          "bytesInOutput": 7374
         },
         "src/storage.ts": {
-          "bytesInOutput": 6183
+          "bytesInOutput": 4406
         },
         "src/writer.ts": {
-          "bytesInOutput": 1413
+          "bytesInOutput": 888
         },
         "src/view.ts": {
-          "bytesInOutput": 93601
+          "bytesInOutput": 63241
         },
         "src/diagram.ts": {
-          "bytesInOutput": 13090
+          "bytesInOutput": 9648
         },
         "src/zone.ts": {
-          "bytesInOutput": 5512
+          "bytesInOutput": 3732
         },
         "src/scale.ts": {
-          "bytesInOutput": 1666
+          "bytesInOutput": 599
         },
         "src/flash-tools.ts": {
-          "bytesInOutput": 5291
+          "bytesInOutput": 3709
+        },
+        "src/motion.ts": {
+          "bytesInOutput": 3161
         },
         "src/note.ts": {
-          "bytesInOutput": 22293
+          "bytesInOutput": 18803
         }
       },
-      "bytes": 197823
+      "bytes": 142492
     }
   }
 }
